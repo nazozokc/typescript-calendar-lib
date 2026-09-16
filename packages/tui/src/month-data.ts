@@ -2,10 +2,9 @@ import {
   assertValidDate,
   buildMonthGrid,
   createDate,
+  getCalendarCellState,
   getMonthName,
   getWeekdayHeaders,
-  isDateInRange,
-  isSameDay,
 } from "@typescript-calendar-lib/core";
 import { shiftMonth } from "./month-math.ts";
 import type { CalendarCell, MonthData, MonthDataOptions } from "./types.ts";
@@ -56,6 +55,7 @@ export function buildMonthData(
           date: null,
           dayOfWeek,
           isCurrentMonth: false,
+          isWeekend: false,
           isToday: false,
           isHighlight: false,
           isInRange: false,
@@ -63,15 +63,14 @@ export function buildMonthData(
       }
 
       const date = createDate(ny, nm - 1, day);
+      const state = getCalendarCellState(date, { today, highlight, range });
 
       return {
         day,
         date,
         dayOfWeek,
         isCurrentMonth: true,
-        isToday: isSameDay(date, today),
-        isHighlight: highlight !== undefined && isSameDay(date, highlight),
-        isInRange: isDateInRange(date, range),
+        ...state,
       };
     }),
   );

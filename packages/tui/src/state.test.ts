@@ -95,6 +95,29 @@ describe("createCalendarState", () => {
     expect(state.month).toBe(12);
     expect(state.monthData.title).toBe("December 9999");
   });
+
+  test("今日が表示月に無ければカーソルは最初の日付セルに置かれる", () => {
+    const state = createCalendarState({
+      today: TODAY, // 2026-09-15
+      initialYear: 2020,
+      initialMonth: 1,
+    });
+    expect(state.year).toBe(2020);
+    expect(state.month).toBe(1);
+    const firstDay = state.monthData.cells.flat().find((c) => c.day !== null)!;
+    // 2020-01-01 は水曜日（weekStart sunday → col 3）
+    expect(state.cursor).toEqual({ row: 0, col: 3 });
+    expect(getCursorDate(state)).toEqual(firstDay.date);
+  });
+
+  test("今日が表示月に無い場合の初期カーソル位置に選択日は無い", () => {
+    const state = createCalendarState({
+      today: TODAY,
+      initialYear: 2020,
+      initialMonth: 1,
+    });
+    expect(state.selectedDate).toBeNull();
+  });
 });
 
 describe("rebuildState", () => {

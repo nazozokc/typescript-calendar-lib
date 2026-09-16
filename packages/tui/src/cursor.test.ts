@@ -75,6 +75,19 @@ describe("moveCursor", () => {
     const moved = moveCursor(state, "down");
     expect(moved.cursor).not.toBeNull();
   });
+
+  test("今日が表示月に無ければ最初の日付セルにスナップする", () => {
+    const state = createCalendarState({
+      today: TODAY,
+      initialYear: 2020,
+      initialMonth: 1,
+      initialCursor: null,
+    });
+    // 2020-01-01 は水曜日（sunday 始まり → col 3）
+    // スナップ先 {row:0, col:3} → down で {row:1, col:3}
+    const moved = moveCursor(state, "down");
+    expect(moved.cursor).toEqual({ row: 1, col: 3 });
+  });
 });
 
 describe("selectDate / getCursorDate", () => {
@@ -139,6 +152,13 @@ describe("setCursorToDate", () => {
     const target = new Date(2026, 8, 1);
     const moved = setCursorToDate(state, target);
     expect(getCursorDate(moved)).toEqual(target);
+  });
+
+  test("Invalid Date を渡すと RangeError", () => {
+    const state = createCalendarState({ today: TODAY });
+    expect(() => setCursorToDate(state, new Date("invalid"))).toThrow(
+      RangeError,
+    );
   });
 });
 

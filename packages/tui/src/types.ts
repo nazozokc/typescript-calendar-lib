@@ -12,6 +12,8 @@ export interface CalendarCell {
   dayOfWeek: number;
   /** 当月の日付か（前月/翌月の埋め込みセルは false） */
   isCurrentMonth: boolean;
+  /** 土曜 or 日曜か */
+  isWeekend: boolean;
   /** 今日の日付か */
   isToday: boolean;
   /** ハイライト対象か */

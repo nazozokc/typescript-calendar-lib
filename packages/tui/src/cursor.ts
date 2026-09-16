@@ -33,7 +33,7 @@ export function moveCursor(
 ): CalendarState {
   const monthData = state.monthData;
   const rows = monthData.visibleRows;
-  const cols = monthData.cells[0]?.length ?? 7;
+  const cols = monthData.cells[0]?.length ?? 0;
 
   if (rows <= 0 || cols <= 0) return state;
 
