@@ -63,7 +63,7 @@ jobs:
         run: |
           version="${{ steps.version.outputs.version }}"
           for pkg in core cli tui react svelte; do
-            pnpm --filter "@typescript-calendar-lib/${pkg}" pkg set "version=${version}"
+            npm --prefix "packages/${pkg}" pkg set "version=${version}"
           done
 
       - name: Build packages
