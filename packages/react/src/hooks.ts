@@ -9,9 +9,12 @@ import {
   createCalendarState,
   getCursorDate,
   getSelectedDate,
+  goToDate,
+  goToMonth,
   goToToday,
   moveCursor,
   navigateMonth,
+  navigateYear,
   sameStateOptions,
   selectDate,
   updateStateOptions,
@@ -25,6 +28,8 @@ export interface UseCalendarStateOptions
   > {
   initialYear?: number;
   initialMonth?: number;
+  /** 表示中の年月が変わったときに呼ばれる */
+  onMonthChange?: (year: number, month: number) => void;
 }
 
 export interface UseCalendarStateReturn {
@@ -35,6 +40,12 @@ export interface UseCalendarStateReturn {
   /** 前月/翌月へ移動 */
   goNext: () => void;
   goPrev: () => void;
+  /** 前年/翌年へ移動 */
+  navigateYear: (direction: MonthDirection) => void;
+  /** 指定した年月へジャンプ */
+  goToMonth: (year: number, month: number) => void;
+  /** 指定した日付の月へジャンプし、カーソルをその日付に置く */
+  goToDate: (date: Date) => void;
   /** 今日の月へジャンプ */
   goToday: () => void;
   /** カーソル位置の日付を選択 */
@@ -85,6 +96,19 @@ export function useCalendarState(
     setState((current) => updateStateOptions(current, options, previous));
   }, [options]);
 
+  // onMonthChange: ref 経由で安定参照
+  const onMonthChangeRef = useRef(options.onMonthChange);
+  onMonthChangeRef.current = options.onMonthChange;
+
+  const prevMonthRef = useRef({ year: state.year, month: state.month });
+  useEffect(() => {
+    const prev = prevMonthRef.current;
+    if (prev.year !== state.year || prev.month !== state.month) {
+      prevMonthRef.current = { year: state.year, month: state.month };
+      onMonthChangeRef.current?.(state.year, state.month);
+    }
+  }, [state.year, state.month]);
+
   return {
     state,
     moveCursor: useCallback(
@@ -97,6 +121,20 @@ export function useCalendarState(
     ),
     goPrev: useCallback(
       () => setState((prev) => navigateMonth(prev, "prev")),
+      [],
+    ),
+    navigateYear: useCallback(
+      (direction: MonthDirection) =>
+        setState((prev) => navigateYear(prev, direction)),
+      [],
+    ),
+    goToMonth: useCallback(
+      (year: number, month: number) =>
+        setState((prev) => goToMonth(prev, year, month)),
+      [],
+    ),
+    goToDate: useCallback(
+      (date: Date) => setState((prev) => goToDate(prev, date)),
       [],
     ),
     goToday: useCallback(() => setState((prev) => goToToday(prev)), []),

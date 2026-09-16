@@ -60,6 +60,10 @@ export function App() {
 | `interactive` | `boolean` | `false` | Enable cell click/hover/keyboard selection |
 | `onDateClick` | `(date: Date) => void` | — | Called when a day cell is clicked (or Enter/Space pressed) |
 | `onDateHover` | `(date: Date) => void` | — | Called when a day cell is hovered |
+| `onKeyDown` | `(e: KeyboardEvent) => void` | — | Keyboard handler on the grid element |
+| `selectedDate` | `Date \| null` | `null` | Marks the cell `aria-selected` |
+| `cursorDate` | `Date \| null` | `null` | The cell that gets `tabIndex=0` (roving tabindex) |
+| `renderCell` | `(day, date, state) => ReactNode` | — | Custom cell content renderer |
 
 The component exports as both named `Calendar` and default.
 
@@ -91,6 +95,9 @@ function App() {
     goNext,       // () => void — next month
     goPrev,       // () => void — previous month
     goToday,      // () => void — jump to today
+    navigateYear, // (direction) => void — "prev" | "next" year
+    goToMonth,    // (year, month) => void — jump to a specific month
+    goToDate,     // (date) => void — jump to a date's month, cursor on that date
     moveCursor,   // (direction) => void — "up" | "down" | "left" | "right"
     selectDate,   // () => void — select date under cursor
     clearSelection,
@@ -110,6 +117,60 @@ function App() {
   );
 }
 ```
+
+`options` also accepts `onMonthChange: (year, month) => void`, called whenever the displayed month changes.
+
+## InteractiveCalendar
+
+`InteractiveCalendar` bundles `useCalendarState` + `<Calendar>` into a single self-contained component. It manages its own state and supports keyboard navigation out of the box:
+
+| Key | Action |
+| :--- | :--- |
+| Arrow keys | Move the cursor (focus follows the cursor cell) |
+| `PageUp` / `PageDown` | Previous / next month |
+| Enter / Space | Same as clicking the focused cell |
+
+```tsx
+import { InteractiveCalendar } from "@typescript-calendar-lib/react";
+import "@typescript-calendar-lib/react/calendar.css"; // required — component styles
+
+function App() {
+  return (
+    <InteractiveCalendar
+      initialYear={2026}
+      initialMonth={9}
+      theme="modern"
+      colorScheme="ocean"
+      onMonthChange={(year, month) => console.log("Month:", year, month)}
+      onDateClick={(date) => console.log("Selected", date)}
+    />
+  );
+}
+```
+
+It accepts the `useCalendarState` options (`initialYear`, `initialMonth`, `locale`, `weekStart`, `highlight`, `range`, `today`, `onMonthChange`) plus the `Calendar` visual props (`theme`, `colorScheme`, `size`, `style`, `renderCell`) and event callbacks (`onDateClick`, `onDateHover`).
+
+## Custom Cell Rendering
+
+Pass `renderCell` to replace the default day-number content of each cell. It receives the day, the full `Date`, and the cell state:
+
+```tsx
+import type { CalendarCellState } from "@typescript-calendar-lib/core";
+
+<Calendar
+  year={2026}
+  month={9}
+  renderCell={(day, date, state) => (
+    <span>
+      {day}
+      {state.isToday && "★"}
+      {state.isInRange && "•"}
+    </span>
+  )}
+/>
+```
+
+---
 
 See the interactive demo in the repository docs (`docs/guide/interactive-demo.md`) for a complete example.
 
@@ -241,7 +302,7 @@ The `style` prop can override any CSS variable or add custom styles:
 
 ## Cell Classes
 
-Each day cell gets semantic classes you can target with CSS:
+Each day cell gets semantic classes you can target with CSS. In interactive mode, the grid is exposed as a `role="grid"` table with `role="gridcell"` cells (WAI-ARIA APG calendar pattern): today's cell gets `aria-current="date"`, the selected date gets `aria-selected`, and only the cursor cell is tabbable (`tabIndex=0`, roving tabindex).
 
 | Class | When |
 | :--- | :--- |
@@ -260,6 +321,7 @@ import Calendar, {
   resolveTheme,
   THEMES,
   useCalendarState,
+  InteractiveCalendar,
 } from "@typescript-calendar-lib/react";
 
 import type {
@@ -268,6 +330,7 @@ import type {
   CalendarSize,
   CalendarSizeName,
   ColorSchemeName,
+  InteractiveCalendarProps,
   ReactColorScheme,
   ReactTheme,
   ThemeName,
