@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { getCellClasses } from "../src/cell-classes.js";
+import { buildRangePreview } from "../src/range-preview.js";
 import { buildSizeStyle, isSizeName } from "../src/size.js";
 import { styleObjectToString } from "../src/style.js";
 import {
@@ -83,6 +84,85 @@ describe("getCellClasses", () => {
         range: { from: new Date(2026, 8, 15), to: new Date(2026, 8, 1) },
       }),
     ).toThrow(RangeError);
+  });
+
+  test("rangePreview 内のセルに is-in-range-preview が付く", () => {
+    const d = new Date(2026, 8, 10);
+    const preview = { from: new Date(2026, 8, 5), to: new Date(2026, 8, 15) };
+    expect(getCellClasses(d, { rangePreview: preview })).toContain(
+      "is-in-range-preview",
+    );
+  });
+
+  test("rangePreview 外のセルには is-in-range-preview が付かない", () => {
+    const d = new Date(2026, 8, 20);
+    const preview = { from: new Date(2026, 8, 5), to: new Date(2026, 8, 15) };
+    expect(getCellClasses(d, { rangePreview: preview })).not.toContain(
+      "is-in-range-preview",
+    );
+  });
+
+  test("rangePreview 未指定なら is-in-range-preview は付かない", () => {
+    expect(getCellClasses(new Date(2026, 8, 10), {})).not.toContain(
+      "is-in-range-preview",
+    );
+  });
+
+  test("逆転した rangePreview は RangeError", () => {
+    expect(() =>
+      getCellClasses(new Date(2026, 8, 10), {
+        rangePreview: {
+          from: new Date(2026, 8, 15),
+          to: new Date(2026, 8, 5),
+        },
+      }),
+    ).toThrow(RangeError);
+  });
+
+  test("hoveredDate のセルに is-hovered が付く", () => {
+    const d = new Date(2026, 8, 10);
+    expect(getCellClasses(d, { hoveredDate: d })).toContain("is-hovered");
+  });
+
+  test("hoveredDate が null なら is-hovered は付かない", () => {
+    expect(
+      getCellClasses(new Date(2026, 8, 10), { hoveredDate: null }),
+    ).not.toContain("is-hovered");
+  });
+});
+
+// ─── buildRangePreview ───────────────────────────────────
+
+describe("buildRangePreview", () => {
+  const jun1 = new Date(2026, 5, 1);
+  const jun5 = new Date(2026, 5, 5);
+  const jun10 = new Date(2026, 5, 10);
+
+  test("selected < hovered → from = selected", () => {
+    const result = buildRangePreview(jun1, jun10);
+    expect(result).toEqual({ from: jun1, to: jun10 });
+  });
+
+  test("selected > hovered → from = hovered（逆順ホバーをソート）", () => {
+    const result = buildRangePreview(jun10, jun1);
+    expect(result).toEqual({ from: jun1, to: jun10 });
+  });
+
+  test("selected = hovered → from = to（1日分の範囲）", () => {
+    const result = buildRangePreview(jun5, jun5);
+    expect(result).toEqual({ from: jun5, to: jun5 });
+  });
+
+  test("selected が null → undefined", () => {
+    expect(buildRangePreview(null, jun10)).toBeUndefined();
+  });
+
+  test("hovered が null → undefined", () => {
+    expect(buildRangePreview(jun1, null)).toBeUndefined();
+  });
+
+  test("両方 null → undefined", () => {
+    expect(buildRangePreview(null, null)).toBeUndefined();
   });
 });
 
@@ -221,6 +301,12 @@ describe("resolveColorScheme", () => {
     for (const scheme of Object.values(COLOR_SCHEMES)) {
       expect(scheme["--cal-selected-bg"]).toBeTruthy();
       expect(scheme["--cal-selected-fg"]).toBeTruthy();
+    }
+  });
+
+  test("全スキームに range-preview 用の変数が含まれる", () => {
+    for (const scheme of Object.values(COLOR_SCHEMES)) {
+      expect(scheme["--cal-range-preview-bg"]).toBeTruthy();
     }
   });
 });

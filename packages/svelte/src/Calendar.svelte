@@ -28,12 +28,16 @@
     highlight?: Date;
     /** 範囲強調 */
     range?: { from: Date; to: Date };
+    /** 範囲プレビュー（ホバー等の候補範囲）。is-in-range-preview クラスで視覚化される */
+    rangePreview?: { from: Date; to: Date };
     /** 今日の基準日。カラースキームの today 着色に使用 */
     today?: Date;
     /** 選択済み日付。該当セルに is-selected クラスと aria-selected が付く */
     selected?: Date | null;
     /** カーソル位置の日付。該当セルに is-cursor クラスが付く */
     cursorDate?: Date | null;
+    /** ホバー中の日付。該当セルに is-hovered クラスが付く */
+    hoveredDate?: Date | null;
     /** 見た目テーマ。既定は "default" */
     theme?: ThemeName | SvelteTheme;
     /** カラースキーム。既定は "default" */
@@ -51,6 +55,10 @@
     onDateClick?: (date: Date) => void;
     /** セルホバー時のコールバック */
     onDateHover?: (date: Date) => void;
+    /** カレンダーからマウスが離れたときのコールバック */
+    onDateLeave?: () => void;
+    /** キーボード操作。root 要素で発火（矢印キー等を InteractiveCalendar が処理する） */
+    onkeydown?: (event: KeyboardEvent) => void;
   }
 
   let {
@@ -60,9 +68,11 @@
     weekStart = "sunday",
     highlight,
     range,
+    rangePreview,
     today,
     selected,
     cursorDate,
+    hoveredDate,
     theme = "default",
     colorScheme = "default",
     size = "md",
@@ -70,6 +80,8 @@
     interactive = false,
     onDateClick,
     onDateHover,
+    onDateLeave,
+    onkeydown,
   }: CalendarProps = $props();
 
   const cellDate = (day: number): Date => createDate(year, month - 1, day);
@@ -78,18 +90,25 @@
       today,
       highlight,
       range,
+      rangePreview,
       selected,
       cursorDate,
+      hoveredDate,
     }) || undefined;
   const isSelectedDay = (day: number): boolean =>
     selected != null && isSameDay(cellDate(day), selected);
   const isTodayDay = (day: number): boolean =>
     today != null && isSameDay(cellDate(day), today);
+  const isCursorDay = (day: number): boolean =>
+    cursorDate != null && isSameDay(cellDate(day), cursorDate);
   const handleCellClick = (day: number) => {
     if (interactive && onDateClick) onDateClick(cellDate(day));
   };
   const handleCellHover = (day: number) => {
     if (interactive && onDateHover) onDateHover(cellDate(day));
+  };
+  const handleMouseLeave = () => {
+    if (interactive && onDateLeave) onDateLeave();
   };
 
   // style 属性は文字列のみ受け付けるためオブジェクトを直列化する（--cal-* 変数含む）
@@ -105,6 +124,9 @@
 <div
   class="calendar {resolveTheme(theme).className}{isSizeName(size) ? ` calendar-size-${size}` : ""}{interactive ? " calendar-interactive" : ""}"
   style={rootStyle}
+  role={interactive ? "group" : undefined}
+  onmouseleave={interactive ? handleMouseLeave : undefined}
+  onkeydown={onkeydown}
 >
   <div class="calendar-header">
     <h2>{getMonthName(locale, month)} {year}</h2>
@@ -133,6 +155,7 @@
                       onclick={() => handleCellClick(day)}
                       onmouseenter={() => handleCellHover(day)}
                       tabindex="0"
+                      data-cursor={isCursorDay(day) ? "true" : undefined}
                       aria-label={`${getMonthName(locale, month)} ${day}, ${year}`}
                       aria-pressed={isSelectedDay(day) || undefined}
                       aria-current={isTodayDay(day) ? "date" : undefined}

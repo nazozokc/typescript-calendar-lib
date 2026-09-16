@@ -1,10 +1,12 @@
 import Calendar from "./Calendar.svelte";
+import InteractiveCalendar from "./InteractiveCalendar.svelte";
 
-export { Calendar };
+export { Calendar, InteractiveCalendar };
 export default Calendar;
 
 export type { CellStateOptions } from "./cell-classes.js";
 export { getCellClasses } from "./cell-classes.js";
+export { buildRangePreview } from "./range-preview.js";
 export type {
   CalendarCustomSize,
   CalendarSize,

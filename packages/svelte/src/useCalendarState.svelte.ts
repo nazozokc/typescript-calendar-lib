@@ -7,6 +7,7 @@ import type {
 import {
   clearSelection,
   createCalendarState,
+  findDateCell,
   getCursorDate,
   getSelectedDate,
   goToToday,
@@ -14,6 +15,7 @@ import {
   navigateMonth,
   sameStateOptions,
   selectDate,
+  setCursorToDate,
   updateStateOptions,
 } from "@typescript-calendar-lib/tui";
 
@@ -49,12 +51,20 @@ export interface UseCalendarStateReturn {
   goToday: () => void;
   /** カーソル位置の日付を選択 */
   selectDate: () => void;
+  /** 指定した日付へカーソルを移動する（当月に無ければ何もしない） */
+  setCursorToDate: (date: Date) => void;
+  /** 指定した日付を選択し、カーソルもそこへ移動する（当月に無ければ何もしない） */
+  selectDateAt: (date: Date) => void;
   /** 選択を解除 */
   clearSelection: () => void;
   /** カーソル位置の日付（null の場合あり） */
   cursorDate: Date | null;
   /** 選択済み日付（null の場合あり） */
   selectedDate: Date | null;
+  /** ホバー中の日付（null の場合あり） */
+  hoveredDate: Date | null;
+  /** ホバー日付を更新する */
+  setHoveredDate: (date: Date | null) => void;
 }
 
 /** undefined を含む日付を値（時刻）で比較する */
@@ -83,6 +93,12 @@ export interface UseCalendarStateReturn {
  *
  * `today` を省略した場合、最初に解決された値が状態に固定され、以降も
  * 引き継がれる（毎回 `new Date()` を渡さなくてよい）。
+ *
+ * マウス操作向けのヘルパーも備える:
+ * - `selectDateAt(date)` — クリックした日付を選択（カーソルも移動）
+ * - `setHoveredDate(date | null)` — Calendar の `is-hovered` クラスに反映されるホバー追跡
+ * - `hoveredDate` + `selectDateAt` を組み合わせると、選択済み日付からホバー日付までの
+ *   範囲プレビュー（`is-in-range-preview`）が表示できる
  */
 export function useCalendarState(
   options: UseCalendarStateOptionsInput = {},
@@ -101,6 +117,9 @@ export function useCalendarState(
     }),
   );
 
+  // ホバー中の日付はローカル reactive 状態で保持する（tui 状態には入れない）。
+  let hoveredDate = $state<Date | null>(null);
+
   // options の「値の変化」を検知して状態を再構築する。
   // getter を effect 内で呼び出すことで、呼び出し元ファイルで追跡される
   // props / $state への読み取りが依存として登録され、値が変わると
@@ -114,6 +133,16 @@ export function useCalendarState(
     state = updateStateOptions(state, next, previous);
   });
 
+  // 表示月が変わったら、古い月を指すホバーをクリアする
+  let prevMonthKey: string | null = null;
+  $effect(() => {
+    const key = `${state.year}-${state.month}`;
+    if (prevMonthKey !== null && key !== prevMonthKey) {
+      hoveredDate = null;
+    }
+    prevMonthKey = key;
+  });
+
   return {
     get state() {
       return state;
@@ -123,6 +152,9 @@ export function useCalendarState(
     },
     get selectedDate() {
       return getSelectedDate(state);
+    },
+    get hoveredDate() {
+      return hoveredDate;
     },
     moveCursor: (direction: Direction) => {
       state = moveCursor(state, direction);
@@ -139,8 +171,19 @@ export function useCalendarState(
     selectDate: () => {
       state = selectDate(state);
     },
+    setCursorToDate: (date: Date) => {
+      state = setCursorToDate(state, date);
+    },
+    selectDateAt: (date: Date) => {
+      const pos = findDateCell(state.monthData, date);
+      if (pos === null) return; // 当月外は no-op
+      state = selectDate({ ...state, cursor: pos });
+    },
     clearSelection: () => {
       state = clearSelection(state);
+    },
+    setHoveredDate: (date: Date | null) => {
+      hoveredDate = date;
     },
   };
 }
