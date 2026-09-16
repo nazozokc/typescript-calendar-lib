@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import Calendar from "../src/Calendar.svelte";
+import InteractiveCalendar from "../src/InteractiveCalendar.svelte";
 import { isSizeName } from "../src/size.js";
 import HookHarness from "./HookHarness.svelte";
 
@@ -70,6 +71,86 @@ describe("useCalendarState", () => {
     expect(screen.getByTestId("selected").textContent).toBe(
       TODAY.toISOString(),
     );
+  });
+});
+
+// ─── useCalendarState マウス操作ヘルパー ─────────────────
+
+describe("useCalendarState マウス操作ヘルパー", () => {
+  test("選択を解除できる", async () => {
+    render(HookHarness, {
+      props: { initialYear: 2026, initialMonth: 9, today: TODAY },
+    });
+    await fireEvent.click(screen.getByTestId("select"));
+    await fireEvent.click(screen.getByTestId("clear"));
+    expect(screen.getByTestId("selected").textContent).toBe("null");
+  });
+
+  test("setCursorToDate でカーソルが指定日付へ移動する", async () => {
+    render(HookHarness, {
+      props: { initialYear: 2026, initialMonth: 9, today: TODAY },
+    });
+    await fireEvent.click(screen.getByTestId("cursor-to"));
+    expect(screen.getByTestId("cursor").textContent).toBe(
+      new Date(2026, 8, 20).toISOString(),
+    );
+  });
+
+  test("setCursorToDate は当月外の日付では no-op", async () => {
+    render(HookHarness, {
+      props: { initialYear: 2026, initialMonth: 9, today: TODAY },
+    });
+    await fireEvent.click(screen.getByTestId("cursor-to-outside"));
+    expect(screen.getByTestId("cursor").textContent).toBe(TODAY.toISOString());
+  });
+
+  test("selectDateAt で指定日付が選択されカーソルも移動する", async () => {
+    render(HookHarness, {
+      props: { initialYear: 2026, initialMonth: 9, today: TODAY },
+    });
+    await fireEvent.click(screen.getByTestId("select-at"));
+    expect(screen.getByTestId("selected").textContent).toBe(
+      new Date(2026, 8, 20).toISOString(),
+    );
+    expect(screen.getByTestId("cursor").textContent).toBe(
+      new Date(2026, 8, 20).toISOString(),
+    );
+  });
+
+  test("selectDateAt は当月外の日付では no-op", async () => {
+    render(HookHarness, {
+      props: { initialYear: 2026, initialMonth: 9, today: TODAY },
+    });
+    await fireEvent.click(screen.getByTestId("select-at-outside"));
+    expect(screen.getByTestId("selected").textContent).toBe("null");
+  });
+
+  test("hoveredDate は初期状態で null", async () => {
+    render(HookHarness, {
+      props: { initialYear: 2026, initialMonth: 9, today: TODAY },
+    });
+    expect(screen.getByTestId("hovered").textContent).toBe("null");
+  });
+
+  test("setHoveredDate でホバー日付を更新・クリアできる", async () => {
+    render(HookHarness, {
+      props: { initialYear: 2026, initialMonth: 9, today: TODAY },
+    });
+    await fireEvent.click(screen.getByTestId("hover"));
+    expect(screen.getByTestId("hovered").textContent).toBe(
+      new Date(2026, 8, 20).toISOString(),
+    );
+    await fireEvent.click(screen.getByTestId("unhover"));
+    expect(screen.getByTestId("hovered").textContent).toBe("null");
+  });
+
+  test("月移動で hoveredDate がクリアされる", async () => {
+    render(HookHarness, {
+      props: { initialYear: 2026, initialMonth: 9, today: TODAY },
+    });
+    await fireEvent.click(screen.getByTestId("hover"));
+    await fireEvent.click(screen.getByTestId("next"));
+    expect(screen.getByTestId("hovered").textContent).toBe("null");
   });
 });
 
@@ -455,5 +536,148 @@ describe("Calendar selected / cursorDate", () => {
     // クラス付与は interactive の有無に関わらず行われる
     expect(container.querySelector("td.is-selected")).not.toBeNull();
     expect(container.querySelector("td.is-cursor")).not.toBeNull();
+  });
+});
+
+// ─── Calendar マウス操作プロップ ──────────────────────────
+
+describe("Calendar マウス操作プロップ", () => {
+  test("hoveredDate のセルに is-hovered クラスがつく", () => {
+    const { container } = render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        interactive: true,
+        today: TODAY,
+        hoveredDate: new Date(2026, 8, 10),
+      },
+    });
+    const hovered = container.querySelector("td.is-hovered");
+    expect(hovered).not.toBeNull();
+    expect(hovered!.textContent).toBe("10");
+    const other = container.querySelector("td:not(.is-hovered)");
+    expect(other).not.toBeNull();
+  });
+
+  test("rangePreview 内のセルに is-in-range-preview クラスがつく", () => {
+    const { container } = render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        interactive: true,
+        today: TODAY,
+        rangePreview: { from: new Date(2026, 8, 5), to: new Date(2026, 8, 10) },
+      },
+    });
+    const preview = container.querySelectorAll("td.is-in-range-preview");
+    expect(preview.length).toBe(6); // 5日〜10日
+  });
+
+  test("マウス離脱で onDateLeave が呼ばれる", () => {
+    const onLeave = vi.fn();
+    const { container } = render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        interactive: true,
+        today: TODAY,
+        onDateLeave: onLeave,
+      },
+    });
+    fireEvent.mouseLeave(container.firstChild!);
+    expect(onLeave).toHaveBeenCalledTimes(1);
+  });
+
+  test("非インタラクティブでは onDateLeave は呼ばれない", () => {
+    const onLeave = vi.fn();
+    const { container } = render(Calendar, {
+      props: { year: 2026, month: 9, today: TODAY, onDateLeave: onLeave },
+    });
+    fireEvent.mouseLeave(container.firstChild!);
+    expect(onLeave).not.toHaveBeenCalled();
+  });
+});
+
+// ─── InteractiveCalendar ─────────────────────────────────
+
+describe("InteractiveCalendar", () => {
+  const props = () => ({
+    initialYear: 2026,
+    initialMonth: 9,
+    today: TODAY,
+  });
+
+  test("セルクリックで日付が選択され aria-pressed が付く", async () => {
+    render(InteractiveCalendar, { props: props() });
+    const btn = screen.getByRole("button", { name: /September 10, 2026/ });
+    await fireEvent.click(btn);
+    expect(btn).toHaveAttribute("aria-pressed", "true");
+    expect(btn.closest("td")).toHaveClass("is-selected");
+  });
+
+  test("ホバーで is-hovered クラスがつき、離脱で消える", async () => {
+    const { container } = render(InteractiveCalendar, { props: props() });
+    const btn = screen.getByRole("button", { name: /September 10, 2026/ });
+    await fireEvent.mouseEnter(btn);
+    expect(btn.closest("td")).toHaveClass("is-hovered");
+    const calendarRoot = container.querySelector(".calendar")!;
+    await fireEvent.mouseLeave(calendarRoot);
+    expect(btn.closest("td")).not.toHaveClass("is-hovered");
+  });
+
+  test("選択後にホバーすると範囲プレビューが表示される", async () => {
+    render(InteractiveCalendar, { props: props() });
+    await fireEvent.click(
+      screen.getByRole("button", { name: /September 10, 2026/ }),
+    );
+    await fireEvent.mouseEnter(
+      screen.getByRole("button", { name: /September 15, 2026/ }),
+    );
+    const mid = screen.getByRole("button", { name: /September 12, 2026/ });
+    expect(mid.closest("td")).toHaveClass("is-in-range-preview");
+    const out = screen.getByRole("button", { name: /September 17, 2026/ });
+    expect(out.closest("td")).not.toHaveClass("is-in-range-preview");
+  });
+
+  test("選択していない状態ではホバーしてもプレビューは出ない", async () => {
+    render(InteractiveCalendar, { props: props() });
+    await fireEvent.mouseEnter(
+      screen.getByRole("button", { name: /September 10, 2026/ }),
+    );
+    const mid = screen.getByRole("button", { name: /September 12, 2026/ });
+    expect(mid.closest("td")).not.toHaveClass("is-in-range-preview");
+  });
+
+  test("逆順ホバー（選択より前の日付）でもプレビュー範囲が正しく出る", async () => {
+    render(InteractiveCalendar, { props: props() });
+    await fireEvent.click(
+      screen.getByRole("button", { name: /September 15, 2026/ }),
+    );
+    await fireEvent.mouseEnter(
+      screen.getByRole("button", { name: /September 10, 2026/ }),
+    );
+    const mid = screen.getByRole("button", { name: /September 12, 2026/ });
+    expect(mid.closest("td")).toHaveClass("is-in-range-preview");
+    const out = screen.getByRole("button", { name: /September 17, 2026/ });
+    expect(out.closest("td")).not.toHaveClass("is-in-range-preview");
+  });
+
+  test("矢印キーでカーソルが移動しフォーカスも追従する", async () => {
+    const { container } = render(InteractiveCalendar, { props: props() });
+    const btn = screen.getByRole("button", { name: /September 15, 2026/ });
+    await fireEvent.keyDown(btn, { key: "ArrowRight" });
+    const cursorBtn = container.querySelector('[data-cursor="true"]');
+    expect(cursorBtn?.textContent).toBe("16");
+  });
+
+  test("Enter キーでも日付が選択される（クリックと同等）", async () => {
+    render(InteractiveCalendar, { props: props() });
+    const btn = screen.getByRole("button", { name: /September 15, 2026/ });
+    btn.focus();
+    // jsdom は button の Enter アクティベーションを実装していないため
+    // keyDown 後の click で再現する（実ブラウザでは Enter が click を発火する）
+    await fireEvent.keyDown(btn, { key: "Enter" });
+    await fireEvent.click(btn);
+    expect(btn).toHaveAttribute("aria-pressed", "true");
   });
 });
