@@ -79,6 +79,33 @@ describe("buildMonthData", () => {
     expect(inRange.every((c) => c.day! >= 1 && c.day! <= 15)).toBe(true);
   });
 
+  test("月跨ぎの範囲は当月の全セルを範囲内にする", () => {
+    const data = buildMonthData(2026, 9, {
+      today: TODAY,
+      range: { from: new Date(2026, 7, 25), to: new Date(2026, 9, 5) },
+    });
+    const dateCells = data.cells.flat().filter((c) => c.day !== null);
+    expect(dateCells.length).toBeGreaterThan(0);
+    for (const cell of dateCells) {
+      expect(cell.isInRange).toBe(true);
+    }
+  });
+
+  test("範囲の片側だけが前月/翌月に跨がっても正しく判定される", () => {
+    // from は前月25日、to は当月15日 → 当月の 1〜15 日のみ in range
+    const data = buildMonthData(2026, 9, {
+      today: TODAY,
+      range: { from: new Date(2026, 7, 25), to: new Date(2026, 8, 15) },
+    });
+    const inRangeDays = data.cells
+      .flat()
+      .filter((c) => c.isInRange)
+      .map((c) => c.day!);
+    expect(inRangeDays).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+    ]);
+  });
+
   test("今日とハイライトは両立しうる", () => {
     const data = buildMonthData(2026, 9, {
       today: TODAY,
@@ -87,6 +114,41 @@ describe("buildMonthData", () => {
     const cell = data.cells.flat().find((c) => c.day === 8)!;
     expect(cell.isToday).toBe(true);
     expect(cell.isHighlight).toBe(true);
+  });
+
+  test("土曜・日曜に isWeekend が立つ（日曜始まり）", () => {
+    // 2026-09-01 is Tuesday, so week 0: null,null,1,2,3,4,5
+    // Sat=5th col, Sun=6th col
+    const data = buildMonthData(2026, 9, { today: TODAY });
+    for (const row of data.cells) {
+      for (const cell of row) {
+        if (cell.day === null) continue;
+        // dayOfWeek: 0=Sun, 5=Sat, 6=Sun → weekend
+        const isSaturdayOrSunday = cell.dayOfWeek === 0 || cell.dayOfWeek === 6;
+        expect(cell.isWeekend).toBe(isSaturdayOrSunday);
+      }
+    }
+  });
+
+  test("土曜・日曜に isWeekend が立つ（月曜始まり）", () => {
+    // 2026-09-01 is Tuesday, weekStart monday: 0=Mon,5=Sat,6=Sun
+    const data = buildMonthData(2026, 9, { weekStart: "monday", today: TODAY });
+    for (const row of data.cells) {
+      for (const cell of row) {
+        if (cell.day === null) continue;
+        const isSaturdayOrSunday = cell.dayOfWeek === 5 || cell.dayOfWeek === 6;
+        expect(cell.isWeekend).toBe(isSaturdayOrSunday);
+      }
+    }
+  });
+
+  test("空欄セルは isWeekend が false", () => {
+    const data = buildMonthData(2026, 9, { today: TODAY });
+    const nullCells = data.cells.flat().filter((c) => c.day === null);
+    expect(nullCells.length).toBeGreaterThan(0);
+    for (const cell of nullCells) {
+      expect(cell.isWeekend).toBe(false);
+    }
   });
 
   test("visibleRows は日付を含む行数（2026-09 は5行）", () => {

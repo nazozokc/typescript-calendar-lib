@@ -52,6 +52,7 @@ interface CalendarCell {
   date: Date | null;        // full Date, null when day is null
   dayOfWeek: number;        // 0 = first day per weekStart
   isCurrentMonth: boolean;  // false for padded cells
+  isWeekend: boolean;       // true for Saturday/Sunday
   isToday: boolean;
   isHighlight: boolean;
   isInRange: boolean;
@@ -62,7 +63,7 @@ interface CalendarCell {
 
 ```ts
 interface MonthDataOptions {
-  locale?: Locale;              // "en" | "ja", default "en"
+  locale?: Locale;              // "en" | "ja" | "es" | "de" | "fr" | "ko" | "zh", default "en"
   weekStart?: WeekStart;        // "sunday" | "monday", default "sunday"
   today?: Date;                 // reference for isToday, default new Date()
   highlight?: Date;             // sets isHighlight
@@ -198,6 +199,23 @@ findFirstDayCell(monthData); // { row, col } | null
 clampCursor(cursor, monthData); // clamps to visible rows/cols
 ```
 
+## Option Sync (for UI framework wrappers)
+
+`resolveOptions`, `sameStateOptions`, and `updateStateOptions` power the React/Svelte wrapper hooks: they detect option changes by value (so inline `Date`/object literals don't cause rebuild loops) and rebuild state while preserving the cursor and selection.
+
+```ts
+import { sameStateOptions, updateStateOptions, resolveOptions } from "@typescript-calendar-lib/tui";
+
+resolveOptions(options);        // fix `today` into state, apply defaults
+sameStateOptions(a, b);         // true when options are value-equal (Dates via getTime)
+updateStateOptions(state, next, prev);
+// - preserves cursor & selectedDate
+// - jumps only when initialYear/initialMonth actually changed
+// - carries over resolved `today` when `next.today` is omitted
+```
+
+`rebuildState(year, month, cursor, selectedDate, options, monthData?)` is the low-level state reconstruction used by `createCalendarState` and navigation — pass a pre-built `MonthData` to skip re-computation.
+
 ## Themes & Color Schemes
 
 Themes describe layout (cell width, separators, frames); color schemes map calendar elements to `CellStyle`. Since the package is headless, the consuming framework performs the actual rendering from these definitions.
@@ -307,11 +325,15 @@ import {
   moveCursor,
   navigateMonth,
   navigateYear,
+  rebuildState,
   resolveColorScheme,
+  resolveOptions,
   resolveTheme,
+  sameStateOptions,
   selectDate,
   setCursorToDate,
   THEMES,
+  updateStateOptions,
 } from "@typescript-calendar-lib/tui";
 
 import type {

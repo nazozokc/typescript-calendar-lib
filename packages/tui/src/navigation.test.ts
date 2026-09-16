@@ -64,6 +64,30 @@ describe("navigateMonth", () => {
     expect(prev.monthData.title).toBe("February 2026");
     expect(prev.cursor).toEqual({ row: 3, col: 6 });
   });
+
+  test("サポート範囲の最小では前月へ移動しない (year 1, month 1)", () => {
+    const state = createCalendarState({
+      today: TODAY,
+      initialYear: 1,
+      initialMonth: 1,
+    });
+    const prev = navigateMonth(state, "prev");
+    expect(prev.year).toBe(1);
+    expect(prev.month).toBe(1);
+    expect(prev.monthData.title).toBe("January 1");
+  });
+
+  test("サポート範囲の最大では翌月へ移動しない (year 9999, month 12)", () => {
+    const state = createCalendarState({
+      today: TODAY,
+      initialYear: 9999,
+      initialMonth: 12,
+    });
+    const next = navigateMonth(state, "next");
+    expect(next.year).toBe(9999);
+    expect(next.month).toBe(12);
+    expect(next.monthData.title).toBe("December 9999");
+  });
 });
 
 describe("navigateYear", () => {
@@ -112,6 +136,21 @@ describe("goToMonth / goToToday", () => {
     const jumped = goToMonth(state, 2026, 13);
     expect(jumped.year).toBe(2027);
     expect(jumped.month).toBe(1);
+  });
+
+  test("範囲外の year はクランプされ state と monthData が乖離しない", () => {
+    const state = createCalendarState({ today: TODAY });
+    const jumped = goToMonth(state, 10000, 1);
+    expect(jumped.year).toBe(9999);
+    expect(jumped.month).toBe(12);
+    expect(jumped.monthData.year).toBe(9999);
+    expect(jumped.monthData.month).toBe(12);
+
+    const low = goToMonth(state, 0, 6);
+    expect(low.year).toBe(1);
+    expect(low.month).toBe(1);
+    expect(low.monthData.year).toBe(1);
+    expect(low.monthData.month).toBe(1);
   });
 
   test("今日の月へジャンプしカーソルを今日に置く", () => {
