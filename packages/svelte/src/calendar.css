@@ -12,6 +12,8 @@
   --cal-range-bg: #fef3c7;
   --cal-today-bg: #fff7ed;
   --cal-today-fg: #c2410c;
+  --cal-selected-bg: #dc2626;
+  --cal-selected-fg: #ffffff;
 
   /* セルサイズ（size propや style の CSS 変数で上書きできる） */
   --cal-cell-w: 2.25rem;
@@ -78,6 +80,17 @@
 
 .calendar td.is-in-range {
   background: var(--cal-range-bg);
+}
+
+.calendar td.is-selected {
+  background: var(--cal-selected-bg);
+  color: var(--cal-selected-fg);
+  font-weight: 700;
+}
+
+.calendar td.is-cursor {
+  outline: 2px solid var(--cal-accent);
+  outline-offset: -2px;
 }
 
 /* ─── Size ────────────────────────────────────────────── */
@@ -207,7 +220,8 @@
 
 .calendar-theme-rounded td.is-today,
 .calendar-theme-rounded td.is-highlight,
-.calendar-theme-rounded td.is-in-range {
+.calendar-theme-rounded td.is-in-range,
+.calendar-theme-rounded td.is-selected {
   border-radius: 999px;
 }
 
@@ -247,6 +261,10 @@
 
 .calendar-interactive td button.calendar-day-btn:hover {
   background: var(--cal-range-bg);
+}
+
+.calendar-interactive td.is-selected button.calendar-day-btn:hover {
+  background: var(--cal-selected-bg);
 }
 
 .calendar-interactive td button.calendar-day-btn:focus-visible {

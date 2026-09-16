@@ -46,6 +46,8 @@ bun add @typescript-calendar-lib/svelte
 | `highlight` | `Date` | — | Date to highlight |
 | `range` | `{ from: Date; to: Date }` | — | Dates to emphasize |
 | `today` | `Date` | — | Reference date for "today" styling |
+| `selected` | `Date \| null` | — | Selected date (`.is-selected` class, `aria-pressed` in interactive mode) |
+| `cursorDate` | `Date \| null` | — | Cursor position (`.is-cursor` class) |
 | `theme` | `ThemeName \| SvelteTheme` | `"default"` | CSS class-based theme |
 | `colorScheme` | `ColorSchemeName \| SvelteColorScheme` | `"default"` | CSS variable-based colors |
 | `size` | `CalendarSize` | `"md"` | Cell size |
@@ -58,13 +60,15 @@ The component exports as both named `Calendar` and default.
 
 ## Interactive Mode
 
-Set `interactive` to make day cells clickable. Each cell becomes a `<button class="calendar-day-btn">` — clickable, hoverable, and keyboard-accessible (Enter / Space):
+Set `interactive` to make day cells clickable. Each cell becomes a `<button class="calendar-day-btn">` — clickable, hoverable, and keyboard-accessible (Enter / Space). Buttons are announced with a localized `aria-label`; today gets `aria-current="date"` and a `selected` date gets `aria-pressed="true"`:
 
 ```svelte
 <Calendar
   year={2026}
   month={9}
   interactive
+  selected={cal.selectedDate}
+  cursorDate={cal.cursorDate}
   onDateClick={(date) => console.log("Selected", date)}
   onDateHover={(date) => console.log("Hovered", date)}
 />
@@ -92,7 +96,13 @@ For full interactivity (cursor movement, month navigation, selection), use the `
 > </script>
 >
 > <button onclick={cal.goPrev}>‹</button>
-> <Calendar year={cal.state.year} month={cal.state.month} interactive />
+> <Calendar
+>   year={cal.state.year}
+>   month={cal.state.month}
+>   selected={cal.selectedDate}
+>   cursorDate={cal.cursorDate}
+>   interactive
+> />
 > <button onclick={cal.goNext}>›</button>
 > ```
 
@@ -177,6 +187,8 @@ Available variables:
 | `--cal-range-bg` | Range background |
 | `--cal-today-bg` | Today background |
 | `--cal-today-fg` | Today foreground |
+| `--cal-selected-bg` | Selected background |
+| `--cal-selected-fg` | Selected foreground |
 
 Pass a custom scheme directly:
 

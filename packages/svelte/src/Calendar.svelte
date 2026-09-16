@@ -5,6 +5,7 @@
     createDate,
     getMonthName,
     getWeekdayHeaders,
+    isSameDay,
   } from "@typescript-calendar-lib/core";
   import { getCellClasses } from "./cell-classes.js";
   import type { CalendarSize } from "./size.js";
@@ -29,6 +30,10 @@
     range?: { from: Date; to: Date };
     /** 今日の基準日。カラースキームの today 着色に使用 */
     today?: Date;
+    /** 選択済み日付。該当セルに is-selected クラスと aria-selected が付く */
+    selected?: Date | null;
+    /** カーソル位置の日付。該当セルに is-cursor クラスが付く */
+    cursorDate?: Date | null;
     /** 見た目テーマ。既定は "default" */
     theme?: ThemeName | SvelteTheme;
     /** カラースキーム。既定は "default" */
@@ -56,6 +61,8 @@
     highlight,
     range,
     today,
+    selected,
+    cursorDate,
     theme = "default",
     colorScheme = "default",
     size = "md",
@@ -67,7 +74,17 @@
 
   const cellDate = (day: number): Date => createDate(year, month - 1, day);
   const cellClass = (day: number): string | undefined =>
-    getCellClasses(cellDate(day), { today, highlight, range }) || undefined;
+    getCellClasses(cellDate(day), {
+      today,
+      highlight,
+      range,
+      selected,
+      cursorDate,
+    }) || undefined;
+  const isSelectedDay = (day: number): boolean =>
+    selected != null && isSameDay(cellDate(day), selected);
+  const isTodayDay = (day: number): boolean =>
+    today != null && isSameDay(cellDate(day), today);
   const handleCellClick = (day: number) => {
     if (interactive && onDateClick) onDateClick(cellDate(day));
   };
@@ -117,6 +134,8 @@
                       onmouseenter={() => handleCellHover(day)}
                       tabindex="0"
                       aria-label={`${getMonthName(locale, month)} ${day}, ${year}`}
+                      aria-pressed={isSelectedDay(day) || undefined}
+                      aria-current={isTodayDay(day) ? "date" : undefined}
                     >
                       {day}
                     </button>

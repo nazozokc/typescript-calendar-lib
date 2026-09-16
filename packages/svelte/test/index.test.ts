@@ -239,3 +239,221 @@ describe("Calendar", () => {
     expect(root.querySelectorAll("td")).not.toHaveLength(0);
   });
 });
+
+// ─── Calendar の視覚プロップ ─────────────────────────────
+
+describe("Calendar の視覚プロップ", () => {
+  test("theme 名に対応するクラスが付く", () => {
+    const { container } = render(Calendar, {
+      props: { year: 2026, month: 9, theme: "modern", today: TODAY },
+    });
+    expect(container.firstChild).toHaveClass("calendar-theme-modern");
+  });
+
+  test("カスタムテーマのクラスが付く", () => {
+    const { container } = render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        theme: { className: "my-cal" },
+        today: TODAY,
+      },
+    });
+    expect(container.firstChild).toHaveClass("my-cal");
+  });
+
+  test("未知のテーマ名は default にフォールバックする", () => {
+    const { container } = render(Calendar, {
+      props: { year: 2026, month: 9, theme: "unknown" as never, today: TODAY },
+    });
+    expect(container.firstChild).toHaveClass("calendar-theme-default");
+  });
+
+  test("colorScheme で CSS 変数が設定される", () => {
+    const { container } = render(Calendar, {
+      props: { year: 2026, month: 9, colorScheme: "ocean", today: TODAY },
+    });
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.getPropertyValue("--cal-bg")).toBe("#f0f9ff");
+  });
+
+  test("カスタムカラースキームが反映される", () => {
+    const { container } = render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        colorScheme: { "--cal-bg": "#123456" },
+        today: TODAY,
+      },
+    });
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.getPropertyValue("--cal-bg")).toBe("#123456");
+  });
+
+  test("未知のカラースキーム名は default にフォールバックする", () => {
+    const { container } = render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        colorScheme: "unknown" as never,
+        today: TODAY,
+      },
+    });
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.getPropertyValue("--cal-bg")).toBe("#ffffff");
+  });
+
+  test("size 名でサイズクラスが付く", () => {
+    const { container } = render(Calendar, {
+      props: { year: 2026, month: 9, size: "lg", today: TODAY },
+    });
+    expect(container.firstChild).toHaveClass("calendar-size-lg");
+  });
+
+  test("カスタムサイズで CSS 変数が設定される", () => {
+    const { container } = render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        size: { width: 48, height: 40 },
+        today: TODAY,
+      },
+    });
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.getPropertyValue("--cal-cell-w")).toBe("48px");
+    expect(root.style.getPropertyValue("--cal-cell-h")).toBe("40px");
+  });
+
+  test("style で CSS 変数を上書きできる", () => {
+    const { container } = render(Calendar, {
+      props: { year: 2026, month: 9, style: { "--cal-bg": "#000000" } },
+    });
+    const root = container.firstChild as HTMLElement;
+    expect(root.style.getPropertyValue("--cal-bg")).toBe("#000000");
+  });
+
+  test("locale でタイトルと言語が変わる", () => {
+    render(Calendar, { props: { year: 2026, month: 9, locale: "ja" } });
+    expect(screen.getByText("9月 2026")).toBeTruthy();
+  });
+
+  test("weekStart=monday で月曜始まりになる", () => {
+    const { container } = render(Calendar, {
+      props: { year: 2026, month: 9, weekStart: "monday" },
+    });
+    const header = container.querySelectorAll("th");
+    expect(header[0]!.textContent).toBe("Mon");
+  });
+
+  test("範囲外の month は RangeError（fail fast）", () => {
+    expect(() => render(Calendar, { props: { year: 2026, month: 0 } })).toThrow(
+      RangeError,
+    );
+    expect(() =>
+      render(Calendar, { props: { year: 2026, month: 13 } }),
+    ).toThrow(RangeError);
+  });
+});
+
+// ─── Calendar selected / cursorDate ──────────────────────
+
+describe("Calendar selected / cursorDate", () => {
+  test("selected の日にちに is-selected クラスが付く", () => {
+    const { container } = render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        selected: new Date(2026, 8, 10),
+        today: TODAY,
+      },
+    });
+    const cell = container.querySelector("td.is-selected");
+    expect(cell).not.toBeNull();
+    expect(cell!.textContent).toBe("10");
+  });
+
+  test("cursorDate の日にちに is-cursor クラスが付く", () => {
+    const { container } = render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        cursorDate: new Date(2026, 8, 12),
+        today: TODAY,
+      },
+    });
+    const cell = container.querySelector("td.is-cursor");
+    expect(cell).not.toBeNull();
+    expect(cell!.textContent).toBe("12");
+  });
+
+  test("当月外の selected にはクラスが付かない", () => {
+    const { container } = render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        selected: new Date(2026, 10, 5),
+        today: TODAY,
+      },
+    });
+    expect(container.querySelector("td.is-selected")).toBeNull();
+  });
+
+  test("interactive で selected の button に aria-pressed=true が付く", () => {
+    const { container } = render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        interactive: true,
+        selected: new Date(2026, 8, 10),
+        today: TODAY,
+      },
+    });
+    const pressed = container.querySelector('button[aria-pressed="true"]');
+    expect(pressed).not.toBeNull();
+    expect(pressed!.textContent).toBe("10");
+  });
+
+  test("selected 以外の button には aria-pressed が付かない", () => {
+    const { container } = render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        interactive: true,
+        selected: new Date(2026, 8, 10),
+        today: TODAY,
+      },
+    });
+    const buttons = container.querySelectorAll("button");
+    expect(buttons.length).toBeGreaterThan(1);
+    for (const button of buttons) {
+      if (button.textContent !== "10") {
+        expect(button.getAttribute("aria-pressed")).toBeNull();
+      }
+    }
+  });
+
+  test("today の button に aria-current=date が付く", () => {
+    const { container } = render(Calendar, {
+      props: { year: 2026, month: 9, interactive: true, today: TODAY },
+    });
+    const current = container.querySelector('button[aria-current="date"]');
+    expect(current).not.toBeNull();
+    expect(current!.textContent).toBe("15");
+  });
+
+  test("非 interactive では aria 属性は付かない", () => {
+    const { container } = render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        selected: new Date(2026, 8, 10),
+        cursorDate: new Date(2026, 8, 12),
+        today: TODAY,
+      },
+    });
+    expect(container.querySelector("button")).toBeNull();
+    // クラス付与は interactive の有無に関わらず行われる
+    expect(container.querySelector("td.is-selected")).not.toBeNull();
+    expect(container.querySelector("td.is-cursor")).not.toBeNull();
+  });
+});
