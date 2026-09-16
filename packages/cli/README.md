@@ -71,6 +71,9 @@ The package ships a `typescript-calendar-lib` binary:
 typescript-calendar-lib                       # current month
 typescript-calendar-lib 2026                  # current month of 2026
 typescript-calendar-lib 2026 9                # September 2026
+typescript-calendar-lib --year                # current year as a 4×3 grid
+typescript-calendar-lib 2026 --year           # 2026 as a 4×3 grid
+typescript-calendar-lib --range 2026-01-01 2026-03-31  # months in a date range
 ```
 
 ### Options
@@ -78,13 +81,22 @@ typescript-calendar-lib 2026 9                # September 2026
 ```
 --theme <name>           Look: default | modern (default: default)
 --color-scheme <name>    Colors: default | ocean | forest | sunset | mono
---color                  Enable ANSI colors
+--color                  Enable ANSI colors (auto-detected for TTY)
+--no-color               Disable ANSI colors
 --locale <lang>          Language: en | ja | es | de | fr | ko | zh (default: en)
 --week-start <day>       First weekday: sunday | monday (default: sunday)
 --highlight <YYYY-MM-DD> Highlight a date (e.g. 2026-09-08)
 --highlight-style <style> Highlight style: bracket | reverse (default: bracket)
+--today <YYYY-MM-DD>     Override today (marks the date, defaults year/month)
+--year                   Render the whole year as a 4×3 grid
+--range <FROM> <TO>      Render months from FROM to TO (YYYY-MM-DD)
+-v, --version            Show version
 -h, --help               Show this help
 ```
+
+### Color detection
+
+Colors are enabled automatically when stdout is a TTY, and disabled when piped or redirected. `--color` and `--no-color` override the detection; `NO_COLOR` and `FORCE_COLOR` environment variables are also respected (explicit flags always win).
 
 Example with `modern` theme and `ocean` color scheme:
 
@@ -248,6 +260,8 @@ By default (`color: false`) the output contains no ANSI escape codes, so it's sa
 ```sh
 typescript-calendar-lib 2026 9 > september.txt
 ```
+
+Colors are disabled automatically when stdout is not a TTY, so piping works without extra flags.
 
 ## Exports
 

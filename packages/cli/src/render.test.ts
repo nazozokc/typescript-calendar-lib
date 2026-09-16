@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { displayWidth } from "./align.ts";
-import { renderMonth } from "./render.ts";
+import { renderMonth, renderYear } from "./render.ts";
 
 describe("renderMonth", () => {
   test("日曜始まりのタイトル行と曜日ヘッダー", () => {
@@ -224,5 +224,64 @@ describe("renderMonth - セル幅とロケール", () => {
     expect(displayWidth(lines[1]!)).toBe(41);
     // 日付行も同じ幅に揃う
     expect(displayWidth(lines[2]!)).toBe(41);
+  });
+});
+
+describe("renderYear", () => {
+  test("12ヶ月全てのタイトルを含む", () => {
+    const out = renderYear(2026);
+    expect(out).toContain("January 2026");
+    expect(out).toContain("February 2026");
+    expect(out).toContain("March 2026");
+    expect(out).toContain("April 2026");
+    expect(out).toContain("May 2026");
+    expect(out).toContain("June 2026");
+    expect(out).toContain("July 2026");
+    expect(out).toContain("August 2026");
+    expect(out).toContain("September 2026");
+    expect(out).toContain("October 2026");
+    expect(out).toContain("November 2026");
+    expect(out).toContain("December 2026");
+  });
+
+  test("4列×3行構成", () => {
+    const out = renderYear(2026);
+    const firstLine = out.split("\n")[0];
+    expect(firstLine).toContain("January 2026");
+    expect(firstLine).toContain("February 2026");
+    expect(firstLine).toContain("March 2026");
+    expect(firstLine).toContain("April 2026");
+  });
+
+  test("modernテーマで描画できる", () => {
+    const out = renderYear(2026, {
+      theme: "modern",
+      today: new Date(2026, 0, 1),
+    });
+    expect(out).toContain("┌");
+    expect(out).toContain("January 2026");
+  });
+
+  test("ハイライトを反映する", () => {
+    const out = renderYear(2026, {
+      highlight: new Date(2026, 0, 15),
+      highlightStyle: "bracket",
+    });
+    expect(out).toContain("[15]");
+  });
+
+  test("カラースキームを反映する", () => {
+    const out = renderYear(2026, {
+      colorScheme: "ocean",
+      color: true,
+      today: new Date(2026, 0, 1),
+    });
+    expect(out).toContain("\u001b[36m");
+  });
+
+  test("日本語ロケールを反映する", () => {
+    const out = renderYear(2026, { locale: "ja" });
+    expect(out).toContain("1月 2026");
+    expect(out).toContain("12月 2026");
   });
 });

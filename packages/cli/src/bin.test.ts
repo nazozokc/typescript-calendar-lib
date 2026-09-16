@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { parseArgs, parseDate } from "./bin.ts";
+import { getVersion, parseArgs, parseDate, resolveColor } from "./bin.ts";
 
 describe("parseDate", () => {
   test("有効な日付をパースする", () => {
@@ -192,5 +192,154 @@ describe("parseArgs", () => {
     expect(args.year).toBe(2026);
     expect(args.month).toBe(9);
     expect(args.color).toBe(true);
+  });
+
+  test("--no-color は noColor を設定する", () => {
+    const { args } = parseArgs(["--no-color"]);
+    expect(args.noColor).toBe(true);
+  });
+
+  test("--year は yearView を設定する", () => {
+    const { args } = parseArgs(["--year"]);
+    expect(args.yearView).toBe(true);
+  });
+
+  test("--year と year 位置引数", () => {
+    const { args } = parseArgs(["2026", "--year"]);
+    expect(args.yearView).toBe(true);
+    expect(args.year).toBe(2026);
+  });
+
+  test("--year と month 位置引数はエラー", () => {
+    const result = parseArgs(["2026", "9", "--year"]);
+    expect(result.error).toContain("Month cannot be used with --year");
+  });
+
+  test("--range で有効な日付範囲", () => {
+    const { args } = parseArgs(["--range", "2026-01-01", "2026-03-31"]);
+    expect(args.range).toEqual({
+      from: new Date(2026, 0, 1),
+      to: new Date(2026, 2, 31),
+    });
+  });
+
+  test("--range で日付逆転はエラー", () => {
+    const result = parseArgs(["--range", "2026-12-31", "2026-01-01"]);
+    expect(result.error).toContain("--range");
+    expect(result.error).toContain("from");
+  });
+
+  test("--range で不正な日付はエラー", () => {
+    const result = parseArgs(["--range", "2026-13-01", "2026-12-31"]);
+    expect(result.error).toContain("Invalid --range date");
+  });
+
+  test("--range で日付1つだけならエラー", () => {
+    const result = parseArgs(["--range", "2026-01-01"]);
+    expect(result.error).toContain("--range requires two dates");
+  });
+
+  test("--range のみ渡すとエラー", () => {
+    const result = parseArgs(["--range"]);
+    expect(result.error).toContain("--range requires two dates");
+  });
+
+  test("--range と位置引数はエラー", () => {
+    const result = parseArgs(["2026", "--range", "2026-01-01", "2026-03-31"]);
+    expect(result.error).toContain(
+      "Positional arguments cannot be used with --range",
+    );
+  });
+
+  test("--year と --range は同時に使えない", () => {
+    const result = parseArgs(["--year", "--range", "2026-01-01", "2026-12-31"]);
+    expect(result.error).toContain("--year and --range");
+  });
+
+  test("--today で有効な日付", () => {
+    const { args } = parseArgs(["--today", "2026-09-08"]);
+    expect(args.today).toEqual(new Date(2026, 8, 8));
+  });
+
+  test("--today に値がない場合はエラー", () => {
+    const result = parseArgs(["--today"]);
+    expect(result.error).toContain("Missing value for option: --today");
+  });
+
+  test("--today に不正な日付はエラー", () => {
+    const result = parseArgs(["--today", "2026-13-01"]);
+    expect(result.error).toContain("Invalid --today date");
+  });
+
+  test("-v は version フラグを返す", () => {
+    expect(parseArgs(["-v"]).version).toBe(true);
+  });
+
+  test("--version は version フラグを返す", () => {
+    expect(parseArgs(["--version"]).version).toBe(true);
+  });
+});
+
+describe("resolveColor", () => {
+  test("--no-color で false", () => {
+    expect(resolveColor(undefined, true, {}, true)).toBe(false);
+  });
+
+  test("--color で true", () => {
+    expect(resolveColor(true, undefined, {}, false)).toBe(true);
+  });
+
+  test("NO_COLOR 環境変数で false", () => {
+    expect(resolveColor(undefined, undefined, { NO_COLOR: "1" }, true)).toBe(
+      false,
+    );
+  });
+
+  test("FORCE_COLOR 環境変数で true", () => {
+    expect(
+      resolveColor(undefined, undefined, { FORCE_COLOR: "1" }, false),
+    ).toBe(true);
+  });
+
+  test("TTY なら true", () => {
+    expect(resolveColor(undefined, undefined, {}, true)).toBe(true);
+  });
+
+  test("非 TTY なら false", () => {
+    expect(resolveColor(undefined, undefined, {}, false)).toBe(false);
+  });
+
+  test("--color は NO_COLOR を上書き", () => {
+    expect(resolveColor(true, undefined, { NO_COLOR: "1" }, false)).toBe(true);
+  });
+
+  test("--no-color は FORCE_COLOR を上書き", () => {
+    expect(resolveColor(undefined, true, { FORCE_COLOR: "1" }, true)).toBe(
+      false,
+    );
+  });
+
+  test("--color は非 TTY を上書き", () => {
+    expect(resolveColor(true, undefined, {}, false)).toBe(true);
+  });
+
+  test("--no-color は TTY を上書き", () => {
+    expect(resolveColor(undefined, true, {}, true)).toBe(false);
+  });
+
+  test("フラグなし・環境変数なし・TTY false なら false", () => {
+    expect(resolveColor(undefined, undefined, {}, false)).toBe(false);
+  });
+
+  test("NO_COLOR 空文字列は無視される", () => {
+    expect(resolveColor(undefined, undefined, { NO_COLOR: "" }, true)).toBe(
+      true,
+    );
+  });
+});
+
+describe("getVersion", () => {
+  test("semver 形式の文字列を返す", () => {
+    expect(getVersion()).toMatch(/^\d+\.\d+\.\d+$/);
   });
 });
