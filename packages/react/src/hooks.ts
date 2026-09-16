@@ -7,6 +7,7 @@ import type {
 import {
   clearSelection,
   createCalendarState,
+  findDateCell,
   getCursorDate,
   getSelectedDate,
   goToDate,
@@ -17,6 +18,7 @@ import {
   navigateYear,
   sameStateOptions,
   selectDate,
+  setCursorToDate,
   updateStateOptions,
 } from "@typescript-calendar-lib/tui";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -50,12 +52,20 @@ export interface UseCalendarStateReturn {
   goToday: () => void;
   /** カーソル位置の日付を選択 */
   selectDate: () => void;
+  /** 指定した日付へカーソルを移動する（当月に無ければ何もしない） */
+  setCursorToDate: (date: Date) => void;
+  /** 指定した日付を選択し、カーソルもそこへ移動する（当月に無ければ何もしない） */
+  selectDateAt: (date: Date) => void;
   /** 選択を解除 */
   clearSelection: () => void;
   /** カーソル位置の日付（null の場合あり） */
   cursorDate: Date | null;
   /** 選択済み日付（null の場合あり） */
   selectedDate: Date | null;
+  /** ホバー中の日付（null の場合あり） */
+  hoveredDate: Date | null;
+  /** ホバー日付を更新する */
+  setHoveredDate: (date: Date | null) => void;
 }
 
 /**
@@ -85,6 +95,9 @@ export function useCalendarState(
     }),
   );
 
+  // ホバー中の日付は React ローカル state で保持する（tui 状態には入れない）。
+  const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
+
   // options の「値の変化」を検知して状態を再構築する。
   // 初回は prevOptions が同一なので何もしない。値が同じままの再レンダリング
   // でも何もしないため、インラインリテラルを毎回渡しても無限ループしない。
@@ -100,12 +113,14 @@ export function useCalendarState(
   const onMonthChangeRef = useRef(options.onMonthChange);
   onMonthChangeRef.current = options.onMonthChange;
 
+  // 表示月が変わったら onMonthChange を通知し、古い月を指すホバーをクリアする
   const prevMonthRef = useRef({ year: state.year, month: state.month });
   useEffect(() => {
     const prev = prevMonthRef.current;
     if (prev.year !== state.year || prev.month !== state.month) {
       prevMonthRef.current = { year: state.year, month: state.month };
       onMonthChangeRef.current?.(state.year, state.month);
+      setHoveredDate(null);
     }
   }, [state.year, state.month]);
 
@@ -139,12 +154,27 @@ export function useCalendarState(
     ),
     goToday: useCallback(() => setState((prev) => goToToday(prev)), []),
     selectDate: useCallback(() => setState((prev) => selectDate(prev)), []),
+    setCursorToDate: useCallback(
+      (date: Date) => setState((prev) => setCursorToDate(prev, date)),
+      [],
+    ),
+    selectDateAt: useCallback(
+      (date: Date) =>
+        setState((prev) => {
+          const pos = findDateCell(prev.monthData, date);
+          if (pos === null) return prev; // 当月外は no-op
+          return selectDate({ ...prev, cursor: pos });
+        }),
+      [],
+    ),
     clearSelection: useCallback(
       () => setState((prev) => clearSelection(prev)),
       [],
     ),
     cursorDate: getCursorDate(state),
     selectedDate: getSelectedDate(state),
+    hoveredDate,
+    setHoveredDate,
   };
 }
 

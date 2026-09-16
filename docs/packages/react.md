@@ -52,6 +52,7 @@ export function App() {
 | `weekStart` | `"sunday" \| "monday"` | `"sunday"` | First day of the week |
 | `highlight` | `Date` | — | Date to highlight |
 | `range` | `{ from: Date; to: Date }` | — | Dates to emphasize |
+| `rangePreview` | `{ from: Date; to: Date }` | — | Candidate range preview (hover preview), rendered with the `is-in-range-preview` class |
 | `today` | `Date` | — | Reference date for "today" styling |
 | `theme` | `ThemeName \| ReactTheme` | `"default"` | CSS class-based theme |
 | `colorScheme` | `ColorSchemeName \| ReactColorScheme` | `"default"` | CSS variable-based colors |
@@ -60,6 +61,7 @@ export function App() {
 | `interactive` | `boolean` | `false` | Enable cell click/hover/keyboard selection |
 | `onDateClick` | `(date: Date) => void` | — | Called when a day cell is clicked (or Enter/Space pressed) |
 | `onDateHover` | `(date: Date) => void` | — | Called when a day cell is hovered |
+| `onDateLeave` | `() => void` | — | Called when the mouse leaves the calendar |
 
 The component exports as both named `Calendar` and default.
 
@@ -93,9 +95,12 @@ function App() {
     goToday,      // () => void — jump to today
     moveCursor,   // (direction) => void — "up" | "down" | "left" | "right"
     selectDate,   // () => void — select date under cursor
+    selectDateAt, // (date) => void — move cursor to a date and select it
     clearSelection,
     cursorDate,   // Date | null
     selectedDate, // Date | null
+    hoveredDate,  // Date | null
+    setHoveredDate, // (date | null) => void
   } = useCalendarState({
     initialYear: 2026,
     initialMonth: 9,
@@ -104,7 +109,14 @@ function App() {
   return (
     <>
       <button onClick={goPrev}>‹</button>
-      <Calendar year={state.year} month={state.month} interactive />
+      <Calendar
+        year={state.year}
+        month={state.month}
+        interactive
+        onDateClick={selectDateAt}   // click a cell → select it
+        onDateHover={setHoveredDate} // track the hovered cell
+        hoveredDate={hoveredDate}
+      />
       <button onClick={goNext}>›</button>
     </>
   );
@@ -178,6 +190,7 @@ Available variables:
 | `--cal-highlight-bg` | Highlight background |
 | `--cal-highlight-fg` | Highlight foreground |
 | `--cal-range-bg` | Range background |
+| `--cal-range-preview-bg` | Range preview background (falls back to `--cal-range-bg`) |
 | `--cal-today-bg` | Today background |
 | `--cal-today-fg` | Today foreground |
 
@@ -249,6 +262,8 @@ Each day cell gets semantic classes you can target with CSS:
 | `is-today` | Matches `today` |
 | `is-highlight` | Matches `highlight` |
 | `is-in-range` | Inside `range` |
+| `is-in-range-preview` | Inside `rangePreview` |
+| `is-hovered` | Matches `hoveredDate` (interactive mode) |
 
 ## Exports
 

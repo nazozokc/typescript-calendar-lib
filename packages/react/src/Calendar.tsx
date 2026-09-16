@@ -16,7 +16,7 @@ import type {
   ReactNode,
   Ref,
 } from "react";
-import { stateToClasses } from "./cell-classes.ts";
+import { getCellClasses } from "./cell-classes.ts";
 import type { CalendarSize } from "./size.ts";
 import { buildSizeStyle, isSizeName } from "./size.ts";
 import type {
@@ -44,6 +44,8 @@ export interface CalendarProps {
   range?: { from: Date; to: Date };
   /** 今日の基準日。カラースキームの today 着色に使用 */
   today?: Date;
+  /** 範囲プレビュー（ホバー等の候補範囲）。is-in-range-preview クラスで視覚化される */
+  rangePreview?: { from: Date; to: Date };
   /** 見た目テーマ。既定は "default" */
   theme?: ThemeName | ReactTheme;
   /** カラースキーム。既定は "default" */
@@ -61,6 +63,8 @@ export interface CalendarProps {
   onDateClick?: (date: Date) => void;
   /** セルホバー時のコールバック */
   onDateHover?: (date: Date) => void;
+  /** カレンダーからマウスが離れたときのコールバック */
+  onDateLeave?: () => void;
   /** キーボード操作。root 要素で発火（矢印キー等を InteractiveCalendar が処理する） */
   onKeyDown?: (event: ReactKeyboardEvent<HTMLDivElement>) => void;
 
@@ -70,6 +74,8 @@ export interface CalendarProps {
   selectedDate?: Date | null;
   /** カーソル位置の日付。このセルだけ tabIndex=0（roving tabindex）になる */
   cursorDate?: Date | null;
+  /** ホバー中の日付。is-hovered クラスで視覚化される */
+  hoveredDate?: Date | null;
   /** セル内容のカスタムレンダリング。interactive 時は button の子として描画される */
   renderCell?: (day: number, date: Date, state: CalendarCellState) => ReactNode;
 
@@ -93,17 +99,26 @@ export function Calendar({
   interactive = false,
   onDateClick,
   onDateHover,
+  onDateLeave,
   onKeyDown,
   selectedDate = null,
   cursorDate = null,
+  hoveredDate = null,
   renderCell,
+  rangePreview,
   ref,
 }: CalendarProps) {
   const cellDate = (day: number): Date => createDate(year, month - 1, day);
   const cellState = (day: number): CalendarCellState =>
     getCalendarCellState(cellDate(day), { today, highlight, range });
   const cellClass = (day: number): string | undefined =>
-    stateToClasses(cellState(day)) || undefined;
+    getCellClasses(cellDate(day), {
+      today,
+      highlight,
+      range,
+      rangePreview,
+      hoveredDate,
+    }) || undefined;
   const isSelected = (day: number): boolean =>
     selectedDate !== null && isSameDay(cellDate(day), selectedDate);
   const isCursor = (day: number): boolean =>
@@ -117,6 +132,10 @@ export function Calendar({
     if (interactive && onDateHover) onDateHover(cellDate(day));
   };
 
+  const handleMouseLeave = () => {
+    if (interactive && onDateLeave) onDateLeave();
+  };
+
   const title = `${getMonthName(locale, month)} ${year}`;
   // インタラクティブ時のみ APG の grid セマンティクスを付与する。
   // 静的表示ではネイティブの table/cell セマンティクスをそのまま使う。
@@ -124,9 +143,11 @@ export function Calendar({
   const cellRole = interactive ? "gridcell" : undefined;
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: onMouseLeave はホバー状態クリア用の補助イベント。キーボード操作（role=grid）は独立して対応済み
     <div
       ref={ref}
       className={`calendar ${resolveTheme(theme).className}${isSizeName(size) ? ` calendar-size-${size}` : ""}${interactive ? " calendar-interactive" : ""}`}
+      onMouseLeave={interactive ? handleMouseLeave : undefined}
       style={{
         ...(resolveColorScheme(colorScheme) as CSSProperties),
         ...buildSizeStyle(size),

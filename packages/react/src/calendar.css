@@ -80,6 +80,11 @@
   background: var(--cal-range-bg);
 }
 
+/* 範囲プレビュー（ホバー等の候補範囲）。is-in-range より薄く表示される */
+.calendar td.is-in-range-preview {
+  background: var(--cal-range-preview-bg, var(--cal-range-bg));
+}
+
 /* ─── Size ────────────────────────────────────────────── */
 
 .calendar-size-sm {
@@ -247,6 +252,11 @@
 
 .calendar-interactive td button.calendar-day-btn:hover {
   background: var(--cal-range-bg);
+}
+
+/* ホバー追跡中のセル（onDateHover で状態化されたホバー） */
+.calendar-interactive td.is-hovered button.calendar-day-btn {
+  background: var(--cal-hover-bg, var(--cal-range-bg));
 }
 
 .calendar-interactive td button.calendar-day-btn:focus-visible {
