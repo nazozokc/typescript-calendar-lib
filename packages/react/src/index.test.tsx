@@ -21,8 +21,13 @@ function HookTestComponent() {
     goToday,
     moveCursor,
     selectDate,
+    setCursorToDate,
+    selectDateAt,
+    clearSelection,
     cursorDate,
     selectedDate,
+    hoveredDate,
+    setHoveredDate,
   } = useCalendarState({
     initialYear: 2026,
     initialMonth: 9,
@@ -42,6 +47,11 @@ function HookTestComponent() {
       "span",
       { "data-testid": "selected" },
       selectedDate?.toISOString() ?? "null",
+    ),
+    createElement(
+      "span",
+      { "data-testid": "hovered" },
+      hoveredDate?.toISOString() ?? "null",
     ),
     createElement(
       "button",
@@ -71,6 +81,65 @@ function HookTestComponent() {
       "button",
       { "data-testid": "select", type: "button", onClick: selectDate },
       "Select",
+    ),
+    createElement(
+      "button",
+      { "data-testid": "clear", type: "button", onClick: clearSelection },
+      "Clear",
+    ),
+    createElement(
+      "button",
+      {
+        "data-testid": "cursor-to",
+        type: "button",
+        onClick: () => setCursorToDate(new Date(2026, 8, 20)),
+      },
+      "CursorTo",
+    ),
+    createElement(
+      "button",
+      {
+        "data-testid": "cursor-to-outside",
+        type: "button",
+        onClick: () => setCursorToDate(new Date(2026, 9, 1)),
+      },
+      "CursorToOutside",
+    ),
+    createElement(
+      "button",
+      {
+        "data-testid": "select-at",
+        type: "button",
+        onClick: () => selectDateAt(new Date(2026, 8, 20)),
+      },
+      "SelectAt",
+    ),
+    createElement(
+      "button",
+      {
+        "data-testid": "select-at-outside",
+        type: "button",
+        onClick: () => selectDateAt(new Date(2026, 9, 1)),
+      },
+      "SelectAtOutside",
+    ),
+    createElement(
+      "button",
+      {
+        "data-testid": "hover",
+        type: "button",
+        onClick: () => setHoveredDate(new Date(2026, 8, 20)),
+      },
+      "Hover",
+    ),
+    createElement(
+      "button",
+      {
+        "data-testid": "unhover",
+        type: "button",
+        onClick: () => setHoveredDate(null),
+      },
+      "Unhover",
     ),
   );
 }
@@ -120,6 +189,66 @@ describe("useCalendarState", () => {
     expect(screen.getByTestId("selected").textContent).toBe(
       TODAY.toISOString(),
     );
+  });
+
+  test("選択を解除できる", () => {
+    render(createElement(HookTestComponent));
+    fireEvent.click(screen.getByTestId("select"));
+    fireEvent.click(screen.getByTestId("clear"));
+    expect(screen.getByTestId("selected").textContent).toBe("null");
+  });
+
+  test("setCursorToDate でカーソルが指定日付へ移動する", () => {
+    render(createElement(HookTestComponent));
+    fireEvent.click(screen.getByTestId("cursor-to"));
+    expect(screen.getByTestId("cursor").textContent).toBe(
+      new Date(2026, 8, 20).toISOString(),
+    );
+  });
+
+  test("setCursorToDate は当月外の日付では no-op", () => {
+    render(createElement(HookTestComponent));
+    fireEvent.click(screen.getByTestId("cursor-to-outside"));
+    expect(screen.getByTestId("cursor").textContent).toBe(TODAY.toISOString());
+  });
+
+  test("selectDateAt で指定日付が選択されカーソルも移動する", () => {
+    render(createElement(HookTestComponent));
+    fireEvent.click(screen.getByTestId("select-at"));
+    expect(screen.getByTestId("selected").textContent).toBe(
+      new Date(2026, 8, 20).toISOString(),
+    );
+    expect(screen.getByTestId("cursor").textContent).toBe(
+      new Date(2026, 8, 20).toISOString(),
+    );
+  });
+
+  test("selectDateAt は当月外の日付では no-op", () => {
+    render(createElement(HookTestComponent));
+    fireEvent.click(screen.getByTestId("select-at-outside"));
+    expect(screen.getByTestId("selected").textContent).toBe("null");
+  });
+
+  test("hoveredDate は初期状態で null", () => {
+    render(createElement(HookTestComponent));
+    expect(screen.getByTestId("hovered").textContent).toBe("null");
+  });
+
+  test("setHoveredDate でホバー日付を更新・クリアできる", () => {
+    render(createElement(HookTestComponent));
+    fireEvent.click(screen.getByTestId("hover"));
+    expect(screen.getByTestId("hovered").textContent).toBe(
+      new Date(2026, 8, 20).toISOString(),
+    );
+    fireEvent.click(screen.getByTestId("unhover"));
+    expect(screen.getByTestId("hovered").textContent).toBe("null");
+  });
+
+  test("月移動で hoveredDate がクリアされる", () => {
+    render(createElement(HookTestComponent));
+    fireEvent.click(screen.getByTestId("hover"));
+    fireEvent.click(screen.getByTestId("next"));
+    expect(screen.getByTestId("hovered").textContent).toBe("null");
   });
 });
 
@@ -215,6 +344,73 @@ describe("Calendar interactive", () => {
       }),
     );
     expect(container.firstChild).toHaveClass("calendar-interactive");
+  });
+
+  test("hoveredDate のセルに is-hovered クラスがつく", () => {
+    render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 9,
+        interactive: true,
+        today: TODAY,
+        hoveredDate: new Date(2026, 8, 10),
+      }),
+    );
+    const hovered = screen.getByRole("button", { name: /September 10, 2026/ });
+    expect(hovered.closest("td")).toHaveClass("is-hovered");
+    const other = screen.getByRole("button", { name: /September 11, 2026/ });
+    expect(other.closest("td")).not.toHaveClass("is-hovered");
+  });
+
+  test("rangePreview 内のセルに is-in-range-preview クラスがつく", () => {
+    render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 9,
+        interactive: true,
+        today: TODAY,
+        rangePreview: {
+          from: new Date(2026, 8, 5),
+          to: new Date(2026, 8, 10),
+        },
+      }),
+    );
+    const inPreview = screen.getByRole("button", {
+      name: /September 7, 2026/,
+    });
+    expect(inPreview.closest("td")).toHaveClass("is-in-range-preview");
+    const outPreview = screen.getByRole("button", {
+      name: /September 12, 2026/,
+    });
+    expect(outPreview.closest("td")).not.toHaveClass("is-in-range-preview");
+  });
+
+  test("マウス離脱で onDateLeave が呼ばれる", () => {
+    const onLeave = vi.fn();
+    const { container } = render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 9,
+        interactive: true,
+        today: TODAY,
+        onDateLeave: onLeave,
+      }),
+    );
+    fireEvent.mouseLeave(container.firstChild!);
+    expect(onLeave).toHaveBeenCalledTimes(1);
+  });
+
+  test("非インタラクティブでは onDateLeave は呼ばれない", () => {
+    const onLeave = vi.fn();
+    const { container } = render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 9,
+        onDateLeave: onLeave,
+      }),
+    );
+    fireEvent.mouseLeave(container.firstChild!);
+    expect(onLeave).not.toHaveBeenCalled();
   });
 });
 
@@ -724,5 +920,102 @@ describe("InteractiveCalendar", () => {
       }),
     );
     expect(screen.getByText("D1")).toBeInTheDocument();
+  });
+
+  test("セルクリックで日付が選択されカーソルも移動する", () => {
+    render(
+      createElement(InteractiveCalendar, {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+      }),
+    );
+    const btn = screen.getByRole("button", { name: /September 10, 2026/ });
+    fireEvent.click(btn);
+    expect(btn.closest("td")).toHaveAttribute("aria-selected", "true");
+    expect(btn).toHaveAttribute("tabindex", "0");
+  });
+
+  test("Enter キーでも日付が選択される（クリックと同等）", () => {
+    render(
+      createElement(InteractiveCalendar, {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+      }),
+    );
+    const btn = screen.getByRole("button", { name: /September 15, 2026/ });
+    btn.focus();
+    // 実ブラウザではフォーカス中の button への Enter は click を発火する。
+    // jsdom はこの既定動作を実装していないため、keyDown 後の click で再現する。
+    fireEvent.keyDown(btn, { key: "Enter" });
+    fireEvent.click(btn);
+    expect(btn.closest("td")).toHaveAttribute("aria-selected", "true");
+  });
+
+  test("ホバーで is-hovered クラスがつき、離脱で消える", () => {
+    const { container } = render(
+      createElement(InteractiveCalendar, {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+      }),
+    );
+    const btn = screen.getByRole("button", { name: /September 10, 2026/ });
+    fireEvent.mouseEnter(btn);
+    expect(btn.closest("td")).toHaveClass("is-hovered");
+    fireEvent.mouseLeave(container.firstChild!);
+    expect(btn.closest("td")).not.toHaveClass("is-hovered");
+  });
+
+  test("選択後にホバーすると範囲プレビューが表示される", () => {
+    render(
+      createElement(InteractiveCalendar, {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /September 10, 2026/ }));
+    fireEvent.mouseEnter(
+      screen.getByRole("button", { name: /September 15, 2026/ }),
+    );
+    const mid = screen.getByRole("button", { name: /September 12, 2026/ });
+    expect(mid.closest("td")).toHaveClass("is-in-range-preview");
+    const out = screen.getByRole("button", { name: /September 17, 2026/ });
+    expect(out.closest("td")).not.toHaveClass("is-in-range-preview");
+  });
+
+  test("選択していない状態ではホバーしてもプレビューは出ない", () => {
+    render(
+      createElement(InteractiveCalendar, {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+      }),
+    );
+    fireEvent.mouseEnter(
+      screen.getByRole("button", { name: /September 10, 2026/ }),
+    );
+    const mid = screen.getByRole("button", { name: /September 12, 2026/ });
+    expect(mid.closest("td")).not.toHaveClass("is-in-range-preview");
+  });
+
+  test("逆順ホバー（選択より前の日付）でもプレビュー範囲が正しく出る", () => {
+    render(
+      createElement(InteractiveCalendar, {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /September 15, 2026/ }));
+    fireEvent.mouseEnter(
+      screen.getByRole("button", { name: /September 10, 2026/ }),
+    );
+    const mid = screen.getByRole("button", { name: /September 12, 2026/ });
+    expect(mid.closest("td")).toHaveClass("is-in-range-preview");
+    const out = screen.getByRole("button", { name: /September 17, 2026/ });
+    expect(out.closest("td")).not.toHaveClass("is-in-range-preview");
   });
 });

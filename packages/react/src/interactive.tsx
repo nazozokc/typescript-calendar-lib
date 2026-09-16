@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import { useCallback, useEffect, useRef } from "react";
 import { Calendar, type CalendarProps } from "./Calendar.tsx";
 import { useCalendarState } from "./hooks.ts";
+import { buildRangePreview } from "./range-preview.ts";
 import type { CalendarSize } from "./size.ts";
 import type {
   ColorSchemeName,
@@ -40,16 +41,22 @@ export interface InteractiveCalendarProps {
 
   // ── イベント ──
 
-  /** セルクリック時（キーボードの Enter/Space 含む） */
+  /** セルクリック時（キーボードの Enter/Space 含む）。クリックした日付は自動的に選択される */
   onDateClick?: (date: Date) => void;
   /** セルホバー時 */
   onDateHover?: (date: Date) => void;
+  /** カレンダーからマウスが離れたとき */
+  onDateLeave?: () => void;
 }
 
 /**
  * `useCalendarState` と `Calendar` を一体化したインタラクティブカレンダー。
- * 内部で状態を管理し、矢印キー（カーソル移動）・PageUp/PageDown（月移動）の
- * キーボード操作に対応する。
+ * 内部で状態を管理し、以下の操作に対応する:
+ *
+ * - マウス: セルクリックで日付を選択（カーソルもそこへ移動） / ホバー追跡 /
+ *   選択済み日付とホバー日付の間を範囲プレビュー表示
+ * - キーボード: 矢印キー（カーソル移動）・PageUp/PageDown（月移動）・
+ *   Enter/Space（クリックと同じ日付選択）
  */
 export function InteractiveCalendar(props: InteractiveCalendarProps) {
   const {
@@ -68,6 +75,7 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     renderCell,
     onDateClick,
     onDateHover,
+    onDateLeave,
   } = props;
 
   const hook = useCalendarState({
@@ -81,8 +89,35 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     onMonthChange,
   });
 
-  const { state, moveCursor, goPrev, goNext } = hook;
+  const { state, moveCursor, goPrev, goNext, selectDateAt, setHoveredDate } =
+    hook;
   const rootRef = useRef<HTMLDivElement>(null);
+
+  // クリック（マウス・Enter/Space 共通）で日付を選択する。
+  // 従来の onDateClick コールバックも引き続き発火する。
+  const handleDateClick = useCallback(
+    (date: Date) => {
+      selectDateAt(date);
+      onDateClick?.(date);
+    },
+    [selectDateAt, onDateClick],
+  );
+
+  const handleDateHover = useCallback(
+    (date: Date) => {
+      setHoveredDate(date);
+      onDateHover?.(date);
+    },
+    [setHoveredDate, onDateHover],
+  );
+
+  const handleDateLeave = useCallback(() => {
+    setHoveredDate(null);
+    onDateLeave?.();
+  }, [setHoveredDate, onDateLeave]);
+
+  // 選択済み日付とホバー日付の間を範囲プレビューとして表示する
+  const rangePreview = buildRangePreview(hook.selectedDate, hook.hoveredDate);
 
   // カーソルが動いたときだけ、そのセルへフォーカスを移す（初回マウントでは動かさない）
   const prevCursorRef = useRef(state.cursor);
@@ -146,8 +181,11 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
       renderCell={renderCell}
       selectedDate={hook.selectedDate}
       cursorDate={hook.cursorDate}
-      onDateClick={onDateClick}
-      onDateHover={onDateHover}
+      hoveredDate={hook.hoveredDate}
+      rangePreview={rangePreview}
+      onDateClick={handleDateClick}
+      onDateHover={handleDateHover}
+      onDateLeave={handleDateLeave}
       onKeyDown={handleKeyDown}
     />
   );

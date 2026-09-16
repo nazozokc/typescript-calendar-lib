@@ -6,7 +6,13 @@
 
 `useCalendarState` と `<Calendar interactive />` を組み合わせると、月移動・カーソル・選択が一つの状態で完結します。
 
-`onDateClick` / `onDateHover` は日付を通知するだけで、`useCalendarState` の状態は更新しません。選択状態を更新するのは `selectDate()` で、引数は取らず**現在のカーソル位置**の日付を `selectedDate` に設定します。上の例では別の Select ボタンから呼んでいます。
+`onDateClick` / `onDateHover` は日付を通知するだけで、`useCalendarState` の状態は更新しません。選択状態を更新するのは:
+- `selectDate()` — 引数は取らず**現在のカーソル位置**の日付を `selectedDate` に設定
+- `selectDateAt(date)` — **クリックした日付**へカーソルを移動して選択（マウス操作用）
+- `setCursorToDate(date)` — カーソルを指定日付へ移動（選択はしない）
+- `setHoveredDate(date | null)` — ホバー日付の追跡（`Calendar` の `is-hovered` クラスに反映）
+
+マウス操作（クリック→選択・ホバー追跡・選択済み日付からの範囲プレビュー）を全部組み込みたい場合は `InteractiveCalendar` がそのまま使えます（下記「React: InteractiveCalendar」参照）。
 
 ### 完全な例
 
@@ -91,6 +97,33 @@ function DatePicker() {
   );
 }
 ```
+
+### React: InteractiveCalendar
+
+クリックで選択・ホバー追跡・選択済み日付からの範囲プレビューまで、マウス操作を全部組み込みたい場合は `InteractiveCalendar` がそのまま使えます。状態も内部で管理されるので props は最小限です:
+
+```tsx
+import { InteractiveCalendar } from "@typescript-calendar-lib/react";
+
+function App() {
+  return (
+    <InteractiveCalendar
+      initialYear={2026}
+      initialMonth={9}
+      theme="modern"
+      colorScheme="ocean"
+      onDateClick={(date) => console.log("Selected", date)}
+      onDateHover={(date) => console.log("Hovered", date)}
+      onDateLeave={() => console.log("Mouse left")}
+    />
+  );
+}
+```
+
+動作:
+- **クリック** — 日付を選択し、カーソルもそこへ移動（キーボードの Enter/Space も同じ）
+- **ホバー** — ホバー中のセルに `is-hovered` クラス。マウスがカレンダーから離れると解除
+- **選択 + ホバー** — 選択済み日付とホバー日付の間が `is-in-range-preview` クラスでプレビュー表示（逆順ホバーでも正しい範囲が出る）
 
 ### キーボード操作
 
