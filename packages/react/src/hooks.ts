@@ -7,7 +7,6 @@ import type {
 import {
   clearSelection,
   createCalendarState,
-  findDateCell,
   getCursorDate,
   getSelectedDate,
   goToDate,
@@ -18,6 +17,7 @@ import {
   navigateYear,
   sameStateOptions,
   selectDate,
+  selectDateAt,
   setCursorToDate,
   updateStateOptions,
 } from "@typescript-calendar-lib/tui";
@@ -84,15 +84,7 @@ export function useCalendarState(
   options: UseCalendarStateOptions = {},
 ): UseCalendarStateReturn {
   const [state, setState] = useState<CalendarState>(() =>
-    createCalendarState({
-      initialYear: options.initialYear,
-      initialMonth: options.initialMonth,
-      today: options.today,
-      locale: options.locale,
-      weekStart: options.weekStart,
-      highlight: options.highlight,
-      range: options.range,
-    }),
+    createCalendarState(options),
   );
 
   // ホバー中の日付は React ローカル state で保持する（tui 状態には入れない）。
@@ -159,12 +151,7 @@ export function useCalendarState(
       [],
     ),
     selectDateAt: useCallback(
-      (date: Date) =>
-        setState((prev) => {
-          const pos = findDateCell(prev.monthData, date);
-          if (pos === null) return prev; // 当月外は no-op
-          return selectDate({ ...prev, cursor: pos });
-        }),
+      (date: Date) => setState((prev) => selectDateAt(prev, date)),
       [],
     ),
     clearSelection: useCallback(

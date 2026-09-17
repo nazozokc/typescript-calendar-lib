@@ -13,7 +13,7 @@ npm install @typescript-calendar-lib/cli
 bun add @typescript-calendar-lib/cli
 ```
 
-Replace `cli` with the package you need: `core`, `cli`, `react`, or `tui`.
+Replace `cli` with the package you need: `core`, `cli`, `react`, `svelte`, or `tui`.
 
 ## Quick Start
 

@@ -9,6 +9,7 @@ import {
   isLeapYear,
   isSameDay,
   lastDayOfMonth,
+  sortRange,
 } from "./utils.ts";
 
 describe("firstDayOfMonth", () => {
@@ -345,5 +346,30 @@ describe("year 0-99（JS Date の 1900 解釈バグを回避）", () => {
     // 50年9月1日は木曜日（1900年9月1日は土曜日と異なる）
     const grid = buildMonthGrid(50, 9, "sunday");
     expect(grid[0]).toEqual([null, null, null, null, 1, 2, 3]);
+  });
+});
+
+// ─── sortRange ────────────────────────────────────────────
+
+describe("sortRange", () => {
+  const jun1 = new Date(2026, 5, 1);
+  const jun10 = new Date(2026, 5, 10);
+
+  test("順方向（from <= to）はそのまま", () => {
+    expect(sortRange(jun1, jun10)).toEqual({ from: jun1, to: jun10 });
+  });
+
+  test("逆方向は from <= to に揃える", () => {
+    expect(sortRange(jun10, jun1)).toEqual({ from: jun1, to: jun10 });
+  });
+
+  test("同日は from = to", () => {
+    expect(sortRange(jun10, jun10)).toEqual({ from: jun10, to: jun10 });
+  });
+
+  test("どちらかが null なら undefined", () => {
+    expect(sortRange(null, jun10)).toBeUndefined();
+    expect(sortRange(jun1, null)).toBeUndefined();
+    expect(sortRange(null, null)).toBeUndefined();
   });
 });

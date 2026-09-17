@@ -2,7 +2,7 @@
 
 Shared, framework-agnostic calendar utilities: date math, locale data, and grid building. Zero runtime dependencies.
 
-> **Tip:** You normally don't need `core` directly — the `cli`, `react`, and `tui` packages re-export the types and utilities you'll need. Reach for `core` when building your own renderer.
+> **Tip:** You normally don't need `core` directly — the `cli`, `react`, `svelte`, and `tui` packages re-export the types and utilities you'll need. Reach for `core` when building your own renderer.
 
 ## Installation
 

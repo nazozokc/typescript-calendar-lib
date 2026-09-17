@@ -1,4 +1,5 @@
 import type { CalendarOptions } from "@typescript-calendar-lib/core";
+import { keyToAction } from "@typescript-calendar-lib/tui";
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useRef } from "react";
 import { Calendar, type CalendarProps } from "./Calendar.tsx";
@@ -133,31 +134,18 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
 
   const handleKeyDown = useCallback(
     (e: Parameters<NonNullable<CalendarProps["onKeyDown"]>>[0]) => {
-      switch (e.key) {
-        case "ArrowRight":
-          e.preventDefault();
-          moveCursor("right");
-          break;
-        case "ArrowLeft":
-          e.preventDefault();
-          moveCursor("left");
-          break;
-        case "ArrowDown":
-          e.preventDefault();
-          moveCursor("down");
-          break;
-        case "ArrowUp":
-          e.preventDefault();
-          moveCursor("up");
-          break;
-        case "PageUp":
-          e.preventDefault();
+      const action = keyToAction(e.key);
+      if (action === undefined) return;
+      e.preventDefault();
+      switch (action) {
+        case "prev":
           goPrev();
           break;
-        case "PageDown":
-          e.preventDefault();
+        case "next":
           goNext();
           break;
+        default:
+          moveCursor(action);
       }
     },
     [moveCursor, goPrev, goNext],

@@ -12,7 +12,8 @@
     "allowImportingTsExtensions": true,
     "paths": {
       "@typescript-calendar-lib/core": ["../core/src/index.ts"],
-      "@typescript-calendar-lib/tui": ["../tui/src/index.ts"]
+      "@typescript-calendar-lib/tui": ["../tui/src/index.ts"],
+      "@typescript-calendar-lib/web": ["../web/src/index.ts"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.svelte"],

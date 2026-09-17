@@ -10,6 +10,7 @@ import {
   getWeekdayHeaders,
   isSameDay,
 } from "@typescript-calendar-lib/core";
+import { formatCellLabel } from "@typescript-calendar-lib/web";
 import type {
   CSSProperties,
   KeyboardEvent as ReactKeyboardEvent,
@@ -26,7 +27,6 @@ import type {
   ThemeName,
 } from "./themes.ts";
 import { resolveColorScheme, resolveTheme } from "./themes.ts";
-import "./calendar.css";
 
 export type {
   CalendarCustomSize,
@@ -109,20 +109,16 @@ export function Calendar({
   ref,
 }: CalendarProps) {
   const cellDate = (day: number): Date => createDate(year, month - 1, day);
-  const cellState = (day: number): CalendarCellState =>
-    getCalendarCellState(cellDate(day), { today, highlight, range });
-  const cellClass = (day: number): string | undefined =>
+  const className = (day: number): string | undefined =>
     getCellClasses(cellDate(day), {
       today,
       highlight,
       range,
       rangePreview,
       hoveredDate,
+      selected: selectedDate,
+      cursorDate,
     }) || undefined;
-  const isSelected = (day: number): boolean =>
-    selectedDate !== null && isSameDay(cellDate(day), selectedDate);
-  const isCursor = (day: number): boolean =>
-    cursorDate !== null && isSameDay(cellDate(day), cursorDate);
 
   const handleCellClick = (day: number) => {
     if (interactive && onDateClick) onDateClick(cellDate(day));
@@ -175,16 +171,23 @@ export function Calendar({
                   if (day === null)
                     // biome-ignore lint/suspicious/noArrayIndexKey: パディングセルは位置が唯一の識別子
                     return <td key={j} role={cellRole} />;
-                  const state = cellState(day);
-                  const selected = isSelected(day);
-                  const cursor = isCursor(day);
+                  const date = cellDate(day);
+                  const state = getCalendarCellState(date, {
+                    today,
+                    highlight,
+                    range,
+                  });
+                  const selected =
+                    selectedDate !== null && isSameDay(date, selectedDate);
+                  const cursor =
+                    cursorDate !== null && isSameDay(date, cursorDate);
                   return (
                     // biome-ignore lint/a11y/useAriaPropsSupportedByRole: interactive 時は td に role=gridcell が付き aria-selected は有効（role が動的なため静的解析できない）
                     <td
                       key={day}
                       role={cellRole}
                       tabIndex={interactive ? -1 : undefined}
-                      className={cellClass(day)}
+                      className={className(day)}
                       aria-selected={selected || undefined}
                       aria-current={state.isToday ? "date" : undefined}
                     >
@@ -196,14 +199,12 @@ export function Calendar({
                           onMouseEnter={() => handleCellHover(day)}
                           tabIndex={cursor ? 0 : -1}
                           data-cursor={cursor ? "true" : undefined}
-                          aria-label={`${getMonthName(locale, month)} ${day}, ${year}`}
+                          aria-label={formatCellLabel(locale, year, month, day)}
                         >
-                          {renderCell
-                            ? renderCell(day, cellDate(day), state)
-                            : day}
+                          {renderCell ? renderCell(day, date, state) : day}
                         </button>
                       ) : renderCell ? (
-                        renderCell(day, cellDate(day), state)
+                        renderCell(day, date, state)
                       ) : (
                         day
                       )}

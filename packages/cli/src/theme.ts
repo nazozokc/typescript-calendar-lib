@@ -1,61 +1,15 @@
 // ─── テーマ ───────────────────────────────────────────────
+// 文字ベースのテーマ（ThemeName / FrameChars / Theme / THEMES / resolveTheme）は
+// tui の headless 定義をそのまま使用する（cli は唯一の消費者であり、複製しない）。
 
-/** 組み込みテーマ名。カスタムテーマは CliTheme オブジェクトを直接渡せる */
-export type ThemeName = "default" | "modern";
+export type { FrameChars, ThemeName } from "@typescript-calendar-lib/tui";
 
-/** 枠線の文字セット（modern テーマで使用） */
-export interface FrameChars {
-  topLeft: string;
-  topRight: string;
-  bottomLeft: string;
-  bottomRight: string;
-  /** 水平線 */
-  h: string;
-  /** 垂直線 */
-  v: string;
-  /** ヘッダー/本文の区切り行で使う交差（┬ や ┼） */
-  j: string;
-  /** 下端区切りで使う交差（┴） */
-  footJ: string;
-}
+import type { Theme } from "@typescript-calendar-lib/tui";
 
-/** 文字ベースの見た目定義 */
-export interface CliTheme {
-  /** セル幅（日付表記の文字幅） */
-  cellWidth: number;
-  /** セル間の区切り文字（default: " " / modern: "│"） */
-  separator: string;
-  /** 枠線文字。null なら枠なし */
-  frame: FrameChars | null;
-}
+/** 文字ベースの見た目定義。tui の Theme と同一 */
+export type CliTheme = Theme;
 
-export const THEMES: Record<ThemeName, CliTheme> = {
-  default: {
-    cellWidth: 3,
-    separator: " ",
-    frame: null,
-  },
-  modern: {
-    cellWidth: 3,
-    separator: "│",
-    frame: {
-      topLeft: "┌",
-      topRight: "┐",
-      bottomLeft: "└",
-      bottomRight: "┘",
-      h: "─",
-      v: "│",
-      j: "┬",
-      footJ: "┴",
-    },
-  },
-};
-
-export function resolveTheme(theme?: ThemeName | CliTheme): CliTheme {
-  return typeof theme === "string"
-    ? (THEMES[theme] ?? THEMES.default)
-    : (theme ?? THEMES.default);
-}
+export { resolveTheme, THEMES } from "@typescript-calendar-lib/tui";
 
 // ─── カラースキーム ───────────────────────────────────────
 

@@ -7,7 +7,6 @@ import type {
 import {
   clearSelection,
   createCalendarState,
-  findDateCell,
   getCursorDate,
   getSelectedDate,
   goToToday,
@@ -15,6 +14,7 @@ import {
   navigateMonth,
   sameStateOptions,
   selectDate,
+  selectDateAt,
   setCursorToDate,
   updateStateOptions,
 } from "@typescript-calendar-lib/tui";
@@ -105,17 +105,7 @@ export function useCalendarState(
 ): UseCalendarStateReturn {
   const getter = typeof options === "function" ? options : () => options;
 
-  let state = $state(
-    createCalendarState({
-      initialYear: getter().initialYear,
-      initialMonth: getter().initialMonth,
-      today: getter().today,
-      locale: getter().locale,
-      weekStart: getter().weekStart,
-      highlight: getter().highlight,
-      range: getter().range,
-    }),
-  );
+  let state = $state(createCalendarState(getter()));
 
   // ホバー中の日付はローカル reactive 状態で保持する（tui 状態には入れない）。
   let hoveredDate = $state<Date | null>(null);
@@ -175,9 +165,7 @@ export function useCalendarState(
       state = setCursorToDate(state, date);
     },
     selectDateAt: (date: Date) => {
-      const pos = findDateCell(state.monthData, date);
-      if (pos === null) return; // 当月外は no-op
-      state = selectDate({ ...state, cursor: pos });
+      state = selectDateAt(state, date);
     },
     clearSelection: () => {
       state = clearSelection(state);
