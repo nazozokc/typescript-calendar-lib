@@ -62,6 +62,8 @@ All options from `@typescript-calendar-lib/core` are supported, plus these CLI-s
 | `theme` | `ThemeName \| CliTheme` | `"default"` | Visual theme (`"default"` \| `"modern"`) or custom theme object |
 | `colorScheme` | `ColorSchemeName \| CliPalette` | `"default"` | Color scheme, active when `color: true` |
 | `today` | `Date` | `new Date()` | Reference date for "today" coloring |
+| `cellData` | `(date: Date) => unknown` | — | Resolve per-cell data; passed to `renderCell` |
+| `renderCell` | `(day, date, state, data?) => string` | — | Custom cell text; replaces the day cell verbatim |
 
 ## CLI Binary
 
@@ -252,6 +254,27 @@ calendar({
 ```
 
 When a date is both highlighted and in range, the highlight takes precedence.
+
+### Per-cell data & custom cells
+
+`cellData` attaches your own data to dates; `renderCell` replaces the day-cell rendering. `cellData` is called once per real cell, and returning `undefined` means "no data":
+
+```ts
+calendar({
+  year: 2026,
+  month: 9,
+  cellData: (date) => (date.getDate() === 15 ? "★" : undefined),
+  renderCell: (day, _date, _state, data) =>
+    data !== undefined ? `[${day}]` : String(day),
+});
+```
+
+`renderCell` receives `(day, date, state, data)`:
+
+- `state` — `getCalendarCellState(date)` result (`isWeekend`, `isToday`, `isHighlight`, `isInRange`, `dayOfWeek`)
+- `data` — the resolved `cellData` value for that date (`undefined` when none)
+
+The returned string replaces the cell **verbatim** — no padding, colorization, or highlight/range styling is applied, so you control cell width and any ANSI codes yourself. A bare `String(day)` in a wide `renderCell` can shift the column alignment of that row.
 
 ### Plain text output
 

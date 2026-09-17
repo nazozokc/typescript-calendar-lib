@@ -285,3 +285,51 @@ describe("renderYear", () => {
     expect(out).toContain("12月 2026");
   });
 });
+
+// ─── renderMonth cellData / renderCell ───────────────────
+
+describe("renderMonth - cellData / renderCell", () => {
+  test("cellData と renderCell でセル内容をカスタムできる", () => {
+    const out = renderMonth(2026, 9, {
+      cellData: (date) => (date.getDate() === 15 ? "★" : undefined),
+      renderCell: (day, _date, _state, data) =>
+        data !== undefined ? `${data}${day}` : String(day),
+    });
+    expect(out).toContain("★15");
+    expect(out).not.toContain("[15]");
+  });
+
+  test("renderCell に day/date/state/data が渡る", () => {
+    const seen: Array<
+      [number, Date, { isWeekend: boolean; isToday: boolean }, unknown]
+    > = [];
+    renderMonth(2026, 9, {
+      today: new Date(2026, 8, 8),
+      cellData: (date) => (date.getDate() === 15 ? "meeting" : undefined),
+      renderCell: (day, date, state, data) => {
+        if (day === 15) seen.push([day, date, state, data]);
+        return String(day);
+      },
+    });
+    expect(seen).toHaveLength(1);
+    const [day, date, state, data] = seen[0]!;
+    expect(day).toBe(15);
+    expect(date).toBeInstanceOf(Date);
+    expect(date.getFullYear()).toBe(2026);
+    expect(state.isWeekend).toBe(false);
+    expect(state.isToday).toBe(false);
+    expect(data).toBe("meeting");
+  });
+
+  test("cellData 未指定時は renderCell の data が undefined", () => {
+    const seen: unknown[] = [];
+    renderMonth(2026, 9, {
+      renderCell: (day, _date, _state, data) => {
+        seen.push(data);
+        return String(day);
+      },
+    });
+    expect(seen).not.toHaveLength(0);
+    expect(seen.every((d) => d === undefined)).toBe(true);
+  });
+});

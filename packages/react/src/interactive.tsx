@@ -37,13 +37,15 @@ export interface InteractiveCalendarProps {
   colorScheme?: ColorSchemeName | ReactColorScheme;
   size?: CalendarSize;
   style?: CSSProperties;
-  /** セル内容のカスタムレンダリング */
+  /** セル内容のカスタムレンダリング。第4引数に該当日のデータが渡る */
   renderCell?: CalendarProps["renderCell"];
+  /** 各セルに付与するユーザー定義データを解決する関数。実セルのみに呼ばれる */
+  cellData?: (date: Date) => unknown;
 
   // ── イベント ──
 
-  /** セルクリック時（キーボードの Enter/Space 含む）。クリックした日付は自動的に選択される */
-  onDateClick?: (date: Date) => void;
+  /** セルクリック時（キーボードの Enter/Space 含む）。クリックした日付は自動的に選択される。第2引数に該当日のデータが渡る */
+  onDateClick?: (date: Date, data?: unknown) => void;
   /** セルホバー時 */
   onDateHover?: (date: Date) => void;
   /** カレンダーからマウスが離れたとき */
@@ -74,6 +76,7 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     size,
     style,
     renderCell,
+    cellData,
     onDateClick,
     onDateHover,
     onDateLeave,
@@ -95,11 +98,11 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
   const rootRef = useRef<HTMLDivElement>(null);
 
   // クリック（マウス・Enter/Space 共通）で日付を選択する。
-  // 従来の onDateClick コールバックも引き続き発火する。
+  // 従来の onDateClick コールバックも引き続き発火し、第2引数に該当日のデータが渡る。
   const handleDateClick = useCallback(
-    (date: Date) => {
+    (date: Date, data?: unknown) => {
       selectDateAt(date);
-      onDateClick?.(date);
+      onDateClick?.(date, data);
     },
     [selectDateAt, onDateClick],
   );
@@ -167,6 +170,7 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
       style={style}
       interactive
       renderCell={renderCell}
+      cellData={cellData}
       selectedDate={hook.selectedDate}
       cursorDate={hook.cursorDate}
       hoveredDate={hook.hoveredDate}

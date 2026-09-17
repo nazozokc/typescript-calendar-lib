@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
+import type { CalendarCellState } from "@typescript-calendar-lib/core";
 import Calendar from "../src/Calendar.svelte";
 import InteractiveCalendar from "../src/InteractiveCalendar.svelte";
 import { isSizeName } from "../src/size.js";
@@ -598,6 +599,98 @@ describe("Calendar マウス操作プロップ", () => {
   });
 });
 
+// ─── Calendar cellData / renderCell / onDateClick ────────
+
+describe("Calendar cellData / renderCell / onDateClick", () => {
+  test("renderCell の第4引数に cellData のデータが渡る", () => {
+    render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        today: TODAY,
+        cellData: (date: Date) =>
+          date.getDate() === 15 ? "holiday" : undefined,
+        renderCell: (
+          _day: number,
+          _date: Date,
+          _state: CalendarCellState,
+          data?: unknown,
+        ) => (data === undefined ? "none" : String(data)),
+      },
+    });
+    expect(screen.getByText("holiday")).toBeTruthy();
+    expect(screen.getAllByText("none").length).toBeGreaterThan(0);
+  });
+
+  test("interactive 時も renderCell が button の子として描画される", () => {
+    const { container } = render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        today: TODAY,
+        interactive: true,
+        cellData: (date: Date) =>
+          date.getDate() === 15 ? "holiday" : undefined,
+        renderCell: (
+          day: number,
+          _date: Date,
+          _state: CalendarCellState,
+          data?: unknown,
+        ) => (data === undefined ? String(day) : String(data)),
+      },
+    });
+    const btn = container.querySelector(
+      'button[aria-label="September 15, 2026"]',
+    );
+    expect(btn).not.toBeNull();
+    expect(btn!.textContent).toBe("holiday");
+  });
+
+  test("cellData 未指定時は renderCell の第4引数が undefined", () => {
+    render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        today: TODAY,
+        renderCell: (
+          _day: number,
+          _date: Date,
+          _state: CalendarCellState,
+          data?: unknown,
+        ) => (data === undefined ? "none" : "has"),
+      },
+    });
+    expect(screen.getAllByText("none").length).toBeGreaterThan(0);
+    expect(screen.queryByText("has")).toBeNull();
+  });
+
+  test("onDateClick の第2引数に cellData のデータが渡る", () => {
+    const onClick = vi.fn();
+    render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        today: TODAY,
+        interactive: true,
+        cellData: (date: Date) =>
+          date.getDate() === 10 ? "meeting" : undefined,
+        onDateClick: onClick,
+      },
+    });
+    const withData = screen.getByRole("button", { name: /September 10, 2026/ });
+    fireEvent.click(withData);
+    expect(onClick.mock.calls[0]![0]).toBeInstanceOf(Date);
+    expect(onClick.mock.calls[0]![1]).toBe("meeting");
+
+    const withoutData = screen.getByRole("button", {
+      name: /September 11, 2026/,
+    });
+    fireEvent.click(withoutData);
+    expect(onClick.mock.calls[1]![0]).toBeInstanceOf(Date);
+    expect(onClick.mock.calls[1]![1]).toBeUndefined();
+  });
+});
+
 // ─── InteractiveCalendar ─────────────────────────────────
 
 describe("InteractiveCalendar", () => {
@@ -613,6 +706,41 @@ describe("InteractiveCalendar", () => {
     await fireEvent.click(btn);
     expect(btn).toHaveAttribute("aria-pressed", "true");
     expect(btn.closest("td")).toHaveClass("is-selected");
+  });
+
+  test("セルクリックで onDateClick に cellData のデータが渡る", async () => {
+    const onClick = vi.fn();
+    render(InteractiveCalendar, {
+      props: {
+        ...props(),
+        cellData: (date: Date) =>
+          date.getDate() === 10 ? "meeting" : undefined,
+        onDateClick: onClick,
+      },
+    });
+    const btn = screen.getByRole("button", { name: /September 10, 2026/ });
+    await fireEvent.click(btn);
+    expect(onClick.mock.calls[0]![0]).toBeInstanceOf(Date);
+    expect(onClick.mock.calls[0]![1]).toBe("meeting");
+  });
+
+  test("renderCell と cellData を InteractiveCalendar 経由で渡せる", async () => {
+    render(InteractiveCalendar, {
+      props: {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+        cellData: (date: Date) => (date.getDate() === 10 ? "★" : undefined),
+        renderCell: (
+          day: number,
+          _date: Date,
+          _state: CalendarCellState,
+          data?: unknown,
+        ) => data ?? String(day),
+      },
+    });
+    const btn = screen.getByRole("button", { name: /September 10, 2026/ });
+    expect(btn.textContent).toBe("★");
   });
 
   test("ホバーで is-hovered クラスがつき、離脱で消える", async () => {
