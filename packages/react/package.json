@@ -20,16 +20,16 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsdown",
+    "build": "tsdown && cp ../web/dist/calendar.css dist/calendar.css",
     "prepack": "pnpm build"
   },
   "dependencies": {
     "@typescript-calendar-lib/core": "workspace:*",
-    "@typescript-calendar-lib/tui": "workspace:*"
+    "@typescript-calendar-lib/tui": "workspace:*",
+    "@typescript-calendar-lib/web": "workspace:*"
   },
   "devDependencies": {
     "@testing-library/react": "^16",
-    "@tsdown/css": "^0.23.0",
     "@types/react": "^19",
     "jsdom": "^26",
     "react-dom": "19.2.8",

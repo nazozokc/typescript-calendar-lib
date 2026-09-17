@@ -8,7 +8,4 @@ export default defineConfig({
   dts: true,
   sourcemap: true,
   outExtensions: () => ({ js: ".js", dts: ".d.ts" }),
-  css: {
-    fileName: "calendar.css",
-  },
 });
