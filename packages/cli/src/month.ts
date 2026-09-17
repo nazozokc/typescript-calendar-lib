@@ -1,10 +1,9 @@
 import {
   buildMonthGrid,
   createDate,
+  getCalendarCellState,
   getMonthName,
   getWeekdayHeaders,
-  isDateInRange,
-  isSameDay,
 } from "@typescript-calendar-lib/core";
 import {
   centerText,
@@ -63,10 +62,10 @@ export function renderMonth(
     if (day === null) return " ".repeat(cellWidth);
 
     const date = createDate(year, month - 1, day);
-    const isHighlight = highlight !== undefined && isSameDay(date, highlight);
-    const isInRange = isDateInRange(date, range);
-    const isToday = isSameDay(date, today);
-    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+    const { isHighlight, isInRange, isToday, isWeekend } = getCalendarCellState(
+      date,
+      { today, highlight, range },
+    );
 
     const text = (
       isHighlight && highlightStyle === "bracket" ? `[${day}]` : String(day)

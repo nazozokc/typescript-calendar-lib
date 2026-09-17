@@ -26,6 +26,7 @@
     "prepack": "pnpm build"
   },
   "dependencies": {
-    "@typescript-calendar-lib/core": "workspace:*"
+    "@typescript-calendar-lib/core": "workspace:*",
+    "@typescript-calendar-lib/tui": "workspace:*"
   }
 }
