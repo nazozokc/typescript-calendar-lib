@@ -23,7 +23,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "svelte-package -i src",
+    "build": "svelte-package -i src && cp ../web/dist/calendar.css dist/calendar.css",
     "prepack": "pnpm build",
     "typecheck": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings"
   },
@@ -39,7 +39,8 @@
   },
   "dependencies": {
     "@typescript-calendar-lib/core": "workspace:*",
-    "@typescript-calendar-lib/tui": "workspace:*"
+    "@typescript-calendar-lib/tui": "workspace:*",
+    "@typescript-calendar-lib/web": "workspace:*"
   },
   "devDependencies": {
     "@sveltejs/package": "^2.5.8",

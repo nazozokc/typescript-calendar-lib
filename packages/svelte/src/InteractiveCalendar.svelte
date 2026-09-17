@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { CalendarOptions } from "@typescript-calendar-lib/core";
+  import { keyToAction } from "@typescript-calendar-lib/tui";
   import Calendar from "./Calendar.svelte";
   import { buildRangePreview } from "./range-preview.js";
   import type { CalendarSize } from "./size.js";
@@ -107,31 +108,18 @@
   });
 
   const handleKeyDown = (event: KeyboardEvent) => {
-    switch (event.key) {
-      case "ArrowRight":
-        event.preventDefault();
-        cal.moveCursor("right");
-        break;
-      case "ArrowLeft":
-        event.preventDefault();
-        cal.moveCursor("left");
-        break;
-      case "ArrowDown":
-        event.preventDefault();
-        cal.moveCursor("down");
-        break;
-      case "ArrowUp":
-        event.preventDefault();
-        cal.moveCursor("up");
-        break;
-      case "PageUp":
-        event.preventDefault();
+    const action = keyToAction(event.key);
+    if (action === undefined) return;
+    event.preventDefault();
+    switch (action) {
+      case "prev":
         cal.goPrev();
         break;
-      case "PageDown":
-        event.preventDefault();
+      case "next":
         cal.goNext();
         break;
+      default:
+        cal.moveCursor(action);
     }
   };
 </script>

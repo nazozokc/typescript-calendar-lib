@@ -7,6 +7,7 @@
     getWeekdayHeaders,
     isSameDay,
   } from "@typescript-calendar-lib/core";
+  import { formatCellLabel } from "@typescript-calendar-lib/web";
   import { getCellClasses } from "./cell-classes.js";
   import type { CalendarSize } from "./size.js";
   import { buildSizeStyle, isSizeName } from "./size.js";
@@ -154,9 +155,9 @@
                       class="calendar-day-btn"
                       onclick={() => handleCellClick(day)}
                       onmouseenter={() => handleCellHover(day)}
-                      tabindex="0"
+                      tabindex={isCursorDay(day) ? 0 : -1}
                       data-cursor={isCursorDay(day) ? "true" : undefined}
-                      aria-label={`${getMonthName(locale, month)} ${day}, ${year}`}
+                      aria-label={formatCellLabel(locale, year, month, day)}
                       aria-pressed={isSelectedDay(day) || undefined}
                       aria-current={isTodayDay(day) ? "date" : undefined}
                     >

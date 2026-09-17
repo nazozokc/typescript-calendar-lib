@@ -1,16 +1,5 @@
 // ─── 範囲プレビュー ───────────────────────────────────────
+// 実装は core の sortRange（2日付のソート済み範囲構築）に集約済み。
+// ここでは互換 API 名（buildRangePreview）として再エクスポートする。
 
-/**
- * 選択済み日付とホバー日付からソート済みの範囲プレビューを組み立てる。
- * どちらかが null なら undefined（プレビューなし）。
- * 日付は常に from <= to に揃えられる（逆順ホバーも正しい範囲になる）。
- */
-export function buildRangePreview(
-  selected: Date | null,
-  hovered: Date | null,
-): { from: Date; to: Date } | undefined {
-  if (selected === null || hovered === null) return undefined;
-  return selected.getTime() <= hovered.getTime()
-    ? { from: selected, to: hovered }
-    : { from: hovered, to: selected };
-}
+export { sortRange as buildRangePreview } from "@typescript-calendar-lib/core";
