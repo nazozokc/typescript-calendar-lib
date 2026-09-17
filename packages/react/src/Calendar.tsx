@@ -184,7 +184,8 @@ export function Calendar({
                   return (
                     // biome-ignore lint/a11y/useAriaPropsSupportedByRole: interactive 時は td に role=gridcell が付き aria-selected は有効（role が動的なため静的解析できない）
                     <td
-                      key={day}
+                      // パディングセル（key=j）との衝突を避けるため日番号に "d-" を付与する。日番号は列位置 j と異なり配列の index ではない
+                      key={`d-${day}`}
                       role={cellRole}
                       tabIndex={interactive ? -1 : undefined}
                       className={className(day)}
