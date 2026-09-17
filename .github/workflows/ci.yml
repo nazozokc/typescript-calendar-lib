@@ -116,9 +116,16 @@ jobs:
         run: |
           set -e
           mkdir -p /tmp/tarballs
-          for pkg in core cli tui react svelte; do
+          # Topological order: each package's prepack build needs its
+          # dependencies' dist (cli needs tui, react/svelte need web).
+          for pkg in core tui web cli react svelte; do
             pnpm --filter "@typescript-calendar-lib/${pkg}" pack --pack-destination /tmp/tarballs
           done
           for tarball in /tmp/tarballs/*.tgz; do
             tar -tzf "$tarball" | grep -q "dist/index.js" || { echo "missing dist in $tarball"; exit 1; }
+          done
+          # react / svelte ship the shared stylesheet copied from web
+          for pkg in web react svelte; do
+            tarball="/tmp/tarballs/typescript-calendar-lib-${pkg}-"*.tgz
+            tar -tzf $tarball | grep -q "dist/calendar.css" || { echo "missing calendar.css in $tarball"; exit 1; }
           done

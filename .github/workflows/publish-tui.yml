@@ -62,7 +62,7 @@ jobs:
       - name: Sync package versions
         run: |
           version="${{ steps.version.outputs.version }}"
-          for pkg in core cli tui react svelte; do
+          for pkg in core tui web cli react svelte; do
             npm --prefix "packages/${pkg}" pkg set "version=${version}"
           done
 

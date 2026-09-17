@@ -1,4 +1,4 @@
-name: publish-svelte
+name: publish-web
 
 on:
   release:
@@ -18,7 +18,7 @@ jobs:
         env:
           RELEASE_BODY: ${{ github.event.release.body }}
         run: |
-          pkg="svelte"
+          pkg="web"
           lines="$(printf '%s\n' "$RELEASE_BODY" | grep -iE '^[[:space:]]*publish[[:space:]]*:' | sed 's/^[[:space:]]*[Pp]ublish[[:space:]]*:[[:space:]]*//' | tr ',' ' ' | tr '\n' ' ')"
           if [ -z "$lines" ]; then
             enabled=true
@@ -29,7 +29,7 @@ jobs:
           fi
           echo "enabled=${enabled}" >> "$GITHUB_OUTPUT"
 
-  publish-svelte:
+  publish-web:
     needs: check
     if: needs.check.outputs.enabled == 'true'
     runs-on: ubuntu-latest
@@ -71,7 +71,7 @@ jobs:
 
       - name: Publish
         run: |
-          pnpm --filter "@typescript-calendar-lib/svelte" publish \
+          pnpm --filter "@typescript-calendar-lib/web" publish \
             --no-git-checks \
             --access public \
             --registry https://registry.npmjs.org/
