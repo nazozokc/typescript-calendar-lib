@@ -27,10 +27,10 @@ export function clampCursor(
 }
 
 /** カーソルを移動する。カーソル未設定時は今日（なければ先頭の日付）にスナップする */
-export function moveCursor(
-  state: CalendarState,
+export function moveCursor<T>(
+  state: CalendarState<T>,
   direction: Direction,
-): CalendarState {
+): CalendarState<T> {
   const monthData = state.monthData;
   const rows = monthData.visibleRows;
   const cols = monthData.cells[0]?.length ?? 0;
@@ -66,17 +66,17 @@ export function moveCursor(
 // ─── 日付取得 ────────────────────────────────────────────
 
 /** 指定日付のセルへカーソルを移動する。当月に無ければ状態を変えず返す */
-export function setCursorToDate(
-  state: CalendarState,
+export function setCursorToDate<T>(
+  state: CalendarState<T>,
   date: Date,
-): CalendarState {
+): CalendarState<T> {
   const pos = findDateCell(state.monthData, date);
   if (pos === null) return state;
   return { ...state, cursor: pos };
 }
 
 /** カーソル位置の日付を取得する。空欄セルなら null */
-export function getCursorDate(state: CalendarState): Date | null {
+export function getCursorDate<T>(state: CalendarState<T>): Date | null {
   if (state.cursor === null) return null;
   const cell = state.monthData.cells[state.cursor.row]?.[state.cursor.col];
   return cell?.date ?? null;

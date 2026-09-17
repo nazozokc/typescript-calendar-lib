@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { CalendarOptions } from "@typescript-calendar-lib/core";
+  import type { CalendarCellState, CalendarOptions } from "@typescript-calendar-lib/core";
   import { keyToAction } from "@typescript-calendar-lib/tui";
   import Calendar from "./Calendar.svelte";
   import { buildRangePreview } from "./range-preview.js";
@@ -35,11 +35,20 @@
     colorScheme?: ColorSchemeName | SvelteColorScheme;
     size?: CalendarSize;
     style?: CSSProperties;
+    /** セル内容のカスタムレンダリング。第4引数に該当日のデータが渡る */
+    renderCell?: (
+      day: number,
+      date: Date,
+      state: CalendarCellState,
+      data?: unknown,
+    ) => string;
+    /** 各セルに付与するユーザー定義データを解決する関数。実セルのみに呼ばれる */
+    cellData?: (date: Date) => unknown;
 
     // ── イベント ──
 
-    /** セルクリック時（キーボードの Enter/Space 含む）。クリックした日付は自動的に選択される */
-    onDateClick?: (date: Date) => void;
+    /** セルクリック時（キーボードの Enter/Space 含む）。クリックした日付は自動的に選択される。第2引数に該当日のデータが渡る */
+    onDateClick?: (date: Date, data?: unknown) => void;
     /** セルホバー時 */
     onDateHover?: (date: Date) => void;
     /** カレンダーからマウスが離れたとき */
@@ -58,6 +67,8 @@
     colorScheme,
     size,
     style,
+    renderCell,
+    cellData,
     onDateClick,
     onDateHover,
     onDateLeave,
@@ -74,10 +85,10 @@
   }));
 
   // クリック（マウス・Enter/Space 共通）で日付を選択する。
-  // 従来の onDateClick コールバックも引き続き発火する。
-  const handleDateClick = (date: Date) => {
+  // 従来の onDateClick コールバックも引き続き発火し、第2引数に該当日のデータが渡る。
+  const handleDateClick = (date: Date, data?: unknown) => {
     cal.selectDateAt(date);
-    onDateClick?.(date);
+    onDateClick?.(date, data);
   };
 
   const handleDateHover = (date: Date) => {
@@ -138,6 +149,8 @@
     size={size}
     style={style}
     interactive
+    renderCell={renderCell}
+    cellData={cellData}
     selected={cal.selectedDate}
     cursorDate={cal.cursorDate}
     hoveredDate={cal.hoveredDate}

@@ -19,6 +19,7 @@ export {
   findDateCell,
   findFirstDayCell,
   findTodayCell,
+  getDateData,
 } from "./search.ts";
 export {
   clearSelection,

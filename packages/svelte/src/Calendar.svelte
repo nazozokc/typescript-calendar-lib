@@ -1,8 +1,9 @@
 <script lang="ts">
-  import type { CalendarOptions } from "@typescript-calendar-lib/core";
+  import type { CalendarCellState, CalendarOptions } from "@typescript-calendar-lib/core";
   import {
     buildMonthGrid,
     createDate,
+    getCalendarCellState,
     getMonthName,
     getWeekdayHeaders,
     isSameDay,
@@ -52,14 +53,26 @@
 
     /** インタラクティブモードを有効にする。セルクリック・ホバー・キーボード選択が可能になる */
     interactive?: boolean;
-    /** セルクリック時のコールバック */
-    onDateClick?: (date: Date) => void;
+    /** セルクリック時のコールバック。第2引数に該当日のデータ（cellData の戻り値）が渡る */
+    onDateClick?: (date: Date, data?: unknown) => void;
     /** セルホバー時のコールバック */
     onDateHover?: (date: Date) => void;
     /** カレンダーからマウスが離れたときのコールバック */
     onDateLeave?: () => void;
     /** キーボード操作。root 要素で発火（矢印キー等を InteractiveCalendar が処理する） */
     onkeydown?: (event: KeyboardEvent) => void;
+
+    // ── セル状態 ──
+
+    /** セル内容のカスタムレンダリング。interactive 時は button の子として描画される。第4引数に該当日のデータが渡る */
+    renderCell?: (
+      day: number,
+      date: Date,
+      state: CalendarCellState,
+      data?: unknown,
+    ) => string;
+    /** 各セルに付与するユーザー定義データを解決する関数。実セルのみに呼ばれる */
+    cellData?: (date: Date) => unknown;
   }
 
   let {
@@ -83,9 +96,13 @@
     onDateHover,
     onDateLeave,
     onkeydown,
+    renderCell,
+    cellData,
   }: CalendarProps = $props();
 
   const cellDate = (day: number): Date => createDate(year, month - 1, day);
+  const cellState = (day: number): CalendarCellState =>
+    getCalendarCellState(cellDate(day), { today, highlight, range });
   const cellClass = (day: number): string | undefined =>
     getCellClasses(cellDate(day), {
       today,
@@ -103,7 +120,10 @@
   const isCursorDay = (day: number): boolean =>
     cursorDate != null && isSameDay(cellDate(day), cursorDate);
   const handleCellClick = (day: number) => {
-    if (interactive && onDateClick) onDateClick(cellDate(day));
+    if (interactive && onDateClick) {
+      const date = cellDate(day);
+      onDateClick(date, cellData?.(date));
+    }
   };
   const handleCellHover = (day: number) => {
     if (interactive && onDateHover) onDateHover(cellDate(day));
@@ -161,8 +181,14 @@
                       aria-pressed={isSelectedDay(day) || undefined}
                       aria-current={isTodayDay(day) ? "date" : undefined}
                     >
-                      {day}
+                      {#if renderCell}
+                        {renderCell(day, cellDate(day), cellState(day), cellData?.(cellDate(day)))}
+                      {:else}
+                        {day}
+                      {/if}
                     </button>
+                  {:else if renderCell}
+                    {renderCell(day, cellDate(day), cellState(day), cellData?.(cellDate(day)))}
                   {:else}
                     {day}
                   {/if}

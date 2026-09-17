@@ -59,8 +59,8 @@ export interface CalendarProps {
 
   /** インタラクティブモードを有効にする。セルクリック・ホバー・キーボード選択が可能になる */
   interactive?: boolean;
-  /** セルクリック時のコールバック */
-  onDateClick?: (date: Date) => void;
+  /** セルクリック時のコールバック。第2引数に該当日のデータ（cellData の戻り値）が渡る */
+  onDateClick?: (date: Date, data?: unknown) => void;
   /** セルホバー時のコールバック */
   onDateHover?: (date: Date) => void;
   /** カレンダーからマウスが離れたときのコールバック */
@@ -76,8 +76,15 @@ export interface CalendarProps {
   cursorDate?: Date | null;
   /** ホバー中の日付。is-hovered クラスで視覚化される */
   hoveredDate?: Date | null;
-  /** セル内容のカスタムレンダリング。interactive 時は button の子として描画される */
-  renderCell?: (day: number, date: Date, state: CalendarCellState) => ReactNode;
+  /** セル内容のカスタムレンダリング。interactive 時は button の子として描画される。第4引数に該当日のデータが渡る */
+  renderCell?: (
+    day: number,
+    date: Date,
+    state: CalendarCellState,
+    data?: unknown,
+  ) => ReactNode;
+  /** 各セルに付与するユーザー定義データを解決する関数。実セルのみに呼ばれる */
+  cellData?: (date: Date) => unknown;
 
   /** root 要素への ref（React 19 の ref-as-prop） */
   ref?: Ref<HTMLDivElement>;
@@ -105,6 +112,7 @@ export function Calendar({
   cursorDate = null,
   hoveredDate = null,
   renderCell,
+  cellData,
   rangePreview,
   ref,
 }: CalendarProps) {
@@ -121,7 +129,10 @@ export function Calendar({
     }) || undefined;
 
   const handleCellClick = (day: number) => {
-    if (interactive && onDateClick) onDateClick(cellDate(day));
+    if (interactive && onDateClick) {
+      const date = cellDate(day);
+      onDateClick(date, cellData?.(date));
+    }
   };
 
   const handleCellHover = (day: number) => {
@@ -177,6 +188,7 @@ export function Calendar({
                     highlight,
                     range,
                   });
+                  const data = cellData?.(date);
                   const selected =
                     selectedDate !== null && isSameDay(date, selectedDate);
                   const cursor =
@@ -202,10 +214,12 @@ export function Calendar({
                           data-cursor={cursor ? "true" : undefined}
                           aria-label={formatCellLabel(locale, year, month, day)}
                         >
-                          {renderCell ? renderCell(day, date, state) : day}
+                          {renderCell
+                            ? renderCell(day, date, state, data)
+                            : day}
                         </button>
                       ) : renderCell ? (
-                        renderCell(day, date, state)
+                        renderCell(day, date, state, data)
                       ) : (
                         day
                       )}

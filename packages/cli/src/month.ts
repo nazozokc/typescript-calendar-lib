@@ -34,6 +34,8 @@ export function renderMonth(
     theme: themeOption = "default",
     colorScheme: schemeOption = "default",
     today = new Date(),
+    cellData,
+    renderCell: customRenderCell,
   } = options;
 
   const theme = resolveTheme(themeOption);
@@ -62,10 +64,15 @@ export function renderMonth(
     if (day === null) return " ".repeat(cellWidth);
 
     const date = createDate(year, month - 1, day);
-    const { isHighlight, isInRange, isToday, isWeekend } = getCalendarCellState(
-      date,
-      { today, highlight, range },
-    );
+    const state = getCalendarCellState(date, { today, highlight, range });
+    const data = cellData?.(date);
+
+    // ユーザー定義の描画があれば、解決済みデータを渡して委譲する
+    if (customRenderCell !== undefined) {
+      return customRenderCell(day, date, state, data);
+    }
+
+    const { isHighlight, isInRange, isToday, isWeekend } = state;
 
     const text = (
       isHighlight && highlightStyle === "bracket" ? `[${day}]` : String(day)

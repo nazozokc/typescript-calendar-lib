@@ -41,8 +41,8 @@ bun add @typescript-calendar-lib/svelte
 | :--- | :--- | :--- | :--- |
 | `year` | `number` | — (required) | Calendar year |
 | `month` | `number` | — (required) | Month, 1-indexed (`1`–`12`) |
-| `locale` | `Locale` | `"en"` | Language |
-| `weekStart` | `WeekStart` | `"sunday"` | First day of the week |
+| `locale` | `"en" \| "ja" \| "es" \| "de" \| "fr" \| "ko" \| "zh"` | `"en"` | Language |
+| `weekStart` | `"sunday" \| "monday"` | `"sunday"` | First day of the week |
 | `highlight` | `Date` | — | Date to highlight |
 | `range` | `{ from: Date; to: Date }` | — | Dates to emphasize |
 | `rangePreview` | `{ from: Date; to: Date }` | — | Candidate range preview (hover preview), rendered with the `is-in-range-preview` class |
@@ -55,15 +55,17 @@ bun add @typescript-calendar-lib/svelte
 | `size` | `CalendarSize` | `"md"` | Cell size |
 | `style` | `CSSProperties` | — | Extra styles for the root element |
 | `interactive` | `boolean` | `false` | Enable cell click/hover/keyboard selection |
-| `onDateClick` | `(date: Date) => void` | — | Called when a day cell is clicked (or Enter/Space pressed) |
+| `onDateClick` | `(date: Date, data?: unknown) => void` | — | Called when a day cell is clicked (or Enter/Space pressed); `data` is that cell's `cellData` value (`undefined` when none) |
 | `onDateHover` | `(date: Date) => void` | — | Called when a day cell is hovered |
 | `onDateLeave` | `() => void` | — | Called when the mouse leaves the calendar |
+| `cellData` | `(date: Date) => unknown` | — | Resolve per-cell data; passed to `renderCell` and `onDateClick` |
+| `renderCell` | `(day, date, state, data?) => string` | — | Custom cell content; the returned string is inserted as plain text (XSS-safe) |
 
 The component exports as both named `Calendar` and default.
 
 ## InteractiveCalendar
 
-A turnkey component that wires `useCalendarState` and `Calendar` together with built-in mouse and keyboard handling. No manual event wiring required.
+A turnkey component that wires `useCalendarState` and `Calendar` together with built-in mouse and keyboard handling. No manual event wiring required:
 
 ```svelte
 <script lang="ts">
@@ -76,8 +78,7 @@ A turnkey component that wires `useCalendarState` and `Calendar` together with b
   initialMonth={9}
   theme="modern"
   colorScheme="ocean"
-  onDateClick={(date) => console.log("Selected", date)}
-  onDateHover={(date) => console.log("Hovered", date)}
+  onDateClick={(date, data) => console.log("Selected", date, data)}
   onDateLeave={() => console.log("Mouse left")}
 />
 ```
@@ -108,13 +109,15 @@ Combines `useCalendarState` options, `Calendar` visual props, and event callback
 | `colorScheme` | `ColorSchemeName \| SvelteColorScheme` | CSS variable-based colors |
 | `size` | `CalendarSize` | Cell size |
 | `style` | `CSSProperties` | Extra styles for the root element |
-| `onDateClick` | `(date: Date) => void` | Called when a date is selected |
+| `cellData` | `(date: Date) => unknown` | Resolve per-cell data; passed to `renderCell` and `onDateClick` |
+| `renderCell` | `(day, date, state, data?) => string` | Custom cell content (plain text, XSS-safe) |
+| `onDateClick` | `(date: Date, data?: unknown) => void` | Called when a date is selected; `data` is the cell's `cellData` value |
 | `onDateHover` | `(date: Date) => void` | Called on cell hover |
 | `onDateLeave` | `() => void` | Called when the mouse leaves the calendar |
 
 ## Interactive Mode
 
-Set `interactive` to make day cells clickable. Each cell becomes a focusable `role="button"` supporting click, mouse hover, and Enter / Space keys. Buttons include a localized `aria-label`; today gets `aria-current="date"` and a `selected` date gets `aria-pressed="true"`:
+Set `interactive` to make day cells clickable. Each cell becomes a `<button class="calendar-day-btn">` — clickable, hoverable, and keyboard-accessible (Enter / Space). Buttons are announced with a localized `aria-label`; today gets `aria-current="date"` and a `selected` date gets `aria-pressed="true"`:
 
 ```svelte
 <Calendar
@@ -127,6 +130,26 @@ Set `interactive` to make day cells clickable. Each cell becomes a focusable `ro
   onDateHover={(date) => console.log("Hovered", date)}
 />
 ```
+
+## Per-cell data & custom cells
+
+`cellData` attaches your own data to specific dates; consume it in `renderCell` (4th argument) or `onDateClick` (2nd argument). `cellData` is called once per real day cell (never for empty cells), and returning `undefined` means "no data":
+
+```svelte
+<Calendar
+  year={2026}
+  month={9}
+  interactive
+  cellData={(date) => (date.getDate() === 15 ? "meeting" : undefined)}
+  renderCell={(day, date, state, data) =>
+    data === undefined ? String(day) : `${day} (${data})`}
+  onDateClick={(date, data) => console.log(date, data)} // data: "meeting" | undefined
+/>
+```
+
+`renderCell` receives `(day, date, state, data)` — `state` is the core `CalendarCellState` (`isWeekend`, `isToday`, …). The returned string is inserted **as plain text**, never as HTML, so it's XSS-safe.
+
+`cellData`/`renderCell` are render-layer options — they are **not** part of `useCalendarState` (`Calendar` re-renders from its props, so hook-level cell data would have no visible effect).
 
 ## `useCalendarState` hook
 
@@ -171,8 +194,8 @@ For full interactivity (cursor movement, month navigation, selection), use the `
 | `moveCursor` | `(direction: Direction) => void` | Move cursor: `"up"` / `"down"` / `"left"` / `"right"` |
 | `selectDate` | `() => void` | Select the date under the cursor |
 | `selectDateAt` | `(date: Date) => void` | Move cursor to a date and select it (useful for mouse click) |
-| `clearSelection` | `() => void` | Clear the selection |
 | `setCursorToDate` | `(date: Date) => void` | Move the cursor to a specific date (no-op if outside current month) |
+| `clearSelection` | `() => void` | Clear the selection |
 | `cursorDate` | `Date \| null` | Date under the cursor |
 | `selectedDate` | `Date \| null` | Currently selected date |
 | `hoveredDate` | `Date \| null` | Currently hovered date |
@@ -287,6 +310,16 @@ Custom objects set the `--cal-cell-w` / `--cal-cell-h` CSS variables (numbers be
 
 Returns `CSSProperties` for the given size name or custom object.
 
+## CSS
+
+The stylesheet must be imported once in your application:
+
+```svelte
+<script lang="ts">
+  import "@typescript-calendar-lib/svelte/calendar.css";
+</script>
+```
+
 ## Cell Classes
 
 Each day cell gets semantic classes you can target with CSS:
@@ -302,24 +335,39 @@ Each day cell gets semantic classes you can target with CSS:
 | `is-selected` | Matches `selected` |
 | `is-cursor` | Matches `cursorDate` |
 
-## CSS
-
-The stylesheet must be imported once in your application:
-
-```svelte
-<script lang="ts">
-  import "@typescript-calendar-lib/svelte/calendar.css";
-</script>
-```
-
-## Types
-
-All types are exported from the package entry point:
+## Exports
 
 ```ts
-export type { CSSProperties } from "@typescript-calendar-lib/svelte/style";
-export type { SvelteTheme, SvelteColorScheme, ThemeName, ColorSchemeName } from "@typescript-calendar-lib/svelte/themes";
-export type { CalendarSize } from "@typescript-calendar-lib/svelte/size";
+import Calendar, {
+  Calendar,
+  buildRangePreview,
+  buildSizeStyle,
+  COLOR_SCHEMES,
+  getCellClasses,
+  InteractiveCalendar,
+  isSizeName,
+  resolveColorScheme,
+  resolveTheme,
+  THEMES,
+  useCalendarState,
+} from "@typescript-calendar-lib/svelte";
+
+import type {
+  CalendarCustomSize,
+  CalendarSize,
+  CalendarSizeName,
+  CellStateOptions,
+  ColorSchemeName,
+  CSSProperties,
+  SvelteColorScheme,
+  SvelteTheme,
+  ThemeName,
+  UseCalendarStateOptions,
+  UseCalendarStateOptionsInput,
+  UseCalendarStateReturn,
+} from "@typescript-calendar-lib/svelte";
 ```
 
-Utility functions (`getCellClasses`, `buildSizeStyle`, `isSizeName`, `resolveTheme`, `resolveColorScheme`) and constants (`THEMES`, `COLOR_SCHEMES`) are also re-exported.
+## License
+
+MIT

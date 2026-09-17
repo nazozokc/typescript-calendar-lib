@@ -841,6 +841,83 @@ describe("Calendar renderCell", () => {
     const btn = screen.getByRole("button", { name: /September 1, 2026/ });
     expect(btn).toHaveTextContent("D1");
   });
+
+  test("renderCell の第4引数に cellData のデータが渡る", () => {
+    render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 9,
+        cellData: (date) => (date.getDate() === 15 ? "holiday" : undefined),
+        renderCell: (_day, _date, _state, data) =>
+          createElement("span", null, String(data ?? "none")),
+      }),
+    );
+    expect(screen.getByText("holiday")).toBeInTheDocument();
+    expect(screen.getAllByText("none").length).toBeGreaterThan(0);
+  });
+
+  test("cellData 未指定時は renderCell の第4引数が undefined", () => {
+    const renderer = vi.fn((_day, _date, _state, _data) => null);
+    render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 9,
+        renderCell: renderer,
+      }),
+    );
+    const called = renderer.mock.calls.find((args) => {
+      const day = args[0] as number;
+      return day === 1;
+    })!;
+    expect(called[3]).toBeUndefined();
+  });
+});
+
+// ─── Calendar cellData / onDateClick ─────────────────────
+
+describe("Calendar cellData / onDateClick", () => {
+  test("onDateClick の第2引数に cellData のデータが渡る", () => {
+    const onClick = vi.fn();
+    render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 9,
+        interactive: true,
+        today: TODAY,
+        cellData: (date) => (date.getDate() === 10 ? "meeting" : undefined),
+        onDateClick: onClick,
+      }),
+    );
+    const withData = screen.getByRole("button", {
+      name: /September 10, 2026/,
+    });
+    fireEvent.click(withData);
+    expect(onClick.mock.calls[0]![0]).toBeInstanceOf(Date);
+    expect(onClick.mock.calls[0]![1]).toBe("meeting");
+
+    const withoutData = screen.getByRole("button", {
+      name: /September 11, 2026/,
+    });
+    fireEvent.click(withoutData);
+    expect(onClick.mock.calls[1]![0]).toBeInstanceOf(Date);
+    expect(onClick.mock.calls[1]![1]).toBeUndefined();
+  });
+
+  test("cellData 未指定時は onDateClick の第2引数が undefined", () => {
+    const onClick = vi.fn();
+    render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 9,
+        interactive: true,
+        today: TODAY,
+        onDateClick: onClick,
+      }),
+    );
+    const btn = screen.getByRole("button", { name: /September 10, 2026/ });
+    fireEvent.click(btn);
+    expect(onClick.mock.calls[0]![1]).toBeUndefined();
+  });
 });
 
 // ─── InteractiveCalendar ────────────────────────────────
@@ -920,6 +997,23 @@ describe("InteractiveCalendar", () => {
       }),
     );
     expect(screen.getByText("D1")).toBeInTheDocument();
+  });
+
+  test("セルクリックで onDateClick に cellData のデータが渡る", () => {
+    const onClick = vi.fn();
+    render(
+      createElement(InteractiveCalendar, {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+        cellData: (date) => (date.getDate() === 10 ? "meeting" : undefined),
+        onDateClick: onClick,
+      }),
+    );
+    const btn = screen.getByRole("button", { name: /September 10, 2026/ });
+    fireEvent.click(btn);
+    expect(onClick.mock.calls[0]![0]).toBeInstanceOf(Date);
+    expect(onClick.mock.calls[0]![1]).toBe("meeting");
   });
 
   test("セルクリックで日付が選択されカーソルも移動する", () => {

@@ -47,49 +47,79 @@ interface MonthData {
 ### `CalendarCell`
 
 ```ts
-interface CalendarCell {
+interface CalendarCell<T = unknown> {
   day: number | null;       // day of month (1–31), null for empty
   date: Date | null;        // full Date, null when day is null
   dayOfWeek: number;        // 0 = first day per weekStart
   isCurrentMonth: boolean;  // false for padded cells
+  isWeekend: boolean;       // true for Saturday/Sunday
   isToday: boolean;
   isHighlight: boolean;
   isInRange: boolean;
+  data?: T;                 // cellData's resolved value; omitted when undefined
 }
 ```
 
 ### `MonthDataOptions`
 
 ```ts
-interface MonthDataOptions {
-  locale?: Locale;              // "en" | "ja", default "en"
+interface MonthDataOptions<T = unknown> {
+  locale?: Locale;              // "en" | "ja" | "es" | "de" | "fr" | "ko" | "zh", default "en"
   weekStart?: WeekStart;        // "sunday" | "monday", default "sunday"
   today?: Date;                 // reference for isToday, default new Date()
   highlight?: Date;             // sets isHighlight
   range?: { from: Date; to: Date }; // sets isInRange
+  cellData?: (date: Date) => T | undefined; // per-cell data; undefined = no data
 }
+```
+
+### Per-cell custom data (`cellData`)
+
+Pass `cellData` to attach your own data to specific dates. It is called once per real cell (never for empty cells), and returning `undefined` means "no data" — the `data` field is then omitted:
+
+```ts
+type Schedule = { title: string };
+
+const data = buildMonthData<Schedule>(2026, 9, {
+  cellData: (date) =>
+    date.getDate() === 15 ? { title: "Meeting" } : undefined,
+});
+
+data.cells[0]![2]!.data; // { title: "Meeting" } | undefined
+```
+
+`MonthData<T>`, `CalendarCell<T>`, and `CalendarState<T>` are generic — `T` defaults to `unknown`, so existing code keeps working without annotations. The same `cellData` is accepted by `createCalendarState()` so the state machine carries it too.
+
+Retrieve the data for an arbitrary date with `getDateData(state, date)` — returns `T | undefined` (`undefined` when the date isn't in the current month or the cell has no data):
+
+```ts
+import { getDateData } from "@typescript-calendar-lib/tui";
+
+const schedule = getDateData(state, new Date(2026, 8, 15)); // Schedule | undefined
 ```
 
 ## State Management
 
-### `createCalendarState(options?): CalendarState`
+### `createCalendarState(options?): CalendarState<T>`
 
 Initializes state. The cursor defaults to today's cell — or the first day cell if today isn't in the displayed month:
 
 ```ts
 import { createCalendarState } from "@typescript-calendar-lib/tui";
 
-const state = createCalendarState({
+const state = createCalendarState<Schedule>({
   initialYear: 2026,
   initialMonth: 9,
   weekStart: "monday",
+  cellData: (date) =>
+    date.getDate() === 15 ? { title: "Meeting" } : undefined,
 });
 ```
 
 ### `CalendarStateOptions`
 
 ```ts
-interface CalendarStateOptions {
+interface CalendarStateOptions<T = unknown> {
   initialYear?: number;         // default: today's year
   initialMonth?: number;        // default: today's month
   initialCursor?: { row: number; col: number } | null; // null = unfocused
@@ -98,19 +128,20 @@ interface CalendarStateOptions {
   weekStart?: WeekStart;
   highlight?: Date;
   range?: { from: Date; to: Date };
+  cellData?: (date: Date) => T | undefined; // per-cell data; undefined = no data
 }
 ```
 
 ### `CalendarState`
 
 ```ts
-interface CalendarState {
+interface CalendarState<T = unknown> {
   year: number;
   month: number; // 1–12
   cursor: { row: number; col: number } | null; // null = unfocused
   selectedDate: Date | null;
-  options: ResolvedOptions;  // options fixed at creation
-  monthData: MonthData;      // cached data for current month
+  options: ResolvedOptions<T>;  // options fixed at creation
+  monthData: MonthData<T>;      // cached data for current month
 }
 ```
 
@@ -190,13 +221,37 @@ Jump to today's month and place the cursor on today's cell.
 ### Search helpers
 
 ```ts
-import { findTodayCell, findDateCell, findFirstDayCell, clampCursor } from "@typescript-calendar-lib/tui";
+import {
+  findTodayCell,
+  findDateCell,
+  findFirstDayCell,
+  clampCursor,
+  getDateData,
+} from "@typescript-calendar-lib/tui";
 
 findTodayCell(monthData);    // { row, col } | null
 findDateCell(monthData, date); // { row, col } | null
 findFirstDayCell(monthData); // { row, col } | null
 clampCursor(cursor, monthData); // clamps to visible rows/cols
+getDateData(state, date);    // resolved user data for a date (T | undefined)
 ```
+
+## Option Sync (for UI framework wrappers)
+
+`resolveOptions`, `sameStateOptions`, and `updateStateOptions` power the React/Svelte wrapper hooks: they detect option changes by value (so inline `Date`/object literals don't cause rebuild loops) and rebuild state while preserving the cursor and selection.
+
+```ts
+import { sameStateOptions, updateStateOptions, resolveOptions } from "@typescript-calendar-lib/tui";
+
+resolveOptions(options);        // fix `today` into state, apply defaults
+sameStateOptions(a, b);         // true when options are value-equal (Dates via getTime)
+updateStateOptions(state, next, prev);
+// - preserves cursor & selectedDate
+// - jumps only when initialYear/initialMonth actually changed
+// - carries over resolved `today` when `next.today` is omitted
+```
+
+`rebuildState(year, month, cursor, selectedDate, options, monthData?)` is the low-level state reconstruction used by `createCalendarState` and navigation — pass a pre-built `MonthData` to skip re-computation.
 
 ## Themes & Color Schemes
 
@@ -255,7 +310,7 @@ interface ColorScheme {
 
 ### `THEMES` / `COLOR_SCHEMES` / `resolveTheme` / `resolveColorScheme`
 
-Same pattern as the [`cli`](/packages/cli) package — predefined maps and resolvers accepting either a name or a custom object.
+Same pattern as the `@typescript-calendar-lib/cli` package — predefined maps and resolvers accepting either a name or a custom object.
 
 ## Example: Minimal TUI Loop
 
@@ -300,6 +355,7 @@ import {
   findFirstDayCell,
   findTodayCell,
   getCursorDate,
+  getDateData,
   getSelectedDate,
   goToDate,
   goToMonth,
@@ -307,11 +363,15 @@ import {
   moveCursor,
   navigateMonth,
   navigateYear,
+  rebuildState,
   resolveColorScheme,
+  resolveOptions,
   resolveTheme,
+  sameStateOptions,
   selectDate,
   setCursorToDate,
   THEMES,
+  updateStateOptions,
 } from "@typescript-calendar-lib/tui";
 
 import type {
@@ -331,3 +391,7 @@ import type {
   ThemeName,
 } from "@typescript-calendar-lib/tui";
 ```
+
+## License
+
+MIT

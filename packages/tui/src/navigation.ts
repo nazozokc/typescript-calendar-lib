@@ -23,12 +23,12 @@ export { shiftMonth };
 type LocateDate = (data: MonthData) => { row: number; col: number } | null;
 
 /** カーソル/選択/オプションを保って年月で状態を再構築する */
-function withMonth(
-  state: CalendarState,
+function withMonth<T>(
+  state: CalendarState<T>,
   year: number,
   month: number,
-): CalendarState {
-  return rebuildState(
+): CalendarState<T> {
+  return rebuildState<T>(
     year,
     month,
     state.cursor,
@@ -38,14 +38,14 @@ function withMonth(
 }
 
 /** 月データを構築してカーソルを置き、状態を再構築する */
-function jumpTo(
-  state: CalendarState,
+function jumpTo<T>(
+  state: CalendarState<T>,
   year: number,
   month: number,
   locate: LocateDate,
-): CalendarState {
-  const data = buildMonthData(year, month, state.options);
-  return rebuildState(
+): CalendarState<T> {
+  const data = buildMonthData<T>(year, month, state.options);
+  return rebuildState<T>(
     year,
     month,
     locate(data),
@@ -56,49 +56,52 @@ function jumpTo(
 }
 
 /** 前月/翌月へ移動する（カーソルは新しい月の範囲にクランプされる） */
-export function navigateMonth(
-  state: CalendarState,
+export function navigateMonth<T>(
+  state: CalendarState<T>,
   direction: MonthDirection,
-): CalendarState {
+): CalendarState<T> {
   const { year, month } = shiftMonth(
     state.year,
     state.month,
     direction === "next" ? 1 : -1,
   );
-  return withMonth(state, year, month);
+  return withMonth<T>(state, year, month);
 }
 
 /** 前年/翌年へ移動する（サポート範囲の端では移動しない） */
-export function navigateYear(
-  state: CalendarState,
+export function navigateYear<T>(
+  state: CalendarState<T>,
   direction: MonthDirection,
-): CalendarState {
+): CalendarState<T> {
   const year = state.year + (direction === "next" ? 1 : -1);
   if (year < MIN_YEAR || year > MAX_YEAR) return state;
-  return withMonth(state, year, state.month);
+  return withMonth<T>(state, year, state.month);
 }
 
 /** 指定した年月へジャンプする。month は正規化される（例: 13 → 翌年1月） */
-export function goToMonth(
-  state: CalendarState,
+export function goToMonth<T>(
+  state: CalendarState<T>,
   year: number,
   month: number,
-): CalendarState {
-  return withMonth(state, year, month);
+): CalendarState<T> {
+  return withMonth<T>(state, year, month);
 }
 
 /** 指定した日付の月へジャンプし、カーソルをその日付のセルに置く */
-export function goToDate(state: CalendarState, date: Date): CalendarState {
+export function goToDate<T>(
+  state: CalendarState<T>,
+  date: Date,
+): CalendarState<T> {
   assertValidDate(date);
-  return jumpTo(state, date.getFullYear(), date.getMonth() + 1, (data) =>
+  return jumpTo<T>(state, date.getFullYear(), date.getMonth() + 1, (data) =>
     findDateCell(data, date),
   );
 }
 
 /** 今日の月へジャンプし、カーソルを今日のセルに置く */
-export function goToToday(state: CalendarState): CalendarState {
+export function goToToday<T>(state: CalendarState<T>): CalendarState<T> {
   const { today } = state.options;
-  return jumpTo(
+  return jumpTo<T>(
     state,
     today.getFullYear(),
     today.getMonth() + 1,

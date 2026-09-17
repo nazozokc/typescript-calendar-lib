@@ -59,14 +59,15 @@ export function App() {
 | `size` | `CalendarSize` | `"md"` | Cell size |
 | `style` | `CSSProperties` | — | Extra styles for the root element |
 | `interactive` | `boolean` | `false` | Enable cell click/hover/keyboard selection |
-| `onDateClick` | `(date: Date) => void` | — | Called when a day cell is clicked (or Enter/Space pressed) |
+| `onDateClick` | `(date: Date, data?: unknown) => void` | — | Called when a day cell is clicked (or Enter/Space pressed); `data` is that cell's `cellData` value (`undefined` when none) |
 | `onDateHover` | `(date: Date) => void` | — | Called when a day cell is hovered |
 | `onDateLeave` | `() => void` | — | Called when the mouse leaves the calendar |
 | `onKeyDown` | `(e: KeyboardEvent) => void` | — | Keyboard handler on the grid element |
 | `selectedDate` | `Date \| null` | `null` | Marks the cell `aria-selected` |
 | `cursorDate` | `Date \| null` | `null` | The cell that gets `tabIndex=0` (roving tabindex) |
 | `hoveredDate` | `Date \| null` | `null` | Marks the hovered cell with the `is-hovered` class |
-| `renderCell` | `(day, date, state) => ReactNode` | — | Custom cell content renderer |
+| `cellData` | `(date: Date) => unknown` | — | Resolve per-cell data; passed to `renderCell` and `onDateClick` |
+| `renderCell` | `(day, date, state, data?) => ReactNode` | — | Custom cell content renderer |
 
 The component exports as both named `Calendar` and default.
 
@@ -161,18 +162,18 @@ function App() {
       theme="modern"
       colorScheme="ocean"
       onMonthChange={(year, month) => console.log("Month:", year, month)}
-      onDateClick={(date) => console.log("Selected", date)}
+      onDateClick={(date, data) => console.log("Selected", date, data)}
       onDateLeave={() => console.log("Mouse left the calendar")}
     />
   );
 }
 ```
 
-It accepts the `useCalendarState` options (`initialYear`, `initialMonth`, `locale`, `weekStart`, `highlight`, `range`, `today`, `onMonthChange`) plus the `Calendar` visual props (`theme`, `colorScheme`, `size`, `style`, `renderCell`) and event callbacks (`onDateClick`, `onDateHover`, `onDateLeave`).
+It accepts the `useCalendarState` options (`initialYear`, `initialMonth`, `locale`, `weekStart`, `highlight`, `range`, `today`, `onMonthChange`) plus the `Calendar` visual props (`theme`, `colorScheme`, `size`, `style`, `cellData`, `renderCell`) and event callbacks (`onDateClick`, `onDateHover`, `onDateLeave`).
 
 ## Custom Cell Rendering
 
-Pass `renderCell` to replace the default day-number content of each cell. It receives the day, the full `Date`, and the cell state:
+Pass `renderCell` to replace the default day-number content of each cell. It receives the day, the full `Date`, the cell state, and (with `cellData`) the resolved data for that date:
 
 ```tsx
 import type { CalendarCellState } from "@typescript-calendar-lib/core";
@@ -180,15 +181,31 @@ import type { CalendarCellState } from "@typescript-calendar-lib/core";
 <Calendar
   year={2026}
   month={9}
-  renderCell={(day, date, state) => (
+  cellData={(date) => (date.getDate() === 15 ? "holiday" : undefined)}
+  renderCell={(day, date, state, data) => (
     <span>
       {day}
+      {data && `(${data})`}
       {state.isToday && "★"}
       {state.isInRange && "•"}
     </span>
   )}
 />
 ```
+
+`cellData` is called once per real day cell (never for empty cells) and receives the cell's full `Date`; returning `undefined` means "no data". Use it to attach anything — strings, objects, IDs — and consume it in `renderCell` (4th argument) or `onDateClick` (2nd argument):
+
+```tsx
+<Calendar
+  year={2026}
+  month={9}
+  interactive
+  cellData={(date) => (date.getDate() === 15 ? "meeting" : undefined)}
+  onDateClick={(date, data) => console.log(date, data)} // data: "meeting" | undefined
+/>
+```
+
+`cellData`/`renderCell` are render-layer options — they are **not** part of `useCalendarState` (`Calendar` re-renders from its props, so hook-level cell data would have no visible effect).
 
 ---
 

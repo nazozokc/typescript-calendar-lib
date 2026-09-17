@@ -12,9 +12,9 @@ function sameDateValue(a: Date | undefined, b: Date | undefined): boolean {
 }
 
 /** Compare public options by value so inline Date/object values are safe. */
-export function sameStateOptions(
-  a: CalendarStateOptions,
-  b: CalendarStateOptions,
+export function sameStateOptions<T>(
+  a: CalendarStateOptions<T>,
+  b: CalendarStateOptions<T>,
 ): boolean {
   return (
     a.initialYear === b.initialYear &&
@@ -24,22 +24,24 @@ export function sameStateOptions(
     sameDateValue(a.today, b.today) &&
     sameDateValue(a.highlight, b.highlight) &&
     sameDateValue(a.range?.from, b.range?.from) &&
-    sameDateValue(a.range?.to, b.range?.to)
+    sameDateValue(a.range?.to, b.range?.to) &&
+    a.cellData === b.cellData
   );
 }
 
 /** Rebuild state while preserving navigation-only state when options change. */
-export function updateStateOptions(
-  state: CalendarState,
-  next: CalendarStateOptions,
-  previous: CalendarStateOptions,
-): CalendarState {
-  const options: ResolvedOptions = resolveOptions({
+export function updateStateOptions<T>(
+  state: CalendarState<T>,
+  next: CalendarStateOptions<T>,
+  previous: CalendarStateOptions<T>,
+): CalendarState<T> {
+  const options: ResolvedOptions<T> = resolveOptions<T>({
     today: next.today ?? state.options.today,
     locale: next.locale ?? state.options.locale,
     weekStart: next.weekStart ?? state.options.weekStart,
     highlight: next.highlight,
     range: next.range,
+    cellData: next.cellData ?? state.options.cellData,
   });
   const year =
     next.initialYear !== undefined && next.initialYear !== previous.initialYear

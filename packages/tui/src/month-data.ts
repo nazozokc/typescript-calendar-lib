@@ -18,17 +18,18 @@ import type { CalendarCell, MonthData, MonthDataOptions } from "./types.ts";
  * `year`/`month` は shiftMonth で正規化される（例: month=13 → 翌年1月）。
  * 不正な入力（NaN・非整数の年月、Invalid Date、未対応ロケール等）には RangeError を投げる。
  */
-export function buildMonthData(
+export function buildMonthData<T>(
   year: number,
   month: number,
-  options: MonthDataOptions = {},
-): MonthData {
+  options: MonthDataOptions<T> = {},
+): MonthData<T> {
   const {
     locale = "en",
     weekStart = "sunday",
     today = new Date(),
     highlight,
     range,
+    cellData,
   } = options;
 
   // ─── 検証・正規化 ───────────────────────────────────
@@ -47,7 +48,7 @@ export function buildMonthData(
   const weekdays = getWeekdayHeaders(locale, weekStart);
   const rawGrid = buildMonthGrid(ny, nm, weekStart);
 
-  const cells: CalendarCell[][] = rawGrid.map((row) =>
+  const cells: CalendarCell<T>[][] = rawGrid.map((row) =>
     row.map((day, dayOfWeek) => {
       if (day === null) {
         return {
@@ -65,13 +66,16 @@ export function buildMonthData(
       const date = createDate(ny, nm - 1, day);
       const state = getCalendarCellState(date, { today, highlight, range });
 
-      return {
+      const cell: CalendarCell<T> = {
         day,
         date,
         dayOfWeek,
         isCurrentMonth: true,
         ...state,
       };
+      const data = cellData?.(date);
+      if (data !== undefined) cell.data = data;
+      return cell;
     }),
   );
 

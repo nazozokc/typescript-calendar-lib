@@ -48,7 +48,7 @@ export function App() {
 | :--- | :--- | :--- | :--- |
 | `year` | `number` | — (required) | Calendar year |
 | `month` | `number` | — (required) | Month, 1-indexed (`1`–`12`) |
-| `locale` | `"en" \| "ja"` | `"en"` | Language |
+| `locale` | `"en" \| "ja" \| "es" \| "de" \| "fr" \| "ko" \| "zh"` | `"en"` | Language |
 | `weekStart` | `"sunday" \| "monday"` | `"sunday"` | First day of the week |
 | `highlight` | `Date` | — | Date to highlight |
 | `range` | `{ from: Date; to: Date }` | — | Dates to emphasize |
@@ -59,15 +59,21 @@ export function App() {
 | `size` | `CalendarSize` | `"md"` | Cell size |
 | `style` | `CSSProperties` | — | Extra styles for the root element |
 | `interactive` | `boolean` | `false` | Enable cell click/hover/keyboard selection |
-| `onDateClick` | `(date: Date) => void` | — | Called when a day cell is clicked (or Enter/Space pressed) |
+| `onDateClick` | `(date: Date, data?: unknown) => void` | — | Called when a day cell is clicked (or Enter/Space pressed); `data` is that cell's `cellData` value (`undefined` when none) |
 | `onDateHover` | `(date: Date) => void` | — | Called when a day cell is hovered |
 | `onDateLeave` | `() => void` | — | Called when the mouse leaves the calendar |
+| `onKeyDown` | `(e: KeyboardEvent) => void` | — | Keyboard handler on the grid element |
+| `selectedDate` | `Date \| null` | `null` | Marks the cell `aria-selected` |
+| `cursorDate` | `Date \| null` | `null` | The cell that gets `tabIndex=0` (roving tabindex) |
+| `hoveredDate` | `Date \| null` | `null` | Marks the hovered cell with the `is-hovered` class |
+| `cellData` | `(date: Date) => unknown` | — | Resolve per-cell data; passed to `renderCell` and `onDateClick` |
+| `renderCell` | `(day, date, state, data?) => ReactNode` | — | Custom cell content renderer |
 
 The component exports as both named `Calendar` and default.
 
 ## Interactive Mode
 
-Set `interactive` to make day cells clickable. Each cell becomes a focusable `role="button"` supporting click, mouse hover, and Enter / Space keys:
+Set `interactive` to make day cells clickable. Each cell becomes a `<button class="calendar-day-btn">` — clickable, hoverable, and keyboard-accessible (Enter / Space):
 
 ```tsx
 <Calendar
@@ -78,6 +84,8 @@ Set `interactive` to make day cells clickable. Each cell becomes a focusable `ro
   onDateHover={(date) => console.log("Hovered", date)}
 />
 ```
+
+`onDateClick` / `onDateHover` notify the caller but don't touch internal state. To select on click, either use `useCalendarState`'s `selectDateAt(date)` (see below) or the ready-made [`InteractiveCalendar`](#interactivecalendar), which wires click-to-select, hover tracking, and range preview out of the box.
 
 ### `useCalendarState` hook
 
@@ -93,8 +101,12 @@ function App() {
     goNext,       // () => void — next month
     goPrev,       // () => void — previous month
     goToday,      // () => void — jump to today
+    navigateYear, // (direction) => void — "prev" | "next" year
+    goToMonth,    // (year, month) => void — jump to a specific month
+    goToDate,     // (date) => void — jump to a date's month, cursor on that date
     moveCursor,   // (direction) => void — "up" | "down" | "left" | "right"
     selectDate,   // () => void — select date under cursor
+    setCursorToDate, // (date) => void — move cursor to a date (same month only)
     selectDateAt, // (date) => void — move cursor to a date and select it
     clearSelection,
     cursorDate,   // Date | null
@@ -115,7 +127,6 @@ function App() {
         interactive
         onDateClick={selectDateAt}   // click a cell → select it
         onDateHover={setHoveredDate} // track the hovered cell
-        hoveredDate={hoveredDate}
       />
       <button onClick={goNext}>›</button>
     </>
@@ -123,7 +134,82 @@ function App() {
 }
 ```
 
-See the [Interactive Demo](/guide/interactive-demo) for a complete example.
+`options` also accepts `onMonthChange: (year, month) => void`, called whenever the displayed month changes.
+
+## InteractiveCalendar
+
+`InteractiveCalendar` bundles `useCalendarState` + `<Calendar>` into a single self-contained component. It manages its own state and supports mouse and keyboard interaction out of the box:
+
+| Input | Action |
+| :--- | :--- |
+| Click a cell | Selects the date (cursor moves there); fires `onDateClick` |
+| Hover a cell | Tracks the hovered date (adds `is-hovered` class); fires `onDateHover` |
+| Mouse leaves | Clears the hover state; fires `onDateLeave` |
+| Selection + hover | Shows a range preview between the selected date and the hovered date (`is-in-range-preview` class) |
+| Arrow keys | Move the cursor (focus follows the cursor cell) |
+| `PageUp` / `PageDown` | Previous / next month |
+| Enter / Space | Same as clicking the focused cell (selects it) |
+
+```tsx
+import { InteractiveCalendar } from "@typescript-calendar-lib/react";
+import "@typescript-calendar-lib/react/calendar.css"; // required — component styles
+
+function App() {
+  return (
+    <InteractiveCalendar
+      initialYear={2026}
+      initialMonth={9}
+      theme="modern"
+      colorScheme="ocean"
+      onMonthChange={(year, month) => console.log("Month:", year, month)}
+      onDateClick={(date, data) => console.log("Selected", date, data)}
+      onDateLeave={() => console.log("Mouse left the calendar")}
+    />
+  );
+}
+```
+
+It accepts the `useCalendarState` options (`initialYear`, `initialMonth`, `locale`, `weekStart`, `highlight`, `range`, `today`, `onMonthChange`) plus the `Calendar` visual props (`theme`, `colorScheme`, `size`, `style`, `cellData`, `renderCell`) and event callbacks (`onDateClick`, `onDateHover`, `onDateLeave`).
+
+## Custom Cell Rendering
+
+Pass `renderCell` to replace the default day-number content of each cell. It receives the day, the full `Date`, the cell state, and (with `cellData`) the resolved data for that date:
+
+```tsx
+import type { CalendarCellState } from "@typescript-calendar-lib/core";
+
+<Calendar
+  year={2026}
+  month={9}
+  cellData={(date) => (date.getDate() === 15 ? "holiday" : undefined)}
+  renderCell={(day, date, state, data) => (
+    <span>
+      {day}
+      {data && `(${data})`}
+      {state.isToday && "★"}
+      {state.isInRange && "•"}
+    </span>
+  )}
+/>
+```
+
+`cellData` is called once per real day cell (never for empty cells) and receives the cell's full `Date`; returning `undefined` means "no data". Use it to attach anything — strings, objects, IDs — and consume it in `renderCell` (4th argument) or `onDateClick` (2nd argument):
+
+```tsx
+<Calendar
+  year={2026}
+  month={9}
+  interactive
+  cellData={(date) => (date.getDate() === 15 ? "meeting" : undefined)}
+  onDateClick={(date, data) => console.log(date, data)} // data: "meeting" | undefined
+/>
+```
+
+`cellData`/`renderCell` are render-layer options — they are **not** part of `useCalendarState` (`Calendar` re-renders from its props, so hook-level cell data would have no visible effect).
+
+---
+
+See the interactive demo in the repository docs (`docs/guide/interactive-demo.md`) for a complete example.
 
 ## Themes
 
@@ -254,7 +340,7 @@ The `style` prop can override any CSS variable or add custom styles:
 
 ## Cell Classes
 
-Each day cell gets semantic classes you can target with CSS:
+Each day cell gets semantic classes you can target with CSS. In interactive mode, the grid is exposed as a `role="grid"` table with `role="gridcell"` cells (WAI-ARIA APG calendar pattern): today's cell gets `aria-current="date"`, the selected date gets `aria-selected`, and only the cursor cell is tabbable (`tabIndex=0`, roving tabindex).
 
 | Class | When |
 | :--- | :--- |
@@ -275,6 +361,7 @@ import Calendar, {
   resolveTheme,
   THEMES,
   useCalendarState,
+  InteractiveCalendar,
 } from "@typescript-calendar-lib/react";
 
 import type {
@@ -283,6 +370,7 @@ import type {
   CalendarSize,
   CalendarSizeName,
   ColorSchemeName,
+  InteractiveCalendarProps,
   ReactColorScheme,
   ReactTheme,
   ThemeName,
@@ -290,3 +378,7 @@ import type {
   UseCalendarStateReturn,
 } from "@typescript-calendar-lib/react";
 ```
+
+## License
+
+MIT

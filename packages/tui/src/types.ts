@@ -3,7 +3,7 @@ import type { Locale, WeekStart } from "@typescript-calendar-lib/core";
 // ─── Cell ────────────────────────────────────────────────
 
 /** カレンダー1セルのメタデータ */
-export interface CalendarCell {
+export interface CalendarCell<T = unknown> {
   /** 日数 (1–31)。空欄セルは null */
   day: number | null;
   /** 完全な Date オブジェクト。day が null なら null */
@@ -20,12 +20,14 @@ export interface CalendarCell {
   isHighlight: boolean;
   /** 範囲指定の色付け対象か */
   isInRange: boolean;
+  /** ユーザー定義データ。cellData が解決した値。未設定セルは undefined */
+  data?: T;
 }
 
 // ─── MonthData ───────────────────────────────────────────
 
 /** 月カレンダーの完全なデータ */
-export interface MonthData {
+export interface MonthData<T = unknown> {
   year: number;
   /** 1–12 */
   month: number;
@@ -34,7 +36,7 @@ export interface MonthData {
   /** 曜日ヘッダー（例: ["Sun", "Mon", ...]） */
   weekdays: readonly string[];
   /** 6行 × 7列のセルグリッド */
-  cells: CalendarCell[][];
+  cells: CalendarCell<T>[][];
   /** 日付を含む行数（末尾の全 null 行を除く） */
   visibleRows: number;
 }
@@ -42,7 +44,7 @@ export interface MonthData {
 // ─── Options ─────────────────────────────────────────────
 
 /** buildMonthData に渡すオプション（プレゼンテーション情報は含まない） */
-export interface MonthDataOptions {
+export interface MonthDataOptions<T = unknown> {
   locale?: Locale;
   weekStart?: WeekStart;
   /** 今日の基準日。省略時は new Date() */
@@ -51,12 +53,14 @@ export interface MonthDataOptions {
   highlight?: Date;
   /** 色付け範囲。from > to は RangeError */
   range?: { from: Date; to: Date };
+  /** 各セルに付与するユーザー定義データを解決する関数。実セルのみに呼ばれる */
+  cellData?: (date: Date) => T | undefined;
 }
 
 // ─── State ───────────────────────────────────────────────
 
 /** createCalendarState に渡すオプション */
-export interface CalendarStateOptions {
+export interface CalendarStateOptions<T = unknown> {
   /** 表示開始年。欠落時は today の年。NaN や非整数は RangeError */
   initialYear?: number;
   /** 表示開始月 (1–12)。範囲外は正規化される（例: 13 → 翌年1月） */
@@ -71,19 +75,23 @@ export interface CalendarStateOptions {
   highlight?: Date;
   /** 色付け範囲。from > to は RangeError */
   range?: { from: Date; to: Date };
+  /** 各セルに付与するユーザー定義データを解決する関数。実セルのみに呼ばれる */
+  cellData?: (date: Date) => T | undefined;
 }
 
 /** 状態に保持される解決済みオプション（月移動時も引き継がれる） */
-export interface ResolvedOptions {
+export interface ResolvedOptions<T = unknown> {
   locale: Locale;
   weekStart: WeekStart;
   today: Date;
   highlight?: Date;
   range?: { from: Date; to: Date };
+  /** 各セルに付与するユーザー定義データを解決する関数。実セルのみに呼ばれる */
+  cellData?: (date: Date) => T | undefined;
 }
 
 /** インタラクティブカレンダーの状態 */
-export interface CalendarState {
+export interface CalendarState<T = unknown> {
   year: number;
   /** 1–12 */
   month: number;
@@ -92,9 +100,9 @@ export interface CalendarState {
   /** 選択済み日付。未選択なら null */
   selectedDate: Date | null;
   /** 状態生成時に解決されたオプション */
-  options: ResolvedOptions;
+  options: ResolvedOptions<T>;
   /** 現在表示中の月データ（キャッシュ） */
-  monthData: MonthData;
+  monthData: MonthData<T>;
 }
 
 /** ナビゲーション方向 */
