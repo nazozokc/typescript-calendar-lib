@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+# Runs build and test suite before pushing.
+
+set -eu
+
+echo "Running build..."
+pnpm build
+
+echo "Running tests..."
+pnpm test
