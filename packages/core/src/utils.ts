@@ -14,6 +14,24 @@ export interface CalendarCellState {
   isInRange: boolean;
 }
 
+/** 日付範囲（from <= to） */
+export interface DateRange {
+  from: Date;
+  to: Date;
+}
+
+/**
+ * 2つの日付を from <= to の順にソートした範囲を返す。
+ * どちらかが null なら undefined（範囲なし）。
+ */
+export function sortRange(
+  a: Date | null,
+  b: Date | null,
+): DateRange | undefined {
+  if (a === null || b === null) return undefined;
+  return a.getTime() <= b.getTime() ? { from: a, to: b } : { from: b, to: a };
+}
+
 /** 月初日（1日）を返す */
 export function firstDayOfMonth(year: number, month: number): Date {
   assertValidYearMonth(year, month);

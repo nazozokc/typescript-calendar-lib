@@ -13,7 +13,7 @@ export type {
   RenderMonthOptions,
   WeekStart,
 } from "./types.ts";
-export type { CalendarCellState } from "./utils.ts";
+export type { CalendarCellState, DateRange } from "./utils.ts";
 export {
   buildMonthGrid,
   daysInMonth,
@@ -24,6 +24,7 @@ export {
   isLeapYear,
   isSameDay,
   lastDayOfMonth,
+  sortRange,
 } from "./utils.ts";
 export {
   assertValidDate,
