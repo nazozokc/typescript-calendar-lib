@@ -1,9 +1,13 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import DOMPurify from "dompurify";
   import hljs from "highlight.js";
   import "highlight.js/styles/github-dark.css";
 
   let { html }: { html: string } = $props();
+  // .md 由来の HTML は markdown-it が html:true で生 HTML を通すため、
+  // スクリプト・イベントハンドラ・javascript: URI を除去してから描画する
+  const safeHtml = $derived(DOMPurify.sanitize(html));
   let container: HTMLDivElement | undefined = $state();
 
   function slugify(text: string): string {
@@ -30,5 +34,5 @@
 </script>
 
 <div class="markdown-body" bind:this={container}>
-  {@html html}
+  {@html safeHtml}
 </div>
