@@ -4,6 +4,9 @@ allowBuilds:
   esbuild: true
 overrides:
   linkify-it: ">=5.0.2"
+  # GHSA-6v5v-wf23-fmfq: markdown-it smartquotes の二次複雑度 DoS（修正版 >=14.2.0）。
+  # vite-plugin-markdown は ^12 を要求しているが API 互換のため override で引き上げる。
+  markdown-it: ">=14.2.0"
 # @sveltejs/package は svelte2tsx 経由で typescript を import するが、自らの
 # 依存として宣言していない。リポジトリの typescript が tsgo (7.x) のため
 # 解決が .pnpm ルートの 7.x にフォールバックし、ts.sys が無くてクラッシュする。
