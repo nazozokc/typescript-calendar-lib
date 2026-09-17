@@ -4,7 +4,8 @@ export {
   moveCursor,
   setCursorToDate,
 } from "./cursor.ts";
-
+export type { CalendarKeyAction } from "./keyboard.ts";
+export { keyToAction } from "./keyboard.ts";
 export { buildMonthData } from "./month-data.ts";
 export {
   goToDate,
@@ -19,7 +20,12 @@ export {
   findFirstDayCell,
   findTodayCell,
 } from "./search.ts";
-export { clearSelection, getSelectedDate, selectDate } from "./selection.ts";
+export {
+  clearSelection,
+  getSelectedDate,
+  selectDate,
+  selectDateAt,
+} from "./selection.ts";
 export { createCalendarState, rebuildState } from "./state.ts";
 export { sameStateOptions, updateStateOptions } from "./state-options.ts";
 export type {

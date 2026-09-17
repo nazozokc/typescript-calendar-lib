@@ -12,10 +12,12 @@ import {
   goToDate,
   goToMonth,
   goToToday,
+  keyToAction,
   moveCursor,
   navigateMonth,
   navigateYear,
   selectDate,
+  selectDateAt,
   setCursorToDate,
 } from "./index.ts";
 
@@ -40,6 +42,7 @@ describe("public exports", () => {
     expect(typeof createCalendarState).toBe("function");
     expect(typeof moveCursor).toBe("function");
     expect(typeof selectDate).toBe("function");
+    expect(typeof selectDateAt).toBe("function");
     expect(typeof clearSelection).toBe("function");
     expect(typeof getCursorDate).toBe("function");
     expect(typeof getSelectedDate).toBe("function");
@@ -54,5 +57,16 @@ describe("public exports", () => {
     expect(typeof goToDate).toBe("function");
     expect(typeof goToToday).toBe("function");
     expect(typeof buildMonthData).toBe("function");
+  });
+
+  test("キーボードマッピングがエクスポートされている", () => {
+    expect(keyToAction("ArrowRight")).toBe("right");
+    expect(keyToAction("ArrowLeft")).toBe("left");
+    expect(keyToAction("ArrowDown")).toBe("down");
+    expect(keyToAction("ArrowUp")).toBe("up");
+    expect(keyToAction("PageUp")).toBe("prev");
+    expect(keyToAction("PageDown")).toBe("next");
+    expect(keyToAction("Enter")).toBeUndefined();
+    expect(keyToAction("a")).toBeUndefined();
   });
 });
