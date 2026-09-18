@@ -47,7 +47,7 @@
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/svelte": "^5",
-    "jsdom": "^26",
+    "jsdom": "^30",
     "svelte-check": "^4",
     "typescript": "^5.9.0",
     "vitest": "^5"
