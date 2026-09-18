@@ -118,6 +118,37 @@ describe("createCalendarState", () => {
     });
     expect(state.selectedDate).toBeNull();
   });
+
+  test("今日が disabled ならカーソルは最初の有効セルに置かれる", () => {
+    const state = createCalendarState({
+      today: TODAY, // 2026-09-15
+      isDateDisabled: (d) => d.getDate() === 15,
+    });
+    // 15 が disabled → 最初の日付セル（1日）へ
+    expect(state.cursor).not.toBeNull();
+    expect(getCursorDate(state)).toEqual(new Date(2026, 8, 1));
+  });
+
+  test("今日が表示月に無く、最初の日付が disabled なら次の有効セルに置かれる", () => {
+    const state = createCalendarState({
+      today: TODAY,
+      initialYear: 2020,
+      initialMonth: 1,
+      // 2020-01-01(水 col3) と 02(木 col4) を disabled
+      isDateDisabled: (d) => d.getDate() <= 2,
+    });
+    // 2020-01-03 は金曜 → col 5
+    expect(state.cursor).toEqual({ row: 0, col: 5 });
+    expect(getCursorDate(state)).toEqual(new Date(2020, 0, 3));
+  });
+
+  test("全セルが disabled ならカーソルは null", () => {
+    const state = createCalendarState({
+      today: TODAY,
+      isDateDisabled: () => true,
+    });
+    expect(state.cursor).toBeNull();
+  });
 });
 
 describe("rebuildState", () => {

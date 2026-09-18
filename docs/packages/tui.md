@@ -56,6 +56,7 @@ interface CalendarCell<T = unknown> {
   isToday: boolean;
   isHighlight: boolean;
   isInRange: boolean;
+  isDisabled: boolean;      // matches `isDateDisabled`
   data?: T;                 // cellData's resolved value; omitted when undefined
 }
 ```
@@ -69,6 +70,7 @@ interface MonthDataOptions<T = unknown> {
   today?: Date;                 // reference for isToday, default new Date()
   highlight?: Date;             // sets isHighlight
   range?: { from: Date; to: Date }; // sets isInRange
+  isDateDisabled?: (date: Date) => boolean; // sets isDisabled
   cellData?: (date: Date) => T | undefined; // per-cell data; undefined = no data
 }
 ```
@@ -128,8 +130,30 @@ interface CalendarStateOptions<T = unknown> {
   weekStart?: WeekStart;
   highlight?: Date;
   range?: { from: Date; to: Date };
+  isDateDisabled?: (date: Date) => boolean; // blocks selection & cursor movement
   cellData?: (date: Date) => T | undefined; // per-cell data; undefined = no data
 }
+```
+
+### Disabled dates (`isDateDisabled`)
+
+Pass `isDateDisabled` to mark dates as non-selectable. It is called once per real cell (never for empty cells) and propagates through the whole state machine:
+
+- `CalendarCell.isDisabled` is set in `buildMonthData()`, so you can render disabled cells differently.
+- `moveCursor` **skips** disabled cells in the movement direction (wrapping around the grid). If every cell in the grid is disabled, the state is returned unchanged.
+- `selectDate` / `selectDateAt` / `setCursorToDate` are no-ops on disabled cells.
+- `goToDate` returns the state unchanged when the target date is disabled.
+- The initial cursor (and `goToToday`) fall back to the first **enabled** cell when today is disabled — or stays `null` when every cell is disabled.
+- `findTodayCell` / `findFirstDayCell` only return enabled cells.
+
+```ts
+const state = createCalendarState({
+  initialYear: 2026,
+  initialMonth: 9,
+  isDateDisabled: (date) => date.getDay() === 0, // disable Sundays
+});
+
+state.monthData.cells.flat().filter((c) => c.isDisabled).length; // 4 (Sep 2026)
 ```
 
 ### `CalendarState`
@@ -160,7 +184,7 @@ import {
 
 ### `moveCursor(state, direction): CalendarState`
 
-`direction` is `"up" | "down" | "left" | "right"`. Movement wraps around grid edges. When the cursor is `null`, it snaps to today (or the first day cell):
+`direction` is `"up" | "down" | "left" | "right"`. Movement wraps around grid edges. When the cursor is `null`, it snaps to today (or the first day cell). Disabled cells are skipped in the movement direction:
 
 ```ts
 const next = moveCursor(state, "right");
@@ -168,7 +192,7 @@ const next = moveCursor(state, "right");
 
 ### `setCursorToDate(state, date): CalendarState`
 
-Moves the cursor to the cell containing `date`. Returns the state unchanged if the date isn't in the current month.
+Moves the cursor to the cell containing `date`. Returns the state unchanged if the date isn't in the current month — or is disabled.
 
 ### `getCursorDate(state): Date | null`
 
@@ -176,7 +200,7 @@ Returns the date under the cursor, or `null` when the cursor is `null` or on an 
 
 ### `selectDate(state): CalendarState`
 
-Selects the date under the cursor. Nothing happens on empty cells.
+Selects the date under the cursor. Nothing happens on empty or disabled cells.
 
 ### `getSelectedDate(state): Date | null`
 
@@ -212,11 +236,11 @@ Jump to a specific month. Year/month are normalized (e.g. month `13` → next ye
 
 ### `goToDate(state, date)`
 
-Jump to the month containing `date` and place the cursor on that date's cell.
+Jump to the month containing `date` and place the cursor on that date's cell. Returns the state unchanged when the date is disabled (or cannot be displayed after year clamping).
 
 ### `goToToday(state)`
 
-Jump to today's month and place the cursor on today's cell.
+Jump to today's month and place the cursor on today's cell. When today is disabled, the cursor falls back to the first enabled cell.
 
 ### Search helpers
 
@@ -229,9 +253,9 @@ import {
   getDateData,
 } from "@typescript-calendar-lib/tui";
 
-findTodayCell(monthData);    // { row, col } | null
+findTodayCell(monthData);    // { row, col } | null (enabled cells only)
 findDateCell(monthData, date); // { row, col } | null
-findFirstDayCell(monthData); // { row, col } | null
+findFirstDayCell(monthData); // { row, col } | null (enabled cells only)
 clampCursor(cursor, monthData); // clamps to visible rows/cols
 getDateData(state, date);    // resolved user data for a date (T | undefined)
 ```
@@ -323,7 +347,10 @@ import {
   selectDate,
 } from "@typescript-calendar-lib/tui";
 
-let state = createCalendarState({ weekStart: "monday" });
+let state = createCalendarState({
+  weekStart: "monday",
+  isDateDisabled: (date) => date.getDay() === 0, // skip Sundays
+});
 
 // Arrow-key style interaction loop
 const onKey = (key: string) => {

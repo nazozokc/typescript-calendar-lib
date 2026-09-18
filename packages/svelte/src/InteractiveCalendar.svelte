@@ -28,6 +28,8 @@
     range?: { from: Date; to: Date };
     /** 今日の基準日。省略時は初回レンダリング時刻に解決される */
     today?: Date;
+    /** 選択不可日付の判定。true を返した日付は選択・カーソル移動・ホバーの対象外になる */
+    isDateDisabled?: (date: Date) => boolean;
 
     // ── Calendar の見た目 ──
 
@@ -63,6 +65,7 @@
     highlight,
     range,
     today,
+    isDateDisabled,
     theme,
     colorScheme,
     size,
@@ -82,6 +85,7 @@
     today,
     highlight,
     range,
+    isDateDisabled,
   }));
 
   // クリック（マウス・Enter/Space 共通）で日付を選択する。
@@ -144,6 +148,7 @@
     highlight={cal.state.options.highlight}
     range={cal.state.options.range}
     today={cal.state.options.today}
+    isDateDisabled={isDateDisabled}
     theme={theme}
     colorScheme={colorScheme}
     size={size}

@@ -1,10 +1,12 @@
 {
   "name": "@typescript-calendar-lib/core",
-  "version": "0.1.1",
+  "version": "1.0.0",
+  "description": "Core date utilities and calendar data primitives for typescript-calendar-lib",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nazozokc/typescript-calendar-lib"
+    "url": "https://github.com/nazozokc/typescript-calendar-lib",
+    "directory": "packages/core"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -21,5 +23,11 @@
   "scripts": {
     "build": "tsdown",
     "prepack": "pnpm build"
-  }
+  },
+  "keywords": [
+    "calendar",
+    "date",
+    "utility"
+  ],
+  "license": "MIT"
 }

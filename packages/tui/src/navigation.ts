@@ -5,7 +5,7 @@ import {
 } from "@typescript-calendar-lib/core";
 import { buildMonthData } from "./month-data.ts";
 import { shiftMonth } from "./month-math.ts";
-import { findDateCell, findTodayCell } from "./search.ts";
+import { findDateCell, findFirstDayCell, findTodayCell } from "./search.ts";
 import { rebuildState } from "./state.ts";
 import type { CalendarState, MonthData, MonthDirection } from "./types.ts";
 
@@ -87,24 +87,40 @@ export function goToMonth<T>(
   return withMonth<T>(state, year, month);
 }
 
-/** 指定した日付の月へジャンプし、カーソルをその日付のセルに置く */
+/** 指定した日付の月へジャンプし、カーソルをその日付のセルに置く。選択不可の日付なら状態を変えない */
 export function goToDate<T>(
   state: CalendarState<T>,
   date: Date,
 ): CalendarState<T> {
   assertValidDate(date);
-  return jumpTo<T>(state, date.getFullYear(), date.getMonth() + 1, (data) =>
-    findDateCell(data, date),
+  const data = buildMonthData<T>(
+    date.getFullYear(),
+    date.getMonth() + 1,
+    state.options,
+  );
+  const pos = findDateCell(data, date);
+  // クランプ後も日付が存在する場合は選択不可チェックをする
+  if (pos !== null) {
+    const cell = data.cells[pos.row]![pos.col]!;
+    if (cell.isDisabled) return state;
+  }
+  return rebuildState<T>(
+    date.getFullYear(),
+    date.getMonth() + 1,
+    pos,
+    state.selectedDate,
+    state.options,
+    data,
   );
 }
 
-/** 今日の月へジャンプし、カーソルを今日のセルに置く */
+/** 今日の月へジャンプし、カーソルを今日のセルに置く。今日が選択不可なら最初の有効セルに置く */
 export function goToToday<T>(state: CalendarState<T>): CalendarState<T> {
   const { today } = state.options;
   return jumpTo<T>(
     state,
     today.getFullYear(),
     today.getMonth() + 1,
-    findTodayCell,
+    (data) => findTodayCell(data) ?? findFirstDayCell(data),
   );
 }

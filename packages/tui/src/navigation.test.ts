@@ -201,6 +201,29 @@ describe("goToMonth / goToToday", () => {
     expect(jumped.monthData.month).toBe(12);
     expect(jumped.cursor).toBeNull();
   });
+
+  test("disabled の日付への goToDate は状態を変えない", () => {
+    const state = createCalendarState({
+      today: TODAY,
+      isDateDisabled: (d) => d.getDate() === 20,
+    });
+    const jumped = goToDate(state, new Date(2026, 8, 20));
+    expect(jumped).toEqual(state);
+  });
+
+  test("today が disabled なら goToToday のカーソルは最初の有効セルに置かれる", () => {
+    const state = createCalendarState({
+      today: TODAY,
+      initialYear: 2020,
+      initialMonth: 1,
+      isDateDisabled: (d) => d.getDate() === 15,
+    });
+    const now = goToToday(state);
+    expect(now.year).toBe(2026);
+    expect(now.month).toBe(9);
+    // 15 が disabled → 1日(火) に置かれる
+    expect(getCursorDate(now)).toEqual(new Date(2026, 8, 1));
+  });
 });
 
 describe("ナビゲーションの入力検証", () => {

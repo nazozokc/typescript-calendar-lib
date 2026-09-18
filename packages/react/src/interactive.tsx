@@ -24,10 +24,12 @@ export interface InteractiveCalendarProps {
   weekStart?: CalendarOptions["weekStart"];
   /** ハイライト対象日 */
   highlight?: Date;
-  /** 色付け範囲 */
+  /** 範囲プレビュー（ホバー等の候補範囲）。is-in-range-preview クラスで視覚化される */
   range?: { from: Date; to: Date };
   /** 今日の基準日。省略時は初回レンダリング時刻に解決される */
   today?: Date;
+  /** 選択不可日付の判定。true を返した日付は選択・カーソル移動・ホバーの対象外になる */
+  isDateDisabled?: (date: Date) => boolean;
   /** 表示中の年月が変わったときに呼ばれる */
   onMonthChange?: (year: number, month: number) => void;
 
@@ -70,6 +72,7 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     highlight,
     range,
     today,
+    isDateDisabled,
     onMonthChange,
     theme,
     colorScheme,
@@ -90,6 +93,7 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     today,
     highlight,
     range,
+    isDateDisabled,
     onMonthChange,
   });
 
@@ -164,6 +168,7 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
       highlight={state.options.highlight}
       range={state.options.range}
       today={state.options.today}
+      isDateDisabled={isDateDisabled}
       theme={theme}
       colorScheme={colorScheme}
       size={size}

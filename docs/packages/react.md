@@ -54,6 +54,7 @@ export function App() {
 | `range` | `{ from: Date; to: Date }` | — | Dates to emphasize |
 | `rangePreview` | `{ from: Date; to: Date }` | — | Candidate range preview (hover preview), rendered with the `is-in-range-preview` class |
 | `today` | `Date` | — | Reference date for "today" styling |
+| `isDateDisabled` | `(date: Date) => boolean` | — | Mark dates as non-selectable (rendered with the `is-disabled` class; blocks clicks, hover, and cursor movement) |
 | `theme` | `ThemeName \| ReactTheme` | `"default"` | CSS class-based theme |
 | `colorScheme` | `ColorSchemeName \| ReactColorScheme` | `"default"` | CSS variable-based colors |
 | `size` | `CalendarSize` | `"md"` | Cell size |
@@ -169,7 +170,20 @@ function App() {
 }
 ```
 
-It accepts the `useCalendarState` options (`initialYear`, `initialMonth`, `locale`, `weekStart`, `highlight`, `range`, `today`, `onMonthChange`) plus the `Calendar` visual props (`theme`, `colorScheme`, `size`, `style`, `cellData`, `renderCell`) and event callbacks (`onDateClick`, `onDateHover`, `onDateLeave`).
+It accepts the `useCalendarState` options (`initialYear`, `initialMonth`, `locale`, `weekStart`, `highlight`, `range`, `today`, `isDateDisabled`, `onMonthChange`) plus the `Calendar` visual props (`theme`, `colorScheme`, `size`, `style`, `cellData`, `renderCell`) and event callbacks (`onDateClick`, `onDateHover`, `onDateLeave`).
+
+## Disabled Dates
+
+Pass `isDateDisabled` to mark dates as non-selectable. Disabled cells render with the `is-disabled` class (see `--cal-disabled-fg` below) and are excluded from all interaction: the button is `disabled`, clicks and hover callbacks are suppressed, and arrow-key movement skips them:
+
+```tsx
+<Calendar
+  year={2026}
+  month={9}
+  interactive
+  isDateDisabled={(date) => date.getDay() === 0} // disable Sundays
+/>
+```
 
 ## Custom Cell Rendering
 
@@ -279,6 +293,7 @@ Available variables:
 | `--cal-range-preview-bg` | Range preview background (falls back to `--cal-range-bg`) |
 | `--cal-today-bg` | Today background |
 | `--cal-today-fg` | Today foreground |
+| `--cal-disabled-fg` | Disabled date foreground |
 
 Pass a custom scheme directly:
 
@@ -350,6 +365,7 @@ Each day cell gets semantic classes you can target with CSS. In interactive mode
 | `is-in-range` | Inside `range` |
 | `is-in-range-preview` | Inside `rangePreview` |
 | `is-hovered` | Matches `hoveredDate` (interactive mode) |
+| `is-disabled` | Matches `isDateDisabled` |
 
 ## Exports
 

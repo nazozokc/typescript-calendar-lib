@@ -13,7 +13,7 @@ npm install @typescript-calendar-lib/cli
 bun add @typescript-calendar-lib/cli
 ```
 
-Replace `cli` with the package you need: `core`, `cli`, `react`, `svelte`, or `tui`.
+Replace `cli` with the package you need: `core`, `cli`, `react`, `svelte`, `tui`, or `web`.
 
 ## Quick Start
 
@@ -70,9 +70,20 @@ For interactivity (click, hover, cursor, month navigation), see the [Interactive
 ```ts
 import { createCalendarState, moveCursor, navigateMonth } from "@typescript-calendar-lib/tui";
 
-const state = createCalendarState({ year: 2026, month: 9 });
+const state = createCalendarState({ initialYear: 2026, initialMonth: 9 });
 const moved = moveCursor(state, "right");
 const nextMonth = navigateMonth(state, "next");
+```
+
+### Svelte Component
+
+```svelte
+<script lang="ts">
+  import Calendar from "@typescript-calendar-lib/svelte";
+  import "@typescript-calendar-lib/svelte/calendar.css";
+</script>
+
+<Calendar year={2026} month={9} colorScheme="ocean" theme="modern" />
 ```
 
 ## Package Overview
@@ -81,16 +92,20 @@ const nextMonth = navigateMonth(state, "next");
 | :--- | :--- |
 | [`core`](/packages/core) | Shared utilities: date math, locale data, grid building |
 | [`cli`](/packages/cli) | Plain-text rendering with themes and ANSI colors |
-| [`react`](/packages/react) | `<Calendar />` React component with CSS themes |
+| [`react`](/packages/react) | `<Calendar />` React 19 component with CSS themes |
+| [`svelte`](/packages/svelte) | `<Calendar />` Svelte 5 component with CSS themes |
 | [`tui`](/packages/tui) | Headless state & data for building TUI calendars |
+| [`web`](/packages/web) | Shared presentation data (themes, color schemes, sizes, CSS) |
 
 ## Dependency Graph
 
 ```
 core (zero dependencies)
- ├── cli   (+ cli-table3)
- ├── react (+ react peer)
- └── tui   (zero extra deps)
+ ├── tui    (zero extra deps)
+ ├── web    (zero extra deps)
+ ├── cli    (→ tui)
+ ├── react  (+ react peer, → tui, web)
+ └── svelte (+ svelte peer, → tui, web)
 ```
 
 All packages depend on `@typescript-calendar-lib/core`. You can use any package independently, or compose them together.

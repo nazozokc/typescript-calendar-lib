@@ -17,19 +17,19 @@ function findCell<T>(
   return null;
 }
 
-/** 月データから「今日」のセル位置を探す。なければ null */
+/** 月データから「今日」のセル位置を探す。選択不可の日付は対象外。なければ null */
 export function findTodayCell<T>(monthData: MonthData<T>): CellPos {
-  return findCell(monthData, (c) => c.isToday);
+  return findCell(monthData, (c) => c.isToday && !c.isDisabled);
 }
 
-/** 月データから指定日付のセル位置を探す。なければ null */
+/** 月データから指定日付のセル位置を探す。選択不可でも位置は返す（呼び出し側が判断）。なければ null */
 export function findDateCell<T>(monthData: MonthData<T>, date: Date): CellPos {
   return findCell(monthData, (c) => c.date !== null && isSameDay(c.date, date));
 }
 
-/** 月データから最初の日付セルを探す */
+/** 月データから最初の日付セルを探す。選択不可の日付は対象外 */
 export function findFirstDayCell<T>(monthData: MonthData<T>): CellPos {
-  return findCell(monthData, (c) => c.day !== null);
+  return findCell(monthData, (c) => c.day !== null && !c.isDisabled);
 }
 
 // ─── データ取得 ──────────────────────────────────────────

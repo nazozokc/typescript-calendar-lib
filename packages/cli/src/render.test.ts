@@ -30,6 +30,54 @@ describe("renderMonth", () => {
   });
 });
 
+describe("renderMonth - isDateDisabled", () => {
+  test("color:false なら disabled セルも従来どおり描画される", () => {
+    const out = renderMonth(2026, 9, {
+      isDateDisabled: (d) => d.getDate() === 15,
+    });
+    expect(out).toContain("15");
+  });
+
+  test("color:true のとき disabled セルは dim コードで描画される", () => {
+    const out = renderMonth(2026, 9, {
+      color: true,
+      colorScheme: "mono",
+      isDateDisabled: (d) => d.getDate() === 15,
+    });
+    // ANSI dim (90) で 15 が描画される
+    expect(out).toContain("\u001b[90m 15\u001b[0m");
+  });
+
+  test("default スキームでも dim フォールバックが使われる", () => {
+    const out = renderMonth(2026, 9, {
+      color: true,
+      isDateDisabled: (d) => d.getDate() === 15,
+    });
+    expect(out).toContain("\u001b[90m 15\u001b[0m");
+  });
+
+  test("disabled でも highlight が優先される", () => {
+    const out = renderMonth(2026, 9, {
+      color: true,
+      colorScheme: "mono",
+      highlight: new Date(2026, 8, 15),
+      highlightStyle: "reverse",
+      isDateDisabled: (d) => d.getDate() === 15,
+    });
+    // 反転 (7) が使われ dim ではない
+    expect(out).toContain("\u001b[7m 15\u001b[0m");
+  });
+
+  test("disabled セルも renderCell に委譲される", () => {
+    const out = renderMonth(2026, 9, {
+      isDateDisabled: (d) => d.getDate() === 15,
+      renderCell: (day, _date, state) =>
+        state.isDisabled ? `x${day}` : String(day),
+    });
+    expect(out).toContain("x15");
+  });
+});
+
 describe("renderMonth - highlight", () => {
   test("bracketスタイルは日付を角括囲みにする", () => {
     const lines = renderMonth(2026, 9, {

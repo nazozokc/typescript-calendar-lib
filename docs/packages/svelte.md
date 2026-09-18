@@ -47,6 +47,7 @@ bun add @typescript-calendar-lib/svelte
 | `range` | `{ from: Date; to: Date }` | — | Dates to emphasize |
 | `rangePreview` | `{ from: Date; to: Date }` | — | Candidate range preview (hover preview), rendered with the `is-in-range-preview` class |
 | `today` | `Date` | — | Reference date for "today" styling |
+| `isDateDisabled` | `(date: Date) => boolean` | — | Mark dates as non-selectable (rendered with the `is-disabled` class; blocks clicks, hover, and cursor movement) |
 | `selected` | `Date \| null` | — | Selected date (`.is-selected` class, `aria-pressed` in interactive mode) |
 | `cursorDate` | `Date \| null` | — | Cursor position (`.is-cursor` class) |
 | `hoveredDate` | `Date \| null` | — | Hovered date (`.is-hovered` class) |
@@ -105,6 +106,7 @@ Combines `useCalendarState` options, `Calendar` visual props, and event callback
 | `highlight` | `Date` | Date to highlight |
 | `range` | `{ from: Date; to: Date }` | Dates to emphasize |
 | `today` | `Date` | Reference date for "today" styling |
+| `isDateDisabled` | `(date: Date) => boolean` | Mark dates as non-selectable |
 | `theme` | `ThemeName \| SvelteTheme` | CSS class-based theme |
 | `colorScheme` | `ColorSchemeName \| SvelteColorScheme` | CSS variable-based colors |
 | `size` | `CalendarSize` | Cell size |
@@ -269,6 +271,7 @@ Available variables:
 | `--cal-range-preview-bg` | Range preview background (falls back to `--cal-range-bg`) |
 | `--cal-today-bg` | Today background |
 | `--cal-today-fg` | Today foreground |
+| `--cal-disabled-fg` | Disabled date foreground |
 | `--cal-selected-bg` | Selected background |
 | `--cal-selected-fg` | Selected foreground |
 
@@ -332,6 +335,7 @@ Each day cell gets semantic classes you can target with CSS:
 | `is-in-range` | Inside `range` |
 | `is-in-range-preview` | Inside `rangePreview` |
 | `is-hovered` | Matches `hoveredDate` (interactive mode) |
+| `is-disabled` | Matches `isDateDisabled` |
 | `is-selected` | Matches `selected` |
 | `is-cursor` | Matches `cursorDate` |
 

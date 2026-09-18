@@ -22,7 +22,7 @@ import {
 export interface UseCalendarStateOptions
   extends Pick<
     CalendarStateOptions,
-    "locale" | "weekStart" | "today" | "highlight" | "range"
+    "locale" | "weekStart" | "today" | "highlight" | "range" | "isDateDisabled"
   > {
   initialYear?: number;
   initialMonth?: number;

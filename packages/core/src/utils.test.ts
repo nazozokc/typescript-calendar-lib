@@ -125,6 +125,7 @@ describe("getCalendarCellState", () => {
       isToday: true,
       isHighlight: true,
       isInRange: true,
+      isDisabled: false,
     });
   });
 
@@ -134,6 +135,7 @@ describe("getCalendarCellState", () => {
       isToday: false,
       isHighlight: false,
       isInRange: false,
+      isDisabled: false,
     });
   });
 
@@ -155,6 +157,30 @@ describe("getCalendarCellState", () => {
     expect(() =>
       getCalendarCellState(new Date(2026, 8, 7), { today: invalid }),
     ).toThrow(RangeError);
+  });
+
+  test("isDateDisabled が true を返す日付は isDisabled: true", () => {
+    const date = new Date(2026, 8, 15);
+    expect(
+      getCalendarCellState(date, {
+        isDateDisabled: (d) => d.getDate() === 15,
+      }),
+    ).toMatchObject({ isDisabled: true });
+  });
+
+  test("isDateDisabled が false を返す日付は isDisabled: false", () => {
+    const date = new Date(2026, 8, 16);
+    expect(
+      getCalendarCellState(date, {
+        isDateDisabled: (d) => d.getDate() === 15,
+      }),
+    ).toMatchObject({ isDisabled: false });
+  });
+
+  test("isDateDisabled 未指定は isDisabled: false", () => {
+    expect(getCalendarCellState(new Date(2026, 8, 15))).toMatchObject({
+      isDisabled: false,
+    });
   });
 });
 

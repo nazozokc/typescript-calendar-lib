@@ -40,13 +40,14 @@ pnpm hooks:install   # enable git hooks (commit message + typecheck/test)
 
 ## Repository structure
 
-pnpm workspace monorepo with five packages:
+pnpm workspace monorepo with six packages:
 
 ```
 packages/
   core/    # Pure calendar logic: date utilities, month/year/range computation
   cli/     # CLI binary (`typescript-calendar-lib`) and text rendering
   tui/     # Framework-agnostic headless state (cursor, selection, navigation)
+  web/     # Shared presentation data (themes, color schemes, sizes, calendar.css)
   react/   # React component + useCalendarState hook, calendar.css
   svelte/  # Svelte 5 component + useCalendarState hook, calendar.css
 docs/      # Docs SPA (Vite build, deployed to GitHub Pages)

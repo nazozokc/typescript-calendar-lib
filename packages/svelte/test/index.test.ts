@@ -809,3 +809,94 @@ describe("InteractiveCalendar", () => {
     expect(btn).toHaveAttribute("aria-pressed", "true");
   });
 });
+
+describe("Calendar isDateDisabled", () => {
+  const disabled15 = (d: Date) => d.getDate() === 15;
+  const base = () => ({ year: 2026, month: 9, today: TODAY });
+
+  test("disabled セルに is-disabled クラスと aria-disabled が付く", () => {
+    const { container } = render(Calendar, {
+      props: { ...base(), isDateDisabled: disabled15 },
+    });
+    const cells = container.querySelectorAll("td.is-disabled");
+    expect(cells).toHaveLength(1);
+    expect(cells[0]!.textContent).toBe("15");
+    expect(cells[0]!.getAttribute("aria-disabled")).toBe("true");
+  });
+
+  test("interactive 時は disabled セルの button が disabled になる", () => {
+    const { container } = render(Calendar, {
+      props: { ...base(), interactive: true, isDateDisabled: disabled15 },
+    });
+    const btns = [...container.querySelectorAll<HTMLButtonElement>("button")];
+    const btn = btns.find((b) => b.textContent === "15")!;
+    expect(btn.disabled).toBe(true);
+    expect(btn.closest("td")!.classList.contains("is-disabled")).toBe(true);
+  });
+
+  test("disabled セルのクリックで onDateClick は呼ばれない", async () => {
+    const onClick = vi.fn();
+    const { container } = render(Calendar, {
+      props: {
+        ...base(),
+        interactive: true,
+        isDateDisabled: disabled15,
+        onDateClick: onClick,
+      },
+    });
+    const btn = [
+      ...container.querySelectorAll<HTMLButtonElement>("button"),
+    ].find((b) => b.textContent === "15")!;
+    await fireEvent.click(btn);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  test("disabled セルへのホバーで onDateHover は呼ばれない", async () => {
+    const onHover = vi.fn();
+    const { container } = render(Calendar, {
+      props: {
+        ...base(),
+        interactive: true,
+        isDateDisabled: disabled15,
+        onDateHover: onHover,
+      },
+    });
+    const btn = [
+      ...container.querySelectorAll<HTMLButtonElement>("button"),
+    ].find((b) => b.textContent === "15")!;
+    await fireEvent.mouseEnter(btn);
+    expect(onHover).not.toHaveBeenCalled();
+  });
+});
+
+describe("InteractiveCalendar isDateDisabled", () => {
+  test("矢印キーで disabled セルをスキップしてカーソルが移動する", async () => {
+    const { container } = render(InteractiveCalendar, {
+      props: {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+        // 初期カーソルは今日(15日)。16(水) だけ disabled → 右矢印で 17(木) へ
+        isDateDisabled: (d: Date) => d.getDate() === 16,
+      },
+    });
+    const btn = screen.getByRole("button", { name: /September 15, 2026/ });
+    btn.focus();
+    await fireEvent.keyDown(btn, { key: "ArrowRight" });
+    const cursorBtn = container.querySelector('[data-cursor="true"]');
+    expect(cursorBtn?.textContent).toBe("17");
+  });
+
+  test("today が disabled なら初期カーソルは最初の有効セルに置かれる", () => {
+    const { container } = render(InteractiveCalendar, {
+      props: {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+        isDateDisabled: (d: Date) => d.getDate() === 15,
+      },
+    });
+    const cursorBtn = container.querySelector('[data-cursor="true"]');
+    expect(cursorBtn?.textContent).toBe("1");
+  });
+});

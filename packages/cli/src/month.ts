@@ -34,6 +34,7 @@ export function renderMonth(
     theme: themeOption = "default",
     colorScheme: schemeOption = "default",
     today = new Date(),
+    isDateDisabled,
     cellData,
     renderCell: customRenderCell,
   } = options;
@@ -64,7 +65,12 @@ export function renderMonth(
     if (day === null) return " ".repeat(cellWidth);
 
     const date = createDate(year, month - 1, day);
-    const state = getCalendarCellState(date, { today, highlight, range });
+    const state = getCalendarCellState(date, {
+      today,
+      highlight,
+      range,
+      isDateDisabled,
+    });
     const data = cellData?.(date);
 
     // ユーザー定義の描画があれば、解決済みデータを渡して委譲する
@@ -72,12 +78,13 @@ export function renderMonth(
       return customRenderCell(day, date, state, data);
     }
 
-    const { isHighlight, isInRange, isToday, isWeekend } = state;
+    const { isHighlight, isInRange, isToday, isDisabled, isWeekend } = state;
 
     const text = (
       isHighlight && highlightStyle === "bracket" ? `[${day}]` : String(day)
     ).padStart(cellWidth);
 
+    // 優先順位: highlight > range > today > disabled > weekend > day
     let code: number | undefined;
     if (isHighlight && highlightStyle === "reverse") {
       code = palette.highlight ?? 7;
@@ -85,6 +92,8 @@ export function renderMonth(
       code = palette.range ?? 33;
     } else if (isToday && palette.today !== undefined) {
       code = palette.today;
+    } else if (isDisabled) {
+      code = palette.dim ?? 90;
     } else if (isWeekend && palette.weekend !== undefined) {
       code = palette.weekend;
     } else if (palette.day !== undefined) {

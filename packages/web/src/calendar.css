@@ -14,6 +14,7 @@
   --cal-today-fg: #c2410c;
   --cal-selected-bg: #dc2626;
   --cal-selected-fg: #ffffff;
+  --cal-disabled-fg: #cbd5e1;
 
   /* セルサイズ（size propや style の CSS 変数で上書きできる） */
   --cal-cell-w: 2.25rem;
@@ -63,6 +64,13 @@
 
 .calendar td.is-weekend {
   color: var(--cal-weekend-fg);
+}
+
+/* 選択不可日付。色を弱め、ポインターイベント無効化は各インタラクティブ層で行う */
+.calendar td.is-disabled {
+  color: var(--cal-disabled-fg, var(--cal-weekend-fg));
+  opacity: 0.5;
+  text-decoration: line-through;
 }
 
 .calendar td.is-today {
@@ -277,6 +285,15 @@
   background: var(--cal-selected-bg);
 }
 
+/* 選択不可セルはカーソルを not-allowed にし、ホバー効果を無効化する */
+.calendar-interactive td.is-disabled button.calendar-day-btn {
+  cursor: not-allowed;
+}
+
+.calendar-interactive td.is-disabled button.calendar-day-btn:hover {
+  background: transparent;
+}
+
 .calendar-interactive td button.calendar-day-btn:focus-visible {
   outline: 2px solid var(--cal-accent);
   outline-offset: -4px;
@@ -284,6 +301,10 @@
 
 .calendar-interactive td button.calendar-day-btn:active {
   transform: scale(0.95);
+}
+
+.calendar-interactive td.is-disabled button.calendar-day-btn:active {
+  transform: none;
 }
 
 /* ─── Theme: retro ─────────────────────────────────────── */

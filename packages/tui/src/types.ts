@@ -20,6 +20,8 @@ export interface CalendarCell<T = unknown> {
   isHighlight: boolean;
   /** 範囲指定の色付け対象か */
   isInRange: boolean;
+  /** 選択不可の日付か（isDateDisabled で判定） */
+  isDisabled: boolean;
   /** ユーザー定義データ。cellData が解決した値。未設定セルは undefined */
   data?: T;
 }
@@ -53,6 +55,8 @@ export interface MonthDataOptions<T = unknown> {
   highlight?: Date;
   /** 色付け範囲。from > to は RangeError */
   range?: { from: Date; to: Date };
+  /** 選択不可の日付を判定する関数。true を返す日付は選択・カーソル移動不可 */
+  isDateDisabled?: (date: Date) => boolean;
   /** 各セルに付与するユーザー定義データを解決する関数。実セルのみに呼ばれる */
   cellData?: (date: Date) => T | undefined;
 }
@@ -75,6 +79,8 @@ export interface CalendarStateOptions<T = unknown> {
   highlight?: Date;
   /** 色付け範囲。from > to は RangeError */
   range?: { from: Date; to: Date };
+  /** 選択不可の日付を判定する関数。true を返す日付は選択・カーソル移動不可 */
+  isDateDisabled?: (date: Date) => boolean;
   /** 各セルに付与するユーザー定義データを解決する関数。実セルのみに呼ばれる */
   cellData?: (date: Date) => T | undefined;
 }
@@ -86,6 +92,8 @@ export interface ResolvedOptions<T = unknown> {
   today: Date;
   highlight?: Date;
   range?: { from: Date; to: Date };
+  /** 選択不可の日付を判定する関数。true を返す日付は選択・カーソル移動不可 */
+  isDateDisabled?: (date: Date) => boolean;
   /** 各セルに付与するユーザー定義データを解決する関数。実セルのみに呼ばれる */
   cellData?: (date: Date) => T | undefined;
 }

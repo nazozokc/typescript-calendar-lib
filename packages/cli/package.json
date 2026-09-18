@@ -1,13 +1,15 @@
 {
   "name": "@typescript-calendar-lib/cli",
-  "version": "0.1.1",
+  "version": "1.0.0",
+  "description": "Terminal calendar renderer with themes and ANSI color schemes",
   "type": "module",
   "bin": {
     "typescript-calendar-lib": "./dist/bin.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/nazozokc/typescript-calendar-lib"
+    "url": "https://github.com/nazozokc/typescript-calendar-lib",
+    "directory": "packages/cli"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -25,6 +27,13 @@
     "build": "tsdown",
     "prepack": "pnpm build"
   },
+  "keywords": [
+    "calendar",
+    "cli",
+    "terminal",
+    "ansi"
+  ],
+  "license": "MIT",
   "dependencies": {
     "@typescript-calendar-lib/core": "workspace:*",
     "@typescript-calendar-lib/tui": "workspace:*"
