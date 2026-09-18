@@ -1,18 +1,30 @@
 # typescript-calendar-lib
 
-A calendar library written in TypeScript. Render month, year, or arbitrary date-range calendars as plain text (with optional ANSI color) right in your terminal.
+A TypeScript calendar library spanning the terminal and the web. Render month, year, or arbitrary date-range calendars as plain text (with optional ANSI color) or as interactive React 19 / Svelte 5 components — all sharing one headless core.
 
 ## Features
 
 - **Month / Year / Range** — render a single month, a full year (4 columns × 3 rows), or any date range
-- **Bilingual** — English, Japanese, Spanish, German, French, Korean, Chinese (Simplified) locales
+- **7 locales** — English, Japanese, Spanish, German, French, Korean, Chinese (Simplified)
 - **Week start** — Sunday or Monday
 - **Highlight today** — bracket (`[8]`) or reverse-video styles
-- **Color ranges** — highlight specific dates with range coloring (opt-in)
-- **Interactive React** — `useCalendarState` hook + clickable/keyboard cells
+- **Range coloring** — emphasize a span of dates (opt-in)
+- **Disabled dates** — block dates with an `isDateDisabled` predicate in every layer (cursor skips them, selection is blocked)
+- **Interactive React 19** — `useCalendarState` hook + clickable/keyboard cells
 - **Interactive Svelte 5** — the same headless state, as a runes-based `useCalendarState` hook + `Calendar` component
 - **Headless TUI state** — cursor, selection, and navigation state machine for any TUI framework
 - **Zero runtime dependencies** — plain text by default; ANSI colors only when enabled
+
+## Packages
+
+| Package | Description |
+| :--- | :--- |
+| [`@typescript-calendar-lib/core`](packages/core/README.md) | Date math, locales, grid building — shared by everything else |
+| [`@typescript-calendar-lib/cli`](packages/cli/README.md) | Terminal renderer with themes, ANSI colors, and a `typescript-calendar-lib` binary |
+| [`@typescript-calendar-lib/tui`](packages/tui/README.md) | Headless calendar data & state machine for any TUI framework |
+| [`@typescript-calendar-lib/web`](packages/web/README.md) | Shared presentation data (themes, color schemes, sizes, CSS) |
+| [`@typescript-calendar-lib/react`](packages/react/README.md) | React 19 component + `useCalendarState` hook |
+| [`@typescript-calendar-lib/svelte`](packages/svelte/README.md) | Svelte 5 component + `useCalendarState` hook |
 
 ## Install
 
@@ -25,6 +37,8 @@ bun add @typescript-calendar-lib/cli
 ```
 
 ## Usage
+
+### CLI (plain text)
 
 ```ts
 import { calendar, calendarYear, calendarRange } from "@typescript-calendar-lib/cli";
@@ -40,6 +54,34 @@ console.log(calendarRange({
   from: new Date(2026, 5, 1),
   to: new Date(2026, 8, 30),
 }));
+```
+
+Or use the `typescript-calendar-lib` binary:
+
+```sh
+typescript-calendar-lib 2026 9
+```
+
+### React
+
+```tsx
+import { Calendar } from "@typescript-calendar-lib/react";
+import "@typescript-calendar-lib/react/calendar.css";
+
+function App() {
+  return <Calendar year={2026} month={9} colorScheme="ocean" />;
+}
+```
+
+### Svelte
+
+```svelte
+<script lang="ts">
+  import Calendar from "@typescript-calendar-lib/svelte";
+  import "@typescript-calendar-lib/svelte/calendar.css";
+</script>
+
+<Calendar year={2026} month={9} colorScheme="ocean" theme="modern" />
 ```
 
 ### Output
@@ -69,6 +111,7 @@ Render a single month.
 | `highlight` | `Date` | — | Date to highlight (e.g. today) |
 | `highlightStyle` | `"bracket" \| "reverse"` | `"bracket"` | Highlight appearance |
 | `range` | `{ from: Date; to: Date }` | — | Dates to color |
+| `isDateDisabled` | `(date: Date) => boolean` | — | Dates to render dimmed as non-selectable |
 | `color` | `boolean` | `false` | Emit ANSI color codes |
 
 ### `calendarYear(options: CalendarYearOptions): string`
@@ -137,6 +180,18 @@ When a date is both highlighted and in range, the highlight takes precedence.
 
 `range.from` must not be after `range.to` — a reversed range throws a `RangeError` in every layer (`core`, the CLI, `buildMonthData`, React, and Svelte).
 
+### Disabled dates
+
+`isDateDisabled` marks dates as non-selectable. In the CLI they render dimmed; in the web packages they get the `is-disabled` class (and `--cal-disabled-fg` color), take `aria-disabled`, and block clicks. Keyboard cursor movement skips them:
+
+```ts
+calendar({
+  year: 2026,
+  month: 9,
+  isDateDisabled: (date) => date.getDay() === 0, // disable Sundays
+});
+```
+
 By default (`color: false`) the output is clean plain text with no ANSI escape codes, so it's safe to pipe into files or other tools.
 
 ## Input validation
@@ -176,7 +231,7 @@ import type {
 pnpm test
 ```
 
-The suite covers date utilities (leap years, month boundaries), locale headers, grid layout, highlight/range rendering, and public API integration.
+The suite covers date utilities (leap years, month boundaries), locale headers, grid layout, highlight/range/disabled rendering, cursor movement, and public API integration across all packages.
 
 ## Development
 
