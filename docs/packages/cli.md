@@ -62,6 +62,7 @@ All options from [`core`](/packages/core) are supported, plus these CLI-specific
 | `theme` | `ThemeName \| CliTheme` | `"default"` | Visual theme (`"default"` \| `"modern"`) or custom theme object |
 | `colorScheme` | `ColorSchemeName \| CliPalette` | `"default"` | Color scheme, active when `color: true` |
 | `today` | `Date` | `new Date()` | Reference date for "today" coloring |
+| `isDateDisabled` | `(date: Date) => boolean` | — | Mark dates as non-selectable; rendered with the `dim` color |
 | `cellData` | `(date: Date) => unknown` | — | Resolve per-cell data; passed to `renderCell` |
 | `renderCell` | `(day, date, state, data?) => string` | — | Custom cell text; replaces the day cell verbatim |
 
@@ -271,10 +272,25 @@ calendar({
 
 `renderCell` receives `(day, date, state, data)`:
 
-- `state` — `getCalendarCellState(date)` result (`isWeekend`, `isToday`, `isHighlight`, `isInRange`, `dayOfWeek`)
+- `state` — `getCalendarCellState(date)` result (`isWeekend`, `isToday`, `isHighlight`, `isInRange`, `isDisabled`)
 - `data` — the resolved `cellData` value for that date (`undefined` when none)
 
 The returned string replaces the cell **verbatim** — no padding, colorization, or highlight/range styling is applied, so you control cell width and any ANSI codes yourself. A bare `String(day)` in a wide `renderCell` can shift the column alignment of that row.
+
+### Disabled dates
+
+`isDateDisabled` marks dates as non-selectable. Disabled cells are rendered with the `dim` color (falling back to `90` even on the `"default"` scheme, which otherwise colors only range/highlight):
+
+```ts
+calendar({
+  year: 2026,
+  month: 9,
+  color: true,
+  isDateDisabled: (date) => date.getDay() === 0, // disable Sundays
+});
+```
+
+Color precedence for a cell: highlight > range > today > **disabled** > weekend > day.
 
 ### Plain text output
 

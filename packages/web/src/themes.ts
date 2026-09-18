@@ -54,6 +54,7 @@ const SCHEME_KEYS = [
   "--cal-today-fg",
   "--cal-selected-bg",
   "--cal-selected-fg",
+  "--cal-disabled-fg",
 ] as const;
 
 /** カラースキームごとの値を SCHEME_KEYS の並びで定義する */
@@ -73,6 +74,7 @@ const SCHEME_VALUES: Record<ColorSchemeName, readonly string[]> = {
     "#c2410c",
     "#dc2626",
     "#ffffff",
+    "#cbd5e1",
   ],
   ocean: [
     "#f0f9ff",
@@ -89,6 +91,7 @@ const SCHEME_VALUES: Record<ColorSchemeName, readonly string[]> = {
     "#155e75",
     "#0e7490",
     "#ffffff",
+    "#7dd3fc",
   ],
   forest: [
     "#f0fdf4",
@@ -105,6 +108,7 @@ const SCHEME_VALUES: Record<ColorSchemeName, readonly string[]> = {
     "#166534",
     "#15803d",
     "#ffffff",
+    "#86efac",
   ],
   sunset: [
     "#fffaf5",
@@ -121,6 +125,7 @@ const SCHEME_VALUES: Record<ColorSchemeName, readonly string[]> = {
     "#9a3412",
     "#ea580c",
     "#ffffff",
+    "#fdba74",
   ],
   mono: [
     "#ffffff",
@@ -137,6 +142,7 @@ const SCHEME_VALUES: Record<ColorSchemeName, readonly string[]> = {
     "#111827",
     "#111827",
     "#ffffff",
+    "#d1d5db",
   ],
   midnight: [
     "#0f172a",
@@ -153,6 +159,7 @@ const SCHEME_VALUES: Record<ColorSchemeName, readonly string[]> = {
     "#7dd3fc",
     "#38bdf8",
     "#0f172a",
+    "#475569",
   ],
   blossom: [
     "#fffaff",
@@ -169,6 +176,7 @@ const SCHEME_VALUES: Record<ColorSchemeName, readonly string[]> = {
     "#be185d",
     "#db2777",
     "#ffffff",
+    "#f9a8d4",
   ],
 };
 

@@ -73,6 +73,8 @@
     ) => string;
     /** 各セルに付与するユーザー定義データを解決する関数。実セルのみに呼ばれる */
     cellData?: (date: Date) => unknown;
+    /** 選択不可日付の判定。true を返した日付は is-disabled クラスになり、インタラクティブ時は選択・ホバーできなくなる */
+    isDateDisabled?: (date: Date) => boolean;
   }
 
   let {
@@ -98,11 +100,12 @@
     onkeydown,
     renderCell,
     cellData,
+    isDateDisabled,
   }: CalendarProps = $props();
 
   const cellDate = (day: number): Date => createDate(year, month - 1, day);
   const cellState = (day: number): CalendarCellState =>
-    getCalendarCellState(cellDate(day), { today, highlight, range });
+    getCalendarCellState(cellDate(day), { today, highlight, range, isDateDisabled });
   const cellClass = (day: number): string | undefined =>
     getCellClasses(cellDate(day), {
       today,
@@ -112,7 +115,9 @@
       selected,
       cursorDate,
       hoveredDate,
+      isDateDisabled,
     }) || undefined;
+  const isDisabledDay = (day: number): boolean => cellState(day).isDisabled;
   const isSelectedDay = (day: number): boolean =>
     selected != null && isSameDay(cellDate(day), selected);
   const isTodayDay = (day: number): boolean =>
@@ -168,18 +173,19 @@
               {#if day === null}
                 <td></td>
               {:else}
-                <td class={cellClass(day)}>
+                <td class={cellClass(day)} aria-disabled={isDisabledDay(day) || undefined}>
                   {#if interactive}
                     <button
                       type="button"
                       class="calendar-day-btn"
-                      onclick={() => handleCellClick(day)}
-                      onmouseenter={() => handleCellHover(day)}
+                      onclick={isDisabledDay(day) ? undefined : () => handleCellClick(day)}
+                      onmouseenter={isDisabledDay(day) ? undefined : () => handleCellHover(day)}
                       tabindex={isCursorDay(day) ? 0 : -1}
                       data-cursor={isCursorDay(day) ? "true" : undefined}
                       aria-label={formatCellLabel(locale, year, month, day)}
                       aria-pressed={isSelectedDay(day) || undefined}
                       aria-current={isTodayDay(day) ? "date" : undefined}
+                      disabled={isDisabledDay(day)}
                     >
                       {#if renderCell}
                         {renderCell(day, cellDate(day), cellState(day), cellData?.(cellDate(day)))}

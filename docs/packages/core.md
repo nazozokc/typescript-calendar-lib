@@ -100,6 +100,7 @@ interface CalendarCellState {
   isToday: boolean;     // matches `today`
   isHighlight: boolean; // matches `highlight`
   isInRange: boolean;   // within `range` (inclusive)
+  isDisabled: boolean;  // matches `isDateDisabled`
 }
 ```
 
@@ -201,7 +202,7 @@ Throws `RangeError` when `from` is after `to`, or when either date is invalid.
 
 ### `getCalendarCellState(date, options?): CalendarCellState`
 
-Computes the display state of a single day cell (weekend, today, highlight, in-range):
+Computes the display state of a single day cell (weekend, today, highlight, in-range, disabled):
 
 ```ts
 const state = getCalendarCellState(new Date(2026, 8, 6), {
@@ -209,7 +210,16 @@ const state = getCalendarCellState(new Date(2026, 8, 6), {
   highlight: new Date(2026, 8, 6),
   range: { from: new Date(2026, 8, 1), to: new Date(2026, 8, 10) },
 });
-// { isWeekend: true, isToday: true, isHighlight: true, isInRange: true }
+// { isWeekend: true, isToday: true, isHighlight: true, isInRange: true, isDisabled: false }
+```
+
+Pass `isDateDisabled` to mark specific dates as non-selectable. It is called once per cell with the cell's `Date`; returning `true` sets `isDisabled` (this is what the `tui`, `cli`, `react`, and `svelte` packages use to block selection/cursor movement):
+
+```ts
+const state = getCalendarCellState(new Date(2026, 8, 15), {
+  isDateDisabled: (date) => date.getDay() === 0, // disable Sundays
+});
+// state.isDisabled === true
 ```
 
 With no options every flag is `false` (except `isWeekend`, which is derived from the date itself). Throws `RangeError` when `date` is invalid.

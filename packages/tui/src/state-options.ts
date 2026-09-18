@@ -25,6 +25,7 @@ export function sameStateOptions<T>(
     sameDateValue(a.highlight, b.highlight) &&
     sameDateValue(a.range?.from, b.range?.from) &&
     sameDateValue(a.range?.to, b.range?.to) &&
+    a.isDateDisabled === b.isDateDisabled &&
     a.cellData === b.cellData
   );
 }
@@ -41,6 +42,7 @@ export function updateStateOptions<T>(
     weekStart: next.weekStart ?? state.options.weekStart,
     highlight: next.highlight,
     range: next.range,
+    isDateDisabled: next.isDateDisabled,
     cellData: next.cellData ?? state.options.cellData,
   });
   const year =

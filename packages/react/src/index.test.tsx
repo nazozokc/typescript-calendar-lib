@@ -414,6 +414,92 @@ describe("Calendar interactive", () => {
   });
 });
 
+describe("Calendar isDateDisabled", () => {
+  const disabled15 = (d: Date) => d.getDate() === 15;
+
+  test("disabled セルに is-disabled クラスがつく", () => {
+    const { container } = render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 9,
+        today: TODAY,
+        isDateDisabled: disabled15,
+      }),
+    );
+    const disabledCells = container.querySelectorAll("td.is-disabled");
+    expect(disabledCells).toHaveLength(1);
+    expect(disabledCells[0]!.textContent).toBe("15");
+  });
+
+  test("disabled セルに aria-disabled がつく", () => {
+    const { container } = render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 9,
+        today: TODAY,
+        isDateDisabled: disabled15,
+      }),
+    );
+    expect(container.querySelector('td[aria-disabled="true"]')).not.toBeNull();
+  });
+
+  test("interactive 時は disabled セルの button が disabled になる", () => {
+    const { container } = render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 9,
+        interactive: true,
+        today: TODAY,
+        isDateDisabled: disabled15,
+      }),
+    );
+    const btn = [
+      ...container.querySelectorAll<HTMLButtonElement>("button"),
+    ].find((b) => b.textContent === "15");
+    expect(btn).toBeDefined();
+    expect(btn!.disabled).toBe(true);
+    expect(btn!.closest("td")!.classList.contains("is-disabled")).toBe(true);
+  });
+
+  test("disabled セルのクリックで onDateClick は呼ばれない", () => {
+    const onClick = vi.fn();
+    const { container } = render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 9,
+        interactive: true,
+        today: TODAY,
+        isDateDisabled: disabled15,
+        onDateClick: onClick,
+      }),
+    );
+    const btn = [
+      ...container.querySelectorAll<HTMLButtonElement>("button"),
+    ].find((b) => b.textContent === "15")!;
+    fireEvent.click(btn);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  test("disabled セルへのホバーで onDateHover は呼ばれない", () => {
+    const onHover = vi.fn();
+    const { container } = render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 9,
+        interactive: true,
+        today: TODAY,
+        isDateDisabled: disabled15,
+        onDateHover: onHover,
+      }),
+    );
+    const btn = [
+      ...container.querySelectorAll<HTMLButtonElement>("button"),
+    ].find((b) => b.textContent === "15")!;
+    fireEvent.mouseEnter(btn);
+    expect(onHover).not.toHaveBeenCalled();
+  });
+});
+
 // ─── useCalendarState options 更新 ─────────────────────
 
 describe("useCalendarState options 更新", () => {
@@ -1111,5 +1197,55 @@ describe("InteractiveCalendar", () => {
     expect(mid.closest("td")).toHaveClass("is-in-range-preview");
     const out = screen.getByRole("button", { name: /September 17, 2026/ });
     expect(out.closest("td")).not.toHaveClass("is-in-range-preview");
+  });
+
+  test("isDateDisabled の日付はクリックで選択されない", () => {
+    const onClick = vi.fn();
+    render(
+      createElement(InteractiveCalendar, {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+        isDateDisabled: (d) => d.getDate() === 15,
+        onDateClick: onClick,
+      }),
+    );
+    const btn = screen.getByRole("button", { name: /September 15, 2026/ });
+    // disabled ボタンはクリック不可
+    expect((btn as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(btn);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  test("矢印キーで disabled セルをスキップしてカーソルが移動する", () => {
+    const { container } = render(
+      createElement(InteractiveCalendar, {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+        // 初期カーソルは今日(15日)。16(水) だけ disabled → 右矢印で 17(木) へ
+        isDateDisabled: (d) => d.getDate() === 16,
+      }),
+    );
+    const before = screen.getByRole("button", { name: /September 15, 2026/ });
+    before.focus();
+    fireEvent.keyDown(before, { key: "ArrowRight" });
+    const cursorBtn = container.querySelector('[data-cursor="true"]');
+    expect(cursorBtn).not.toBeNull();
+    expect(cursorBtn!.getAttribute("aria-label")).toMatch(/September 17/);
+  });
+
+  test("today が disabled なら初期カーソルは最初の有効セルに置かれる", () => {
+    const { container } = render(
+      createElement(InteractiveCalendar, {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+        isDateDisabled: (d) => d.getDate() === 15,
+      }),
+    );
+    const cursorBtn = container.querySelector('[data-cursor="true"]');
+    expect(cursorBtn).not.toBeNull();
+    expect(cursorBtn!.getAttribute("aria-label")).toMatch(/September 1/);
   });
 });

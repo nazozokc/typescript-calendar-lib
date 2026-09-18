@@ -29,6 +29,7 @@ export function buildMonthData<T>(
     today = new Date(),
     highlight,
     range,
+    isDateDisabled,
     cellData,
   } = options;
 
@@ -60,11 +61,17 @@ export function buildMonthData<T>(
           isToday: false,
           isHighlight: false,
           isInRange: false,
+          isDisabled: false,
         };
       }
 
       const date = createDate(ny, nm - 1, day);
-      const state = getCalendarCellState(date, { today, highlight, range });
+      const state = getCalendarCellState(date, {
+        today,
+        highlight,
+        range,
+        isDateDisabled,
+      });
 
       const cell: CalendarCell<T> = {
         day,

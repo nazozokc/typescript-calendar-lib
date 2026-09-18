@@ -26,7 +26,8 @@ export function clampCursor(
   };
 }
 
-/** カーソルを移動する。カーソル未設定時は今日（なければ先頭の日付）にスナップする */
+/** カーソルを移動する。カーソル未設定時は今日（なければ先頭の日付）にスナップする。
+ * 選択不可セルは同じ方向にスキップされ、全セルが選択不可なら状態を変えない。 */
 export function moveCursor<T>(
   state: CalendarState<T>,
   direction: Direction,
@@ -45,33 +46,42 @@ export function moveCursor<T>(
 
   let { row, col } = cursor;
 
-  switch (direction) {
-    case "left":
-      col = (col - 1 + cols) % cols;
-      break;
-    case "right":
-      col = (col + 1) % cols;
-      break;
-    case "up":
-      row = (row - 1 + rows) % rows;
-      break;
-    case "down":
-      row = (row + 1) % rows;
-      break;
+  // 選択不可セルをスキップする。最大 rows*cols 回試行し、有効セルが無ければ現状維持
+  for (let i = 0; i < rows * cols; i++) {
+    switch (direction) {
+      case "left":
+        col = (col - 1 + cols) % cols;
+        break;
+      case "right":
+        col = (col + 1) % cols;
+        break;
+      case "up":
+        row = (row - 1 + rows) % rows;
+        break;
+      case "down":
+        row = (row + 1) % rows;
+        break;
+    }
+    const cell = monthData.cells[row]?.[col];
+    if (cell !== undefined && cell.day !== null && !cell.isDisabled) {
+      return { ...state, cursor: { row, col } };
+    }
   }
 
-  return { ...state, cursor: { row, col } };
+  return state;
 }
 
 // ─── 日付取得 ────────────────────────────────────────────
 
-/** 指定日付のセルへカーソルを移動する。当月に無ければ状態を変えず返す */
+/** 指定日付のセルへカーソルを移動する。当月に無い・選択不可の日付なら状態を変えず返す */
 export function setCursorToDate<T>(
   state: CalendarState<T>,
   date: Date,
 ): CalendarState<T> {
   const pos = findDateCell(state.monthData, date);
   if (pos === null) return state;
+  const cell = state.monthData.cells[pos.row]![pos.col]!;
+  if (cell.isDisabled) return state;
   return { ...state, cursor: pos };
 }
 

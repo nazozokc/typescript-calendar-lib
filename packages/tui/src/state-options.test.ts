@@ -88,6 +88,18 @@ describe("sameStateOptions", () => {
     ).toBe(false);
   });
 
+  test("異なる isDateDisabled は false（参照比較）", () => {
+    const f1 = (d: Date) => d.getDate() === 1;
+    const f2 = (d: Date) => d.getDate() === 2;
+    expect(
+      sameStateOptions({ isDateDisabled: f1 }, { isDateDisabled: f1 }),
+    ).toBe(true);
+    expect(
+      sameStateOptions({ isDateDisabled: f1 }, { isDateDisabled: f2 }),
+    ).toBe(false);
+    expect(sameStateOptions({ isDateDisabled: f1 }, {})).toBe(false);
+  });
+
   test("両方 undefined のオプションは true", () => {
     expect(sameStateOptions({}, {})).toBe(true);
   });
@@ -227,6 +239,32 @@ describe("updateStateOptions", () => {
       { initialYear: 2026, initialMonth: 3 },
     );
     expect(next.cursor).toEqual({ row: 3, col: 6 });
+  });
+
+  test("isDateDisabled の変更が月データに反映される", () => {
+    const state = createCalendarState({ today: TODAY });
+    const disable15 = (d: Date) => d.getDate() === 15;
+    const next = updateStateOptions(state, { isDateDisabled: disable15 }, {});
+    expect(next.options.isDateDisabled).toBe(disable15);
+    const disabled = next.monthData.cells.flat().filter((c) => c.isDisabled);
+    expect(disabled).toHaveLength(1);
+    expect(disabled[0]!.day).toBe(15);
+  });
+
+  test("isDateDisabled の解除（undefined）が反映される", () => {
+    const disable15 = (d: Date) => d.getDate() === 15;
+    const state = createCalendarState({
+      today: TODAY,
+      isDateDisabled: disable15,
+    });
+    // next に undefined を渡すと解除される（highlight/range と同じ props 駆動）
+    const next = updateStateOptions(
+      state,
+      { isDateDisabled: undefined },
+      { isDateDisabled: disable15 },
+    );
+    expect(next.options.isDateDisabled).toBeUndefined();
+    expect(next.monthData.cells.flat().some((c) => c.isDisabled)).toBe(false);
   });
 
   test("Invalid Date の today は RangeError", () => {

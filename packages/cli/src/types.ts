@@ -20,6 +20,8 @@ export interface CliExtraOptions {
   colorScheme?: ColorSchemeName | CliPalette;
   /** 今日の基準日。カラースキームの today 着色に使用 */
   today?: Date;
+  /** 選択不可な日付を判定する述語。true を返した日付は dim 色で描画される */
+  isDateDisabled?: (date: Date) => boolean;
   /** 各セルに付与するユーザー定義データを解決する関数。実セルのみに呼ばれる */
   cellData?: (date: Date) => unknown;
   /** セル内容のカスタム描画。受け取った文字列がそのままセルに使われる（幅・ANSI は呼び出し側で調整） */

@@ -85,6 +85,8 @@ export interface CalendarProps {
   ) => ReactNode;
   /** 各セルに付与するユーザー定義データを解決する関数。実セルのみに呼ばれる */
   cellData?: (date: Date) => unknown;
+  /** 選択不可日付の判定。true を返した日付は is-disabled クラスになり、インタラクティブ時は選択・ホバーできなくなる */
+  isDateDisabled?: (date: Date) => boolean;
 
   /** root 要素への ref（React 19 の ref-as-prop） */
   ref?: Ref<HTMLDivElement>;
@@ -113,6 +115,7 @@ export function Calendar({
   hoveredDate = null,
   renderCell,
   cellData,
+  isDateDisabled,
   rangePreview,
   ref,
 }: CalendarProps) {
@@ -126,6 +129,7 @@ export function Calendar({
       hoveredDate,
       selected: selectedDate,
       cursorDate,
+      isDateDisabled,
     }) || undefined;
 
   const handleCellClick = (day: number) => {
@@ -187,6 +191,7 @@ export function Calendar({
                     today,
                     highlight,
                     range,
+                    isDateDisabled,
                   });
                   const data = cellData?.(date);
                   const selected =
@@ -203,16 +208,26 @@ export function Calendar({
                       className={className(day)}
                       aria-selected={selected || undefined}
                       aria-current={state.isToday ? "date" : undefined}
+                      aria-disabled={state.isDisabled || undefined}
                     >
                       {interactive ? (
                         <button
                           type="button"
                           className="calendar-day-btn"
-                          onClick={() => handleCellClick(day)}
-                          onMouseEnter={() => handleCellHover(day)}
+                          onClick={
+                            state.isDisabled
+                              ? undefined
+                              : () => handleCellClick(day)
+                          }
+                          onMouseEnter={
+                            state.isDisabled
+                              ? undefined
+                              : () => handleCellHover(day)
+                          }
                           tabIndex={cursor ? 0 : -1}
                           data-cursor={cursor ? "true" : undefined}
                           aria-label={formatCellLabel(locale, year, month, day)}
+                          disabled={state.isDisabled}
                         >
                           {renderCell
                             ? renderCell(day, date, state, data)

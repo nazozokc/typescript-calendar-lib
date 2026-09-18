@@ -15,6 +15,7 @@ export function resolveOptions<T>(
     today,
     highlight: options.highlight,
     range: options.range,
+    isDateDisabled: options.isDateDisabled,
     cellData: options.cellData,
   };
 }

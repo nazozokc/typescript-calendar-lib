@@ -18,6 +18,8 @@ export interface CellStateOptions {
   selected?: Date | null;
   /** カーソル位置の日付。該当セルに is-cursor クラスが付く */
   cursorDate?: Date | null;
+  /** 選択不可日付の判定。該当セルに is-disabled クラスが付く */
+  isDateDisabled?: (date: Date) => boolean;
 }
 
 // 範囲の from > to は不正入力として RangeError（isDateInRange が検証する）
@@ -35,6 +37,7 @@ export function getCellClasses(date: Date, options: CellStateOptions): string {
     isDateInRange(date, options.rangePreview)
   )
     classes.push("is-in-range-preview");
+  if (state.isDisabled) classes.push("is-disabled");
   if (options.hoveredDate != null && isSameDay(date, options.hoveredDate))
     classes.push("is-hovered");
   if (options.selected != null && isSameDay(date, options.selected))

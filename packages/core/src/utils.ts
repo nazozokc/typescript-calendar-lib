@@ -12,6 +12,7 @@ export interface CalendarCellState {
   isToday: boolean;
   isHighlight: boolean;
   isInRange: boolean;
+  isDisabled: boolean;
 }
 
 /** 日付範囲（from <= to） */
@@ -117,6 +118,7 @@ export function getCalendarCellState(
     today?: Date;
     highlight?: Date;
     range?: { from: Date; to: Date };
+    isDateDisabled?: (date: Date) => boolean;
   } = {},
 ): CalendarCellState {
   assertValidDate(date);
@@ -127,6 +129,7 @@ export function getCalendarCellState(
       options.highlight !== undefined && isSameDay(date, options.highlight),
     isInRange:
       options.range !== undefined && isDateInRange(date, options.range),
+    isDisabled: options.isDateDisabled?.(date) ?? false,
   };
 }
 
