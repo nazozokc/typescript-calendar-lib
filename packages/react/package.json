@@ -1,10 +1,12 @@
 {
   "name": "@typescript-calendar-lib/react",
-  "version": "0.1.1",
+  "version": "1.0.0",
+  "description": "React 19 calendar components with CSS themes and color schemes",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nazozokc/typescript-calendar-lib"
+    "url": "https://github.com/nazozokc/typescript-calendar-lib",
+    "directory": "packages/react"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -23,6 +25,13 @@
     "build": "tsdown && cp ../web/dist/calendar.css dist/calendar.css",
     "prepack": "pnpm build"
   },
+  "keywords": [
+    "calendar",
+    "react",
+    "component",
+    "ui"
+  ],
+  "license": "MIT",
   "dependencies": {
     "@typescript-calendar-lib/core": "workspace:*",
     "@typescript-calendar-lib/tui": "workspace:*",

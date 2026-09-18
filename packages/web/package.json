@@ -1,11 +1,12 @@
 {
   "name": "@typescript-calendar-lib/web",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Shared presentation data (themes, color schemes, sizes, CSS) for web framework calendar components",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nazozokc/typescript-calendar-lib"
+    "url": "https://github.com/nazozokc/typescript-calendar-lib",
+    "directory": "packages/web"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

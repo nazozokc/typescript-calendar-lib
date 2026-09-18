@@ -1,11 +1,12 @@
 {
   "name": "@typescript-calendar-lib/svelte",
-  "version": "0.2.7",
+  "version": "1.0.0",
   "description": "Svelte 5 components and reactive state for typescript-calendar-lib",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nazozokc/typescript-calendar-lib"
+    "url": "https://github.com/nazozokc/typescript-calendar-lib",
+    "directory": "packages/svelte"
   },
   "svelte": "./dist/index.js",
   "main": "./dist/index.js",

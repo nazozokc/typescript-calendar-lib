@@ -1,11 +1,12 @@
 {
   "name": "@typescript-calendar-lib/tui",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "Framework-agnostic headless calendar data & state for any TUI framework (Ink, blessed, terminal-kit, ...)",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nazozokc/typescript-calendar-lib"
+    "url": "https://github.com/nazozokc/typescript-calendar-lib",
+    "directory": "packages/tui"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
