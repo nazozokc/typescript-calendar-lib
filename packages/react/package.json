@@ -40,7 +40,7 @@
   "devDependencies": {
     "@testing-library/react": "^16",
     "@types/react": "^19",
-    "jsdom": "^26",
+    "jsdom": "^30",
     "react-dom": "19.2.8",
     "vitest": "^5"
   },
