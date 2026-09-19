@@ -1,6 +1,6 @@
 {
   "name": "@typescript-calendar-lib/web",
-  "version": "1.0.0",
+  "version": "0.5.1",
   "description": "Shared presentation data (themes, color schemes, sizes, CSS) for web framework calendar components",
   "type": "module",
   "repository": {
@@ -33,7 +33,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@typescript-calendar-lib/core": "workspace:*"
+    "@typescript-calendar-lib/core": "^0.5.1"
   },
   "devDependencies": {
     "@tsdown/css": "^0.23.0"

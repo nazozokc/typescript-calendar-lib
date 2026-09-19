@@ -142,8 +142,8 @@ importers:
   packages/web:
     dependencies:
       '@typescript-calendar-lib/core':
-        specifier: workspace:*
-        version: link:../core
+        specifier: ^0.5.1
+        version: 0.5.1
     devDependencies:
       '@tsdown/css':
         specifier: ^0.23.0
@@ -687,6 +687,9 @@ packages:
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
+
+  '@typescript-calendar-lib/core@0.5.1':
+    resolution: {integrity: sha512-yWutwft7LEkiCfgDuy6QGCYNuGtXxfFWPlORXFC/S1mHqaBI5NwexAkqgu69ZQCw/0UmchE4DNw0lAZh3nKk6g==}
 
   '@typescript/typescript-aix-ppc64@7.0.2':
     resolution: {integrity: sha512-MTKKkWB7p/0E9xi1d1tHtZ5PiLkGEMIq88pK2CubZjOsLtYTLqhgIgi6zepFa+9GHZ6h05NMCkQxGKiPXMxXtQ==}
@@ -2110,6 +2113,8 @@ snapshots:
 
   '@types/trusted-types@2.0.7':
     optional: true
+
+  '@typescript-calendar-lib/core@0.5.1': {}
 
   '@typescript/typescript-aix-ppc64@7.0.2':
     optional: true

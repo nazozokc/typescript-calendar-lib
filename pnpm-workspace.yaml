@@ -2,6 +2,8 @@ packages:
   - "packages/*"
 allowBuilds:
   esbuild: true
+minimumReleaseAgeExclude:
+  - '@typescript-calendar-lib/core@0.5.1'
 overrides:
   linkify-it: ">=5.0.2"
   # GHSA-6v5v-wf23-fmfq: markdown-it smartquotes の二次複雑度 DoS（修正版 >=14.2.0）。
