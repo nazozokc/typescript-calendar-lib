@@ -50,7 +50,7 @@
     "@testing-library/svelte": "^5",
     "jsdom": "^30",
     "svelte-check": "^4",
-    "typescript": "^7.0.2",
+    "typescript": "^5.9.0",
     "vitest": "^5"
   }
 }
