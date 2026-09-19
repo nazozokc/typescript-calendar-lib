@@ -7,12 +7,6 @@ export default defineConfig({
   resolve: {
     alias: {
       "@typescript-calendar-lib/core": resolve("../core/src/index.ts"),
-      "@typescript-calendar-lib/tui": resolve("../tui/src/index.ts"),
-      "@typescript-calendar-lib/web": resolve("../web/src/index.ts"),
     },
-  },
-  test: {
-    environment: "jsdom",
-    include: ["src/**/*.test.{ts,tsx}"],
   },
 });

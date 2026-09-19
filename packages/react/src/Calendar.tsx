@@ -52,6 +52,8 @@ export interface CalendarProps {
   colorScheme?: ColorSchemeName | ReactColorScheme;
   /** セルサイズ。既定は "md"。{ width, height } で自由に指定できる */
   size?: CalendarSize;
+  /** 狭い画面（スマホ等）でセルサイズと余白を自動調整する。既定は false（無効） */
+  responsive?: boolean;
   /** root 要素に追加するスタイル。CSS変数（--cal-*）で自由に上書きできる */
   style?: CSSProperties;
 
@@ -104,6 +106,7 @@ export function Calendar({
   theme = "default",
   colorScheme = "default",
   size = "md",
+  responsive = false,
   style,
   interactive = false,
   onDateClick,
@@ -157,7 +160,7 @@ export function Calendar({
     // biome-ignore lint/a11y/noStaticElementInteractions: onMouseLeave はホバー状態クリア用の補助イベント。キーボード操作（role=grid）は独立して対応済み
     <div
       ref={ref}
-      className={`calendar ${resolveTheme(theme).className}${isSizeName(size) ? ` calendar-size-${size}` : ""}${interactive ? " calendar-interactive" : ""}`}
+      className={`calendar ${resolveTheme(theme).className}${isSizeName(size) ? ` calendar-size-${size}` : ""}${interactive ? " calendar-interactive" : ""}${responsive ? " calendar-responsive" : ""}`}
       onMouseLeave={interactive ? handleMouseLeave : undefined}
       style={{
         ...(resolveColorScheme(colorScheme) as CSSProperties),

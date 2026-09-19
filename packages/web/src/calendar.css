@@ -343,3 +343,40 @@
 .calendar-theme-retro td.is-today {
   border-radius: 0;
 }
+
+/* ─── Responsive (opt-in) ──────────────────────────────── */
+/* 狭いビューポート（スマホ等）でセルサイズ・余白・フォントを縮小し、
+   7 列テーブルを画面内に収める。root に calendar-responsive クラスが
+   ある場合のみ有効（Calendar の responsive prop で切り替える）。 */
+
+@media (max-width: 480px) {
+  .calendar-responsive {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    --cal-cell-w: 1.75rem;
+    --cal-cell-h: 1.5rem;
+    --cal-font-size: 0.75rem;
+    --cal-header-font-size: 1rem;
+  }
+
+  .calendar-responsive table {
+    width: 100%;
+  }
+
+  .calendar-responsive th,
+  .calendar-responsive td {
+    box-sizing: border-box;
+    padding: 0.125rem;
+  }
+}
+
+/* さらに狭い画面（小さいスマホの縦持ちなど）では一段階縮小する */
+@media (max-width: 360px) {
+  .calendar-responsive {
+    --cal-cell-w: 1.5rem;
+    --cal-cell-h: 1.375rem;
+    --cal-font-size: 0.6875rem;
+    --cal-header-font-size: 0.875rem;
+  }
+}

@@ -292,6 +292,20 @@ describe("Calendar", () => {
     expect(container.firstChild).toHaveClass("calendar-interactive");
   });
 
+  test("responsive 有効で calendar-responsive クラスがつく", () => {
+    const { container } = render(Calendar, {
+      props: { year: 2026, month: 9, responsive: true, today: TODAY },
+    });
+    expect(container.firstChild).toHaveClass("calendar-responsive");
+  });
+
+  test("responsive 未指定では calendar-responsive クラスがつかない", () => {
+    const { container } = render(Calendar, {
+      props: { year: 2026, month: 9, today: TODAY },
+    });
+    expect(container.firstChild).not.toHaveClass("calendar-responsive");
+  });
+
   test("逆転した range は RangeError", () => {
     expect(() =>
       render(Calendar, {
@@ -741,6 +755,19 @@ describe("InteractiveCalendar", () => {
     });
     const btn = screen.getByRole("button", { name: /September 10, 2026/ });
     expect(btn.textContent).toBe("★");
+  });
+
+  test("responsive が InteractiveCalendar 経由で反映される", () => {
+    const { container } = render(InteractiveCalendar, {
+      props: {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+        responsive: true,
+      },
+    });
+    const calendarRoot = container.querySelector(".calendar")!;
+    expect(calendarRoot).toHaveClass("calendar-responsive");
   });
 
   test("ホバーで is-hovered クラスがつき、離脱で消える", async () => {

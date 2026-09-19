@@ -54,6 +54,7 @@ bun add @typescript-calendar-lib/svelte
 | `theme` | `ThemeName \| SvelteTheme` | `"default"` | CSS class-based theme |
 | `colorScheme` | `ColorSchemeName \| SvelteColorScheme` | `"default"` | CSS variable-based colors |
 | `size` | `CalendarSize` | `"md"` | Cell size |
+| `responsive` | `boolean` | `false` | Shrink cells & padding below `480px` so the grid fits phone screens |
 | `style` | `CSSProperties` | — | Extra styles for the root element |
 | `interactive` | `boolean` | `false` | Enable cell click/hover/keyboard selection |
 | `onDateClick` | `(date: Date, data?: unknown) => void` | — | Called when a day cell is clicked (or Enter/Space pressed); `data` is that cell's `cellData` value (`undefined` when none) |
@@ -110,6 +111,7 @@ Combines `useCalendarState` options, `Calendar` visual props, and event callback
 | `theme` | `ThemeName \| SvelteTheme` | CSS class-based theme |
 | `colorScheme` | `ColorSchemeName \| SvelteColorScheme` | CSS variable-based colors |
 | `size` | `CalendarSize` | Cell size |
+| `responsive` | `boolean` | Shrink cells & padding below `480px` so the grid fits phone screens |
 | `style` | `CSSProperties` | Extra styles for the root element |
 | `cellData` | `(date: Date) => unknown` | Resolve per-cell data; passed to `renderCell` and `onDateClick` |
 | `renderCell` | `(day, date, state, data?) => string` | Custom cell content (plain text, XSS-safe) |

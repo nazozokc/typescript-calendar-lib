@@ -58,6 +58,7 @@ export function App() {
 | `theme` | `ThemeName \| ReactTheme` | `"default"` | CSS class-based theme |
 | `colorScheme` | `ColorSchemeName \| ReactColorScheme` | `"default"` | CSS variable-based colors |
 | `size` | `CalendarSize` | `"md"` | Cell size |
+| `responsive` | `boolean` | `false` | Shrink cells & padding below `480px` so the grid fits phone screens |
 | `style` | `CSSProperties` | — | Extra styles for the root element |
 | `interactive` | `boolean` | `false` | Enable cell click/hover/keyboard selection |
 | `onDateClick` | `(date: Date, data?: unknown) => void` | — | Called when a day cell is clicked (or Enter/Space pressed); `data` is that cell's `cellData` value (`undefined` when none) |
@@ -170,7 +171,7 @@ function App() {
 }
 ```
 
-It accepts the `useCalendarState` options (`initialYear`, `initialMonth`, `locale`, `weekStart`, `highlight`, `range`, `today`, `isDateDisabled`, `onMonthChange`) plus the `Calendar` visual props (`theme`, `colorScheme`, `size`, `style`, `cellData`, `renderCell`) and event callbacks (`onDateClick`, `onDateHover`, `onDateLeave`).
+It accepts the `useCalendarState` options (`initialYear`, `initialMonth`, `locale`, `weekStart`, `highlight`, `range`, `today`, `isDateDisabled`, `onMonthChange`) plus the `Calendar` visual props (`theme`, `colorScheme`, `size`, `responsive`, `style`, `cellData`, `renderCell`) and event callbacks (`onDateClick`, `onDateHover`, `onDateLeave`).
 
 ## Disabled Dates
 

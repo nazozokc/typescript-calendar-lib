@@ -57,6 +57,7 @@ export function App() {
 | `theme` | `ThemeName \| ReactTheme` | `"default"` | CSS class-based theme |
 | `colorScheme` | `ColorSchemeName \| ReactColorScheme` | `"default"` | CSS variable-based colors |
 | `size` | `CalendarSize` | `"md"` | Cell size |
+| `responsive` | `boolean` | `false` | Shrink cells & padding below `480px` so the grid fits phone screens |
 | `style` | `CSSProperties` | — | Extra styles for the root element |
 | `interactive` | `boolean` | `false` | Enable cell click/hover/keyboard selection |
 | `onDateClick` | `(date: Date, data?: unknown) => void` | — | Called when a day cell is clicked (or Enter/Space pressed); `data` is that cell's `cellData` value (`undefined` when none) |
@@ -169,7 +170,7 @@ function App() {
 }
 ```
 
-It accepts the `useCalendarState` options (`initialYear`, `initialMonth`, `locale`, `weekStart`, `highlight`, `range`, `today`, `onMonthChange`) plus the `Calendar` visual props (`theme`, `colorScheme`, `size`, `style`, `cellData`, `renderCell`) and event callbacks (`onDateClick`, `onDateHover`, `onDateLeave`).
+It accepts the `useCalendarState` options (`initialYear`, `initialMonth`, `locale`, `weekStart`, `highlight`, `range`, `today`, `onMonthChange`) plus the `Calendar` visual props (`theme`, `colorScheme`, `size`, `responsive`, `style`, `cellData`, `renderCell`) and event callbacks (`onDateClick`, `onDateHover`, `onDateLeave`).
 
 ## Custom Cell Rendering
 
@@ -325,6 +326,16 @@ Or custom pixel sizes:
 ```
 
 Numbers are treated as pixels; strings pass through as CSS lengths (`"3rem"`, `"2.5em"`, etc.).
+
+## Responsive
+
+The 7-column grid has fixed cell sizes, so on narrow phone screens it can overflow. Pass `responsive` to make the calendar shrink its cells, fonts, and padding below `480px` (and a step tighter below `360px`) and fill the viewport width:
+
+```tsx
+<Calendar year={2026} month={9} responsive />
+```
+
+It's **off by default** to keep existing layouts unchanged. The calendar root gets a `calendar-responsive` class that drives CSS media queries — you can also add that class yourself, or use the `style` prop / your own CSS to tune the breakpoints further.
 
 ## Styling with `style`
 

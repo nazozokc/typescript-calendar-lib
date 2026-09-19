@@ -53,6 +53,7 @@ bun add @typescript-calendar-lib/svelte
 | `theme` | `ThemeName \| SvelteTheme` | `"default"` | CSS class-based theme |
 | `colorScheme` | `ColorSchemeName \| SvelteColorScheme` | `"default"` | CSS variable-based colors |
 | `size` | `CalendarSize` | `"md"` | Cell size |
+| `responsive` | `boolean` | `false` | Shrink cells & padding below `480px` so the grid fits phone screens |
 | `style` | `CSSProperties` | — | Extra styles for the root element |
 | `interactive` | `boolean` | `false` | Enable cell click/hover/keyboard selection |
 | `onDateClick` | `(date: Date, data?: unknown) => void` | — | Called when a day cell is clicked (or Enter/Space pressed); `data` is that cell's `cellData` value (`undefined` when none) |
@@ -108,6 +109,7 @@ Combines `useCalendarState` options, `Calendar` visual props, and event callback
 | `theme` | `ThemeName \| SvelteTheme` | CSS class-based theme |
 | `colorScheme` | `ColorSchemeName \| SvelteColorScheme` | CSS variable-based colors |
 | `size` | `CalendarSize` | Cell size |
+| `responsive` | `boolean` | Shrink cells & padding below `480px` so the grid fits phone screens |
 | `style` | `CSSProperties` | Extra styles for the root element |
 | `cellData` | `(date: Date) => unknown` | Resolve per-cell data; passed to `renderCell` and `onDateClick` |
 | `renderCell` | `(day, date, state, data?) => string` | Custom cell content (plain text, XSS-safe) |
@@ -319,6 +321,16 @@ The stylesheet must be imported once in your application:
   import "@typescript-calendar-lib/svelte/calendar.css";
 </script>
 ```
+
+## Responsive
+
+The 7-column grid has fixed cell sizes, so on narrow phone screens it can overflow. Pass `responsive` to make the calendar shrink its cells, fonts, and padding below `480px` (and a step tighter below `360px`) and fill the viewport width:
+
+```svelte
+<Calendar year={2026} month={9} responsive />
+```
+
+It's **off by default** to keep existing layouts unchanged. The calendar root gets a `calendar-responsive` class that drives CSS media queries — you can also add that class yourself, or use the `style` prop / your own CSS to tune the breakpoints further.
 
 ## Cell Classes
 

@@ -36,6 +36,8 @@
     theme?: ThemeName | SvelteTheme;
     colorScheme?: ColorSchemeName | SvelteColorScheme;
     size?: CalendarSize;
+    /** 狭い画面（スマホ等）でセルサイズと余白を自動調整する */
+    responsive?: boolean;
     style?: CSSProperties;
     /** セル内容のカスタムレンダリング。第4引数に該当日のデータが渡る */
     renderCell?: (
@@ -69,6 +71,7 @@
     theme,
     colorScheme,
     size,
+    responsive,
     style,
     renderCell,
     cellData,
@@ -152,6 +155,7 @@
     theme={theme}
     colorScheme={colorScheme}
     size={size}
+    responsive={responsive}
     style={style}
     interactive
     renderCell={renderCell}

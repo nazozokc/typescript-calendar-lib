@@ -38,6 +38,8 @@ export interface InteractiveCalendarProps {
   theme?: ThemeName | ReactTheme;
   colorScheme?: ColorSchemeName | ReactColorScheme;
   size?: CalendarSize;
+  /** 狭い画面（スマホ等）でセルサイズと余白を自動調整する */
+  responsive?: boolean;
   style?: CSSProperties;
   /** セル内容のカスタムレンダリング。第4引数に該当日のデータが渡る */
   renderCell?: CalendarProps["renderCell"];
@@ -77,6 +79,7 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     theme,
     colorScheme,
     size,
+    responsive,
     style,
     renderCell,
     cellData,
@@ -172,6 +175,7 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
       theme={theme}
       colorScheme={colorScheme}
       size={size}
+      responsive={responsive}
       style={style}
       interactive
       renderCell={renderCell}

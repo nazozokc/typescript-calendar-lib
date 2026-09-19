@@ -13,13 +13,9 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "development": "./src/index.ts",
       "default": "./dist/index.js"
     },
-    "./calendar.css": {
-      "development": "./src/calendar.css",
-      "default": "./dist/calendar.css"
-    }
+    "./calendar.css": "./dist/calendar.css"
   },
   "files": [
     "dist"

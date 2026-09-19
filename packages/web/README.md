@@ -147,6 +147,10 @@ The shared stylesheet must be imported once in your application. The `react` / `
 import "@typescript-calendar-lib/web/calendar.css";
 ```
 
+### Responsive media queries
+
+When the calendar root also carries a `calendar-responsive` class, the stylesheet applies two media-query steps that shrink cell sizes, fonts, and padding so the 7-column grid fits phone screens: below `480px` the cells drop to `sm`-scale and the grid fills the viewport width, and below `360px` they shrink one step further. The `react` / `svelte` `Calendar` components expose this as an opt-in `responsive` prop (off by default).
+
 ## Exports
 
 ```ts

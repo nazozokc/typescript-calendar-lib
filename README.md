@@ -12,6 +12,7 @@ A TypeScript calendar library spanning the terminal and the web. Render month, y
 - **Disabled dates** — block dates with an `isDateDisabled` predicate in every layer (cursor skips them, selection is blocked)
 - **Interactive React 19** — `useCalendarState` hook + clickable/keyboard cells
 - **Interactive Svelte 5** — the same headless state, as a runes-based `useCalendarState` hook + `Calendar` component
+- **Responsive web components (opt-in)** — a `responsive` prop (React/Svelte) shrinks cells, fonts, and padding so the 7-column grid stays inside phone screens
 - **Headless TUI state** — cursor, selection, and navigation state machine for any TUI framework
 - **Zero runtime dependencies** — plain text by default; ANSI colors only when enabled
 
@@ -83,6 +84,20 @@ function App() {
 
 <Calendar year={2026} month={9} colorScheme="ocean" theme="modern" />
 ```
+
+### Responsive (React / Svelte)
+
+The React and Svelte calendars keep a fixed 7-column grid, which can overflow narrow phone screens. Pass `responsive` to make the grid shrink its cells, fonts, and padding below `480px` (and a touch more below `360px`) so it always fits:
+
+```tsx
+<Calendar year={2026} month={9} responsive />
+```
+
+```svelte
+<Calendar year={2026} month={9} responsive />
+```
+
+It is **off by default** — existing layouts are untouched. Both `Calendar` and `InteractiveCalendar` accept the prop.
 
 ### Output
 

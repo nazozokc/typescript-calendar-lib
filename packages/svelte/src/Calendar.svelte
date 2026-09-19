@@ -46,6 +46,8 @@
     colorScheme?: ColorSchemeName | SvelteColorScheme;
     /** セルサイズ。既定は "md"。{ width, height } で自由に指定できる */
     size?: CalendarSize;
+    /** 狭い画面（スマホ等）でセルサイズと余白を自動調整する。既定は false（無効） */
+    responsive?: boolean;
     /** root 要素に追加するスタイル。CSS変数（--cal-*）で自由に上書きできる */
     style?: CSSProperties;
 
@@ -92,6 +94,7 @@
     theme = "default",
     colorScheme = "default",
     size = "md",
+    responsive = false,
     style,
     interactive = false,
     onDateClick,
@@ -148,7 +151,7 @@
 </script>
 
 <div
-  class="calendar {resolveTheme(theme).className}{isSizeName(size) ? ` calendar-size-${size}` : ""}{interactive ? " calendar-interactive" : ""}"
+  class="calendar {resolveTheme(theme).className}{isSizeName(size) ? ` calendar-size-${size}` : ""}{interactive ? " calendar-interactive" : ""}{responsive ? " calendar-responsive" : ""}"
   style={rootStyle}
   role={interactive ? "group" : undefined}
   onmouseleave={interactive ? handleMouseLeave : undefined}

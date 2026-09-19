@@ -346,6 +346,29 @@ describe("Calendar interactive", () => {
     expect(container.firstChild).toHaveClass("calendar-interactive");
   });
 
+  test("responsive 有効で calendar-responsive クラスがつく", () => {
+    const { container } = render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 9,
+        responsive: true,
+        today: TODAY,
+      }),
+    );
+    expect(container.firstChild).toHaveClass("calendar-responsive");
+  });
+
+  test("responsive 未指定では calendar-responsive クラスがつかない", () => {
+    const { container } = render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 9,
+        today: TODAY,
+      }),
+    );
+    expect(container.firstChild).not.toHaveClass("calendar-responsive");
+  });
+
   test("hoveredDate のセルに is-hovered クラスがつく", () => {
     render(
       createElement(Calendar, {
@@ -1083,6 +1106,20 @@ describe("InteractiveCalendar", () => {
       }),
     );
     expect(screen.getByText("D1")).toBeInTheDocument();
+  });
+
+  test("responsive が InteractiveCalendar 経由で反映される", () => {
+    const { container } = render(
+      createElement(InteractiveCalendar, {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+        responsive: true,
+      }),
+    );
+    expect(container.querySelector(".calendar")).toHaveClass(
+      "calendar-responsive",
+    );
   });
 
   test("セルクリックで onDateClick に cellData のデータが渡る", () => {
