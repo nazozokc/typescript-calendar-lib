@@ -65,6 +65,40 @@ describe("navigateMonth", () => {
     expect(prev.cursor).toEqual({ row: 3, col: 6 });
   });
 
+  test("月初の1日から翌月へ移動してもカーソルが空欄に落ちない", () => {
+    // 2026-09-01 は火曜（row0 col2）→ 2026-10 の row0 col2 は空欄（10/1 は木曜 col4）
+    const state = createCalendarState({
+      today: TODAY,
+      initialCursor: { row: 0, col: 2 }, // 9月1日
+    });
+    const next = navigateMonth(state, "next");
+    expect(next.cursor).not.toBeNull();
+    expect(getCursorDate(next)).toEqual(new Date(2026, 9, 1));
+    expect(next.cursor).toEqual({ row: 0, col: 4 });
+  });
+
+  test("新月の同じ位置が disabled なら有効セルへスナップされる", () => {
+    // カーソルは 9/15（row2 col2）。10/13（row2 col2 相当）が disabled なら 10/12 へ
+    const state = createCalendarState({
+      today: TODAY,
+      isDateDisabled: (d: Date) => d.getDate() === 13,
+    });
+    const next = navigateMonth(state, "next");
+    expect(next.cursor).not.toBeNull();
+    expect(getCursorDate(next)).toEqual(new Date(2026, 9, 12));
+  });
+
+  test("カーソル未設定（カーソル null）のまま移動してもカーソルは null のまま", () => {
+    // 全セル disabled だと初期カーソルは置かれない（null のまま）
+    const state = createCalendarState({
+      today: TODAY,
+      isDateDisabled: () => true,
+    });
+    expect(state.cursor).toBeNull();
+    const next = navigateMonth(state, "next");
+    expect(next.cursor).toBeNull();
+  });
+
   test("サポート範囲の最小では前月へ移動しない (year 1, month 1)", () => {
     const state = createCalendarState({
       today: TODAY,
