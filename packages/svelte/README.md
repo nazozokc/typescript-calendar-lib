@@ -8,6 +8,8 @@ A `<Calendar />` Svelte 5 component with CSS-based themes and color schemes, plu
 > npm install svelte @typescript-calendar-lib/svelte
 > ```
 
+> **Note: Build tooling** — This package ships Svelte component sources (`.svelte`), so your app must have a Svelte compiler wired up, e.g. Vite with [`@sveltejs/vite-plugin-svelte`](https://github.com/sveltejs/vite-plugin-svelte) or SvelteKit. It is not designed to be imported directly in Node.js (SSR without a compiler fails with `ERR_UNKNOWN_FILE_EXTENSION`).
+
 ## Installation
 
 ```sh

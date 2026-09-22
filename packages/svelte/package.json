@@ -39,9 +39,9 @@
     "svelte": "^5"
   },
   "dependencies": {
-    "@typescript-calendar-lib/core": "workspace:*",
-    "@typescript-calendar-lib/tui": "workspace:*",
-    "@typescript-calendar-lib/web": "workspace:*"
+    "@typescript-calendar-lib/core": "workspace:^",
+    "@typescript-calendar-lib/tui": "workspace:^",
+    "@typescript-calendar-lib/web": "workspace:^"
   },
   "devDependencies": {
     "@sveltejs/package": "^2.5.8",
