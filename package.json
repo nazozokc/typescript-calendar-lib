@@ -18,7 +18,7 @@
     "docs:preview": "vite preview --config docs/vite.config.ts"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.13",
+    "@biomejs/biome": "^2.5.14",
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@vitest/coverage-v8": "^5.0.1",
