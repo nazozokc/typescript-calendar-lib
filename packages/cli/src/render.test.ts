@@ -140,6 +140,23 @@ describe("renderMonth - themes", () => {
     expect(lines[lines.length - 1]).toBe("└───┴───┴───┴───┴───┴───┴───┘");
   });
 
+  test("modernテーマで週番号列を表示できる", () => {
+    const out = renderMonth(2026, 9, {
+      theme: "modern",
+      showWeekNumbers: true,
+      weekStart: "monday",
+      ...base,
+    });
+    const lines = out.split("\n");
+    // 上枠は連続線（既存仕様）。innerWidth = 7*3 + 6 + (2+1) = 30
+    expect(lines[0]).toBe(`┌${"─".repeat(30)}┐`);
+    // 区切り行は週番号列（幅2）とセル列（幅3）が別セグメントになる
+    expect(lines[2]).toBe("├──┬───┬───┬───┬───┬───┬───┬───┤");
+    expect(lines[3]).toBe("│  │Mon│Tue│Wed│Thu│Fri│Sat│Sun│");
+    expect(lines[5]).toContain("│36│");
+    expect(lines[lines.length - 1]).toBe("└──┴───┴───┴───┴───┴───┴───┴───┘");
+  });
+
   test("modernテーマでも日付とハイライトは描画される", () => {
     const out = renderMonth(2026, 9, {
       theme: "modern",

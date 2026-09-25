@@ -102,3 +102,54 @@ describe("calendarRange", () => {
     expect(out).toContain("[8]");
   });
 });
+
+describe("showWeekNumbers", () => {
+  test("月曜始まりなら ISO 週番号が行頭に表示される（2026-09）", () => {
+    const out = calendar({
+      year: 2026,
+      month: 9,
+      weekStart: "monday",
+      showWeekNumbers: true,
+    });
+    // 2026-09 の第1週は 8/31 を含む週 → ISO 第36週
+    const lines = out.split("\n");
+    expect(lines[2]).toContain("36");
+    // 月曜始まりの行頭は ISO 週: 9/7 週 = 第37週
+    expect(lines[3]).toContain("37");
+  });
+
+  test("日曜始まりなら年始包含週の週番号が行頭に表示される（2026-09）", () => {
+    const out = calendar({
+      year: 2026,
+      month: 9,
+      weekStart: "sunday",
+      showWeekNumbers: true,
+    });
+    // 2026-09 の第1行は 8/30 を含む週。年始(1/1)を含む週を第1週とする規則で第36週
+    const lines = out.split("\n");
+    expect(lines[2]).toContain("36");
+    // 9/6 の週は第37週
+    expect(lines[3]).toContain("37");
+  });
+
+  test("既定では週番号は表示されない", () => {
+    const out = calendar({ year: 2026, month: 9, weekStart: "monday" });
+    const lines = out.split("\n");
+    // 週番号なしの場合は行頭の空白を取り除くと日番号（1）から始まる
+    expect(lines[2]!.trimStart().startsWith("1 ")).toBe(true);
+  });
+
+  test("年末年始の月で週番号が 53 → 1 に切り替わる（2027-01 月曜始まり）", () => {
+    const out = calendar({
+      year: 2027,
+      month: 1,
+      weekStart: "monday",
+      showWeekNumbers: true,
+    });
+    // 2027-01-01 は金曜。月曜始まりの ISO 週で 2026-12-28 の週は第53週
+    const lines = out.split("\n");
+    expect(lines[2]).toContain("53");
+    // 2027-01-04 の週は ISO 第1週
+    expect(lines[3]).toContain(" 1");
+  });
+});
