@@ -1,3 +1,4 @@
+import type { DateRange } from "@typescript-calendar-lib/core";
 import type {
   CalendarState,
   CalendarStateOptions,
@@ -9,12 +10,14 @@ import {
   createCalendarState,
   getCursorDate,
   getSelectedDate,
+  getSelectedRange,
   goToToday,
   moveCursor,
   navigateMonth,
   sameStateOptions,
   selectDate,
   selectDateAt,
+  selectRange,
   setCursorToDate,
   updateStateOptions,
 } from "@typescript-calendar-lib/tui";
@@ -22,7 +25,13 @@ import {
 export interface UseCalendarStateOptions
   extends Pick<
     CalendarStateOptions,
-    "locale" | "weekStart" | "today" | "highlight" | "range" | "isDateDisabled"
+    | "locale"
+    | "weekStart"
+    | "today"
+    | "highlight"
+    | "range"
+    | "isDateDisabled"
+    | "selectionMode"
   > {
   initialYear?: number;
   initialMonth?: number;
@@ -55,12 +64,16 @@ export interface UseCalendarStateReturn {
   setCursorToDate: (date: Date) => void;
   /** 指定した日付を選択し、カーソルもそこへ移動する（当月に無ければ何もしない） */
   selectDateAt: (date: Date) => void;
+  /** from/to の範囲を選択範囲として直接設定する（順序は自動で整列される） */
+  selectRange: (from: Date, to: Date) => void;
   /** 選択を解除 */
   clearSelection: () => void;
   /** カーソル位置の日付（null の場合あり） */
   cursorDate: Date | null;
   /** 選択済み日付（null の場合あり） */
   selectedDate: Date | null;
+  /** 確定した選択範囲（未確定・single モードでは null） */
+  selectedRange: DateRange | null;
   /** ホバー中の日付（null の場合あり） */
   hoveredDate: Date | null;
   /** ホバー日付を更新する */
@@ -143,6 +156,9 @@ export function useCalendarState(
     get selectedDate() {
       return getSelectedDate(state);
     },
+    get selectedRange() {
+      return getSelectedRange(state);
+    },
     get hoveredDate() {
       return hoveredDate;
     },
@@ -166,6 +182,9 @@ export function useCalendarState(
     },
     selectDateAt: (date: Date) => {
       state = selectDateAt(state, date);
+    },
+    selectRange: (from: Date, to: Date) => {
+      state = selectRange(state, from, to);
     },
     clearSelection: () => {
       state = clearSelection(state);

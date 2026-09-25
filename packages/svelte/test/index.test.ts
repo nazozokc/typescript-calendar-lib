@@ -155,6 +155,43 @@ describe("useCalendarState マウス操作ヘルパー", () => {
   });
 });
 
+// ─── useCalendarState 範囲選択 ───────────────────────────
+
+describe("useCalendarState 範囲選択", () => {
+  test("range モードで 2 回クリックすると選択範囲が確定する", async () => {
+    render(HookHarness, {
+      props: {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+        selectionMode: "range",
+      },
+    });
+    await fireEvent.click(screen.getByTestId("select-at-10"));
+    expect(screen.getByTestId("selected-range").textContent).toBe("null");
+    await fireEvent.click(screen.getByTestId("select-at-15"));
+    expect(screen.getByTestId("selected-range").textContent).toBe(
+      `${new Date(2026, 8, 10).toISOString()}→${new Date(2026, 8, 15).toISOString()}`,
+    );
+  });
+
+  test("逆順クリックでも範囲が正しく整列される", async () => {
+    render(HookHarness, {
+      props: {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+        selectionMode: "range",
+      },
+    });
+    await fireEvent.click(screen.getByTestId("select-at-15"));
+    await fireEvent.click(screen.getByTestId("select-at-10"));
+    expect(screen.getByTestId("selected-range").textContent).toBe(
+      `${new Date(2026, 8, 10).toISOString()}→${new Date(2026, 8, 15).toISOString()}`,
+    );
+  });
+});
+
 // ─── useCalendarState options 更新 ──────────────────────
 
 describe("useCalendarState options 更新", () => {
@@ -448,6 +485,31 @@ describe("Calendar の視覚プロップ", () => {
     expect(() =>
       render(Calendar, { props: { year: 2026, month: 13 } }),
     ).toThrow(RangeError);
+  });
+});
+
+// ─── Calendar showWeekNumbers ────────────────────────────
+
+describe("Calendar showWeekNumbers", () => {
+  test("showWeekNumbers で行先頭に週番号が表示される", () => {
+    const { container } = render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        weekStart: "monday",
+        showWeekNumbers: true,
+      },
+    });
+    const week = container.querySelector("td.calendar-week");
+    expect(week).not.toBeNull();
+    expect(week!.textContent).toBe("36");
+  });
+
+  test("showWeekNumbers 未指定では週番号セルが表示されない", () => {
+    const { container } = render(Calendar, {
+      props: { year: 2026, month: 9 },
+    });
+    expect(container.querySelector(".calendar-week")).toBeNull();
   });
 });
 

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { CalendarCellState, CalendarOptions } from "@typescript-calendar-lib/core";
+  import type { SelectionMode } from "@typescript-calendar-lib/tui";
   import { keyToAction } from "@typescript-calendar-lib/tui";
   import Calendar from "./Calendar.svelte";
   import { buildRangePreview } from "./range-preview.js";
@@ -26,6 +27,8 @@
     highlight?: Date;
     /** 色付け範囲 */
     range?: { from: Date; to: Date };
+    /** 選択方式。既定は "single"。range では 2 回のクリックで範囲が確定する */
+    selectionMode?: SelectionMode;
     /** 今日の基準日。省略時は初回レンダリング時刻に解決される */
     today?: Date;
     /** 選択不可日付の判定。true を返した日付は選択・カーソル移動・ホバーの対象外になる */
@@ -66,6 +69,7 @@
     weekStart,
     highlight,
     range,
+    selectionMode,
     today,
     isDateDisabled,
     theme,
@@ -89,6 +93,7 @@
     highlight,
     range,
     isDateDisabled,
+    selectionMode,
   }));
 
   // クリック（マウス・Enter/Space 共通）で日付を選択する。
@@ -108,9 +113,9 @@
     onDateLeave?.();
   };
 
-  // 選択済み日付とホバー日付の間を範囲プレビューとして表示する
+  // 確定した選択範囲があればそれを、なければ選択日〜ホバー日のプレビューを表示する
   const rangePreview = $derived(
-    buildRangePreview(cal.selectedDate, cal.hoveredDate),
+    cal.selectedRange ?? buildRangePreview(cal.selectedDate, cal.hoveredDate),
   );
 
   // カーソルが動いたときだけ、そのセルへフォーカスを移す（初回マウントでは動かさない）

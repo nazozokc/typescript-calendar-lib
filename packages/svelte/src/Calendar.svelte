@@ -1,10 +1,13 @@
 <script lang="ts">
   import type { CalendarCellState, CalendarOptions } from "@typescript-calendar-lib/core";
   import {
+    addDays,
     buildMonthGrid,
     createDate,
     getCalendarCellState,
+    getISOWeek,
     getMonthName,
+    getWeekOfYear,
     getWeekdayHeaders,
     isSameDay,
   } from "@typescript-calendar-lib/core";
@@ -48,6 +51,8 @@
     size?: CalendarSize;
     /** 狭い画面（スマホ等）でセルサイズと余白を自動調整する。既定は false（無効） */
     responsive?: boolean;
+    /** 行の先頭に週番号を表示する。既定は false（非表示） */
+    showWeekNumbers?: boolean;
     /** root 要素に追加するスタイル。CSS変数（--cal-*）で自由に上書きできる */
     style?: CSSProperties;
 
@@ -95,6 +100,7 @@
     colorScheme = "default",
     size = "md",
     responsive = false,
+    showWeekNumbers = false,
     style,
     interactive = false,
     onDateClick,
@@ -127,6 +133,15 @@
     today != null && isSameDay(cellDate(day), today);
   const isCursorDay = (day: number): boolean =>
     cursorDate != null && isSameDay(cellDate(day), cursorDate);
+  const weekOf = (row: (number | null)[]): number | null => {
+    const firstIdx = row.findIndex((d) => d !== null);
+    if (firstIdx === -1) return null;
+    const firstDate = createDate(year, month - 1, row[firstIdx]!);
+    const weekStartDate = addDays(firstDate, -firstIdx);
+    return weekStart === "monday"
+      ? getISOWeek(weekStartDate)
+      : getWeekOfYear(weekStartDate);
+  };
   const handleCellClick = (day: number) => {
     if (interactive && onDateClick) {
       const date = cellDate(day);
@@ -163,6 +178,9 @@
   <table>
     <thead>
       <tr>
+        {#if showWeekNumbers}
+          <th class="calendar-week"></th>
+        {/if}
         {#each getWeekdayHeaders(locale, weekStart) as day (day)}
           <th>{day}</th>
         {/each}
@@ -172,6 +190,9 @@
       {#each buildMonthGrid(year, month, weekStart) as row, i (i)}
         {#if !row.every((d) => d === null)}
           <tr>
+            {#if showWeekNumbers}
+              <td class="calendar-week">{weekOf(row)}</td>
+            {/if}
             {#each row as day, j (j)}
               {#if day === null}
                 <td></td>
