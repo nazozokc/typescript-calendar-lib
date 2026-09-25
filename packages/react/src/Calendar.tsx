@@ -3,11 +3,14 @@ import type {
   CalendarOptions,
 } from "@typescript-calendar-lib/core";
 import {
+  addDays,
   buildMonthGrid,
   createDate,
   getCalendarCellState,
+  getISOWeek,
   getMonthName,
   getWeekdayHeaders,
+  getWeekOfYear,
   isSameDay,
 } from "@typescript-calendar-lib/core";
 import { formatCellLabel } from "@typescript-calendar-lib/web";
@@ -39,6 +42,8 @@ export interface CalendarProps {
   month: number;
   locale?: CalendarOptions["locale"];
   weekStart?: CalendarOptions["weekStart"];
+  /** 各週の先頭に週番号（ISO/年始基準）を表示する。既定は false */
+  showWeekNumbers?: boolean;
   highlight?: Date;
   /** 範囲強調 */
   range?: { from: Date; to: Date };
@@ -100,6 +105,7 @@ export function Calendar({
   month,
   locale = "en",
   weekStart = "sunday",
+  showWeekNumbers = false,
   highlight,
   range,
   today,
@@ -123,6 +129,15 @@ export function Calendar({
   ref,
 }: CalendarProps) {
   const cellDate = (day: number): Date => createDate(year, month - 1, day);
+  const weekOf = (row: (number | null)[]): number | null => {
+    const firstIdx = row.findIndex((d) => d !== null);
+    if (firstIdx === -1) return null;
+    const firstDate = createDate(year, month - 1, row[firstIdx]!);
+    const weekStartDate = addDays(firstDate, -firstIdx);
+    return weekStart === "monday"
+      ? getISOWeek(weekStartDate)
+      : getWeekOfYear(weekStartDate);
+  };
   const className = (day: number): string | undefined =>
     getCellClasses(cellDate(day), {
       today,
@@ -174,6 +189,7 @@ export function Calendar({
       <table role={gridRole} aria-label={title} onKeyDown={onKeyDown}>
         <thead>
           <tr>
+            {showWeekNumbers && <th key="week" className="calendar-week" />}
             {getWeekdayHeaders(locale, weekStart).map((day) => (
               <th key={day}>{day}</th>
             ))}
@@ -182,9 +198,15 @@ export function Calendar({
         <tbody>
           {buildMonthGrid(year, month, weekStart).map((row, i) => {
             if (row.every((d) => d === null)) return null;
+            const week = weekOf(row);
             return (
               // biome-ignore lint/suspicious/noArrayIndexKey: 月グリッドは静的で並び順が変わらない
               <tr key={i}>
+                {showWeekNumbers && week !== null && (
+                  <td key="week" className="calendar-week">
+                    {week}
+                  </td>
+                )}
                 {row.map((day, j) => {
                   if (day === null)
                     // biome-ignore lint/suspicious/noArrayIndexKey: パディングセルは位置が唯一の識別子
