@@ -131,6 +131,7 @@ interface CalendarStateOptions<T = unknown> {
   highlight?: Date;
   range?: { from: Date; to: Date };
   cellData?: (date: Date) => T | undefined; // per-cell data; undefined = no data
+  selectionMode?: SelectionMode;    // "single" | "range", default "single"
 }
 ```
 
@@ -142,6 +143,7 @@ interface CalendarState<T = unknown> {
   month: number; // 1–12
   cursor: { row: number; col: number } | null; // null = unfocused
   selectedDate: Date | null;
+  selectedRange: DateRange | null; // committed range in range mode; always null in single mode
   options: ResolvedOptions<T>;  // options fixed at creation
   monthData: MonthData<T>;      // cached data for current month
 }
@@ -186,7 +188,36 @@ Returns the selected date, or `null` if none.
 
 ### `clearSelection(state): CalendarState`
 
-Clears the selected date.
+Clears the selected date (and the selected range, in range mode).
+
+## Range selection
+
+Set `selectionMode: "range"` to select a date range instead of a single date. Picking alternates between **anchor → range → reset**:
+
+1. 1st pick — sets the anchor (`selectedRange` is `null`).
+2. 2nd pick — commits the range: `selectedRange` is set to the sorted `{ from, to }`, and `selectedDate` becomes the sorted end.
+3. 3rd pick — starts a new anchor, resetting `selectedRange` to `null`.
+
+The committed `selectedRange` survives month navigation.
+
+```ts
+import { selectRange, getSelectedRange } from "@typescript-calendar-lib/tui";
+
+let state = createCalendarState({ weekStart: "monday", selectionMode: "range" });
+
+state = selectDate(state);                 // picks the cursor date (anchor)
+state = selectDate(state);                 // commits the range
+getSelectedRange(state);                   // { from: Date; to: Date } | null
+clearSelection(state);                     // clears selectedDate and selectedRange
+```
+
+### `selectRange(state, from, to): CalendarState`
+
+Directly sets a range. `from`/`to` are sorted automatically and `selectedDate` becomes the sorted end. Works regardless of `selectionMode`.
+
+### `getSelectedRange(state): DateRange | null`
+
+Returns the committed range, or `null` when unset (anchor-only or nothing selected).
 
 ## Navigation
 
@@ -359,9 +390,11 @@ import {
   getCursorDate,
   getDateData,
   getSelectedDate,
+  getSelectedRange,
   goToDate,
   goToMonth,
   goToToday,
+  keyToAction,
   moveCursor,
   navigateMonth,
   navigateYear,
@@ -371,6 +404,8 @@ import {
   resolveTheme,
   sameStateOptions,
   selectDate,
+  selectDateAt,
+  selectRange,
   setCursorToDate,
   THEMES,
   updateStateOptions,
@@ -378,6 +413,7 @@ import {
 
 import type {
   CalendarCell,
+  CalendarKeyAction,
   CalendarState,
   CalendarStateOptions,
   CellStyle,
@@ -389,6 +425,7 @@ import type {
   MonthDataOptions,
   MonthDirection,
   ResolvedOptions,
+  SelectionMode,
   Theme,
   ThemeName,
 } from "@typescript-calendar-lib/tui";

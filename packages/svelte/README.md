@@ -56,6 +56,7 @@ bun add @typescript-calendar-lib/svelte
 | `colorScheme` | `ColorSchemeName \| SvelteColorScheme` | `"default"` | CSS variable-based colors |
 | `size` | `CalendarSize` | `"md"` | Cell size |
 | `responsive` | `boolean` | `false` | Shrink cells & padding below `480px` so the grid fits phone screens |
+| `showWeekNumbers` | `boolean` | `false` | Render a leading week-number column (`th`/`td` with class `calendar-week`); the number follows `weekStart` (`"monday"` → ISO week, `"sunday"` → week-containing-Jan-1 week) |
 | `style` | `CSSProperties` | — | Extra styles for the root element |
 | `interactive` | `boolean` | `false` | Enable cell click/hover/keyboard selection |
 | `onDateClick` | `(date: Date, data?: unknown) => void` | — | Called when a day cell is clicked (or Enter/Space pressed); `data` is that cell's `cellData` value (`undefined` when none) |
@@ -105,6 +106,7 @@ Combines `useCalendarState` options, `Calendar` visual props, and event callback
 | `initialMonth` | `number` | Starting month `1`–`12` (normalized if out of range) |
 | `locale` | `Locale` | Language |
 | `weekStart` | `WeekStart` | First day of the week |
+| `selectionMode` | `SelectionMode` | Selection mode: `"single"` \| `"range"` (default `"single"`; range commits on the 2nd pick) |
 | `highlight` | `Date` | Date to highlight |
 | `range` | `{ from: Date; to: Date }` | Dates to emphasize |
 | `today` | `Date` | Reference date for "today" styling |
@@ -198,12 +200,45 @@ For full interactivity (cursor movement, month navigation, selection), use the `
 | `moveCursor` | `(direction: Direction) => void` | Move cursor: `"up"` / `"down"` / `"left"` / `"right"` |
 | `selectDate` | `() => void` | Select the date under the cursor |
 | `selectDateAt` | `(date: Date) => void` | Move cursor to a date and select it (useful for mouse click) |
+| `selectRange` | `(from: Date, to: Date) => void` | Set a committed range directly (range mode) |
 | `setCursorToDate` | `(date: Date) => void` | Move the cursor to a specific date (no-op if outside current month) |
 | `clearSelection` | `() => void` | Clear the selection |
 | `cursorDate` | `Date \| null` | Date under the cursor |
 | `selectedDate` | `Date \| null` | Currently selected date |
+| `selectedRange` | `DateRange \| null` | Committed selection range (range mode) |
 | `hoveredDate` | `Date \| null` | Currently hovered date |
 | `setHoveredDate` | `(date: Date \| null) => void` | Set or clear the hovered date |
+
+## Range selection
+
+Pass `selectionMode="range"` to select a date range instead of a single date. Clicking alternates between **anchor → range → reset**: the 1st click sets an anchor, the 2nd commits the range, and the 3rd starts a new anchor. The committed range stays visible as the preview until the next pick begins.
+
+```svelte
+<InteractiveCalendar
+  initialYear={2026}
+  initialMonth={9}
+  selectionMode="range"
+/>
+```
+
+With the raw hook, set the range explicitly via `selectRange(from, to)` and read it back from the `selectedRange` return value:
+
+```svelte
+<script lang="ts">
+  import { useCalendarState } from "@typescript-calendar-lib/svelte";
+
+  const cal = useCalendarState({
+    initialYear: 2026,
+    initialMonth: 9,
+    selectionMode: "range",
+  });
+
+  function pick() {
+    cal.selectRange(new Date(2026, 8, 1), new Date(2026, 8, 15));
+    console.log(cal.selectedRange); // { from, to } | null
+  }
+</script>
+```
 
 ## Themes
 

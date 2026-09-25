@@ -58,6 +58,7 @@ export function App() {
 | `colorScheme` | `ColorSchemeName \| ReactColorScheme` | `"default"` | CSS variable-based colors |
 | `size` | `CalendarSize` | `"md"` | Cell size |
 | `responsive` | `boolean` | `false` | Shrink cells & padding below `480px` so the grid fits phone screens |
+| `showWeekNumbers` | `boolean` | `false` | Render a leading week-number column (`th`/`td` with class `calendar-week`); the number follows `weekStart` (`"monday"` → ISO week, `"sunday"` → week-containing-Jan-1 week) |
 | `style` | `CSSProperties` | — | Extra styles for the root element |
 | `interactive` | `boolean` | `false` | Enable cell click/hover/keyboard selection |
 | `onDateClick` | `(date: Date, data?: unknown) => void` | — | Called when a day cell is clicked (or Enter/Space pressed); `data` is that cell's `cellData` value (`undefined` when none) |
@@ -109,9 +110,11 @@ function App() {
     selectDate,   // () => void — select date under cursor
     setCursorToDate, // (date) => void — move cursor to a date (same month only)
     selectDateAt, // (date) => void — move cursor to a date and select it
+    selectRange,  // (from, to) => void — set a committed range (range mode)
     clearSelection,
     cursorDate,   // Date | null
     selectedDate, // Date | null
+    selectedRange, // DateRange | null — committed range (range mode)
     hoveredDate,  // Date | null
     setHoveredDate, // (date | null) => void
   } = useCalendarState({
@@ -135,7 +138,7 @@ function App() {
 }
 ```
 
-`options` also accepts `onMonthChange: (year, month) => void`, called whenever the displayed month changes.
+`options` also accepts `selectionMode: "single" | "range"` (default `"single"`) and `onMonthChange: (year, month) => void`, called whenever the displayed month changes.
 
 ## InteractiveCalendar
 
@@ -147,6 +150,7 @@ function App() {
 | Hover a cell | Tracks the hovered date (adds `is-hovered` class); fires `onDateHover` |
 | Mouse leaves | Clears the hover state; fires `onDateLeave` |
 | Selection + hover | Shows a range preview between the selected date and the hovered date (`is-in-range-preview` class) |
+| Picking (range mode) | Alternates anchor → committed range → new anchor (`selectionMode="range"`) |
 | Arrow keys | Move the cursor (focus follows the cursor cell) |
 | `PageUp` / `PageDown` | Previous / next month |
 | Enter / Space | Same as clicking the focused cell (selects it) |
@@ -170,7 +174,29 @@ function App() {
 }
 ```
 
-It accepts the `useCalendarState` options (`initialYear`, `initialMonth`, `locale`, `weekStart`, `highlight`, `range`, `today`, `onMonthChange`) plus the `Calendar` visual props (`theme`, `colorScheme`, `size`, `responsive`, `style`, `cellData`, `renderCell`) and event callbacks (`onDateClick`, `onDateHover`, `onDateLeave`).
+It accepts the `useCalendarState` options (`initialYear`, `initialMonth`, `locale`, `weekStart`, `selectionMode`, `highlight`, `range`, `today`, `onMonthChange`) plus the `Calendar` visual props (`theme`, `colorScheme`, `size`, `responsive`, `style`, `cellData`, `renderCell`) and event callbacks (`onDateClick`, `onDateHover`, `onDateLeave`).
+
+## Range selection
+
+Pass `selectionMode="range"` to select a date range by clicking. Selection alternates between **anchor → range → reset**: the 1st click sets an anchor, the 2nd commits the range, and the 3rd starts a new anchor. The committed range is kept as the preview until the next pick begins.
+
+```tsx
+<InteractiveCalendar
+  initialYear={2026}
+  initialMonth={9}
+  selectionMode="range"
+/>
+```
+
+With the raw hook, use `selectRange(from, to)` to set the range explicitly and read it back from the `selectedRange` return value:
+
+```tsx
+const { state, selectRange, selectedRange } = useCalendarState({
+  initialYear: 2026,
+  initialMonth: 9,
+  selectionMode: "range",
+});
+```
 
 ## Custom Cell Rendering
 
