@@ -31,6 +31,7 @@ export interface CliPalette {
   weekday?: number;
   day?: number;
   weekend?: number;
+  holiday?: number;
   today?: number;
   /** highlightStyle: "reverse" のときに使うコード（default は 7 = 反転） */
   highlight?: number;
@@ -43,6 +44,7 @@ export const COLOR_SCHEMES: Record<ColorSchemeName, CliPalette> = {
   /** 従来どおり。着色は range(黄) と highlight(反転) のみ */
   default: {
     range: 33,
+    holiday: 31,
     highlight: 7,
   },
   ocean: {
@@ -50,6 +52,7 @@ export const COLOR_SCHEMES: Record<ColorSchemeName, CliPalette> = {
     weekday: 36,
     day: 37,
     weekend: 34,
+    holiday: 31,
     today: 36,
     highlight: 7,
     range: 34,
@@ -61,6 +64,7 @@ export const COLOR_SCHEMES: Record<ColorSchemeName, CliPalette> = {
     weekday: 32,
     day: 37,
     weekend: 90,
+    holiday: 31,
     today: 32,
     highlight: 7,
     range: 32,
@@ -72,6 +76,7 @@ export const COLOR_SCHEMES: Record<ColorSchemeName, CliPalette> = {
     weekday: 35,
     day: 37,
     weekend: 33,
+    holiday: 31,
     today: 35,
     highlight: 7,
     range: 35,
@@ -83,6 +88,7 @@ export const COLOR_SCHEMES: Record<ColorSchemeName, CliPalette> = {
     weekday: 37,
     day: 37,
     weekend: 90,
+    holiday: 31,
     today: 37,
     highlight: 7,
     range: 90,

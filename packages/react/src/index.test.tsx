@@ -448,8 +448,12 @@ describe("Calendar showWeekNumbers", () => {
       }),
     );
     // thead 先頭に空の th が並ぶ
-    expect(container.querySelector("th.calendar-week")).not.toBeNull();
-    const weekCells = container.querySelectorAll("td.calendar-week");
+    const weekHeader = container.querySelector("th.calendar-week[scope='col']");
+    expect(weekHeader).not.toBeNull();
+    expect(weekHeader).toHaveAttribute("aria-label", "Week number");
+    const weekCells = container.querySelectorAll(
+      "th.calendar-week[scope='row']",
+    );
     expect(weekCells.length).toBeGreaterThan(0);
     // 先頭の実行（2026-09 月曜始まり）の週番号は 36
     expect([...weekCells].some((td) => td.textContent === "36")).toBe(true);
@@ -457,6 +461,13 @@ describe("Calendar showWeekNumbers", () => {
     expect(weekCells.length).toBe(
       [...container.querySelectorAll("tbody tr")].length,
     );
+  });
+
+  test("曜日ヘッダーに scope=col がつく", () => {
+    const { container } = render(
+      createElement(Calendar, { year: 2026, month: 9 }),
+    );
+    expect(container.querySelectorAll("thead th[scope='col']")).toHaveLength(7);
   });
 
   test("showWeekNumbers 未指定では週番号要素が存在しない", () => {
@@ -550,6 +561,44 @@ describe("Calendar isDateDisabled", () => {
     ].find((b) => b.textContent === "15")!;
     fireEvent.mouseEnter(btn);
     expect(onHover).not.toHaveBeenCalled();
+  });
+});
+
+// ─── holiday ────────────────────────────────────────────
+
+describe("Calendar holiday", () => {
+  test("祝日・振替休日に is-holiday クラスがつく", () => {
+    // 2026-05-03 憲法記念日 / 05-04 みどりの日 / 05-05 こどもの日 /
+    // 05-06 は 5/3 が日曜のため振替休日
+    const { container } = render(
+      createElement(Calendar, { year: 2026, month: 5, today: TODAY }),
+    );
+    const holidayCells = container.querySelectorAll("td.is-holiday");
+    expect([...holidayCells].map((c) => c.textContent).sort()).toEqual([
+      "3",
+      "4",
+      "5",
+      "6",
+    ]);
+  });
+
+  test("平日は is-holiday クラスがつかない", () => {
+    const { container } = render(
+      createElement(Calendar, { year: 2026, month: 5, today: TODAY }),
+    );
+    expect(container.querySelector("td.is-holiday")?.textContent).not.toBe("8");
+  });
+
+  test("holidayLocale を指定するとそのロケールで判定する", () => {
+    const { container } = render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 5,
+        today: TODAY,
+        holidayLocale: "en",
+      }),
+    );
+    expect(container.querySelectorAll("td.is-holiday")).toHaveLength(0);
   });
 });
 
@@ -981,6 +1030,16 @@ describe("Calendar ARIA", () => {
     expect(grid).toHaveAttribute("aria-label", "September 2026");
   });
 
+  test("非 interactive でも table に aria-label がつく", () => {
+    const { container } = render(
+      createElement(Calendar, { year: 2026, month: 9 }),
+    );
+    expect(container.querySelector("table")).toHaveAttribute(
+      "aria-label",
+      "September 2026",
+    );
+  });
+
   test("非 interactive ではネイティブ table セマンティクスのまま", () => {
     const { container } = render(
       createElement(Calendar, { year: 2026, month: 9 }),
@@ -1012,6 +1071,25 @@ describe("Calendar ARIA", () => {
     );
     const btn = screen.getByRole("button", { name: /September 10, 2026/ });
     expect(btn.closest("td")).toHaveAttribute("aria-selected", "true");
+    expect(btn).toHaveAttribute("aria-pressed", "true");
+  });
+
+  test("selected 以外の button には aria-pressed=false が付く", () => {
+    render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 9,
+        interactive: true,
+        selectedDate: new Date(2026, 8, 10),
+      }),
+    );
+    const buttons = screen.getAllByRole("button");
+    expect(buttons.length).toBeGreaterThan(1);
+    for (const button of buttons) {
+      if (button.textContent !== "10") {
+        expect(button).toHaveAttribute("aria-pressed", "false");
+      }
+    }
   });
 
   test("cursorDate のセルだけ tabIndex=0 になる（roving tabindex）", () => {

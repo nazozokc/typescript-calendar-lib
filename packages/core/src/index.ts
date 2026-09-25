@@ -25,6 +25,15 @@ export {
   startOfWeek,
   startOfYear,
 } from "./date-math.ts";
+export {
+  addBusinessDays,
+  diffInBusinessDays,
+  getHolidayName,
+  HOLIDAY_MAX_YEAR,
+  HOLIDAY_MIN_YEAR,
+  isBusinessDay,
+  isHoliday,
+} from "./holidays.ts";
 export type { LocaleData } from "./locale.ts";
 export {
   getLocaleData,

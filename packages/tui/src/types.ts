@@ -18,6 +18,8 @@ export interface CalendarCell<T = unknown> {
   isCurrentMonth: boolean;
   /** 土曜 or 日曜か */
   isWeekend: boolean;
+  /** 祝日か（holidayLocale に従って判定。指定なしは "ja"） */
+  isHoliday: boolean;
   /** 今日の日付か */
   isToday: boolean;
   /** ハイライト対象か */
@@ -55,6 +57,8 @@ export type SelectionMode = "single" | "range";
 /** buildMonthData に渡すオプション（プレゼンテーション情報は含まない） */
 export interface MonthDataOptions<T = unknown> {
   locale?: Locale;
+  /** 祝日の判定に使うロケール。省略時は "ja" */
+  holidayLocale?: Locale;
   weekStart?: WeekStart;
   /** 今日の基準日。省略時は new Date() */
   today?: Date;
@@ -81,6 +85,8 @@ export interface CalendarStateOptions<T = unknown> {
   /** 今日の基準日。省略時は生成時に new Date() で解決され、状態に固定される */
   today?: Date;
   locale?: Locale;
+  /** 祝日の判定に使うロケール。省略時は "ja" */
+  holidayLocale?: Locale;
   weekStart?: WeekStart;
   /** ハイライト対象日 */
   highlight?: Date;
@@ -97,6 +103,8 @@ export interface CalendarStateOptions<T = unknown> {
 /** 状態に保持される解決済みオプション（月移動時も引き継がれる） */
 export interface ResolvedOptions<T = unknown> {
   locale: Locale;
+  /** 祝日の判定に使うロケール。既定は "ja" */
+  holidayLocale: Locale;
   weekStart: WeekStart;
   today: Date;
   highlight?: Date;

@@ -88,6 +88,26 @@ function App() {
 <Calendar year={2026} month={9} colorScheme="ocean" theme="modern" />
 ```
 
+### Server-side rendering
+
+The React and Svelte components render without browser globals. React can be rendered with `react-dom/server`; Svelte 5 provides `render` from `svelte/server`:
+
+```tsx
+import { renderToString } from "react-dom/server";
+import { Calendar } from "@typescript-calendar-lib/react";
+
+const html = renderToString(<Calendar year={2026} month={9} />);
+```
+
+```ts
+import { render } from "svelte/server";
+import Calendar from "@typescript-calendar-lib/svelte";
+
+const { body } = render(Calendar, { props: { year: 2026, month: 9 } });
+```
+
+Next.js App Router Server Components render React calendars on the server by default. SvelteKit pages are server-rendered by default. See the [React](packages/react/README.md#server-side-rendering) and [Svelte](packages/svelte/README.md#server-side-rendering) guides for framework examples and client-component boundaries.
+
 ### Responsive (React / Svelte)
 
 The React and Svelte calendars keep a fixed 7-column grid, which can overflow narrow phone screens. Pass `responsive` to make the grid shrink its cells, fonts, and padding below `480px` (and a touch more below `360px`) so it always fits:

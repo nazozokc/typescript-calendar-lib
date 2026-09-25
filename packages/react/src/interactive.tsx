@@ -22,6 +22,7 @@ export interface InteractiveCalendarProps {
   /** 表示開始月 (1-12)。範囲外は正規化される */
   initialMonth?: number;
   locale?: CalendarOptions["locale"];
+  holidayLocale?: CalendarOptions["holidayLocale"];
   weekStart?: CalendarOptions["weekStart"];
   /** 選択方式。既定は "single"。範囲選択時はクリックのたびにアンカー→確定→リセットを交互に行う */
   selectionMode?: SelectionMode;
@@ -73,6 +74,7 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     initialYear,
     initialMonth,
     locale,
+    holidayLocale,
     weekStart,
     selectionMode,
     highlight,
@@ -96,6 +98,7 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     initialYear,
     initialMonth,
     locale,
+    holidayLocale,
     weekStart,
     selectionMode,
     today,
@@ -175,6 +178,7 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
       year={state.year}
       month={state.month}
       locale={state.options.locale}
+      holidayLocale={state.options.holidayLocale}
       weekStart={state.options.weekStart}
       highlight={state.options.highlight}
       range={state.options.range}

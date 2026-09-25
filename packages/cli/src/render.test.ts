@@ -99,7 +99,7 @@ describe("renderMonth - highlight", () => {
   test("color:falseではANSIエスケープを含まない", () => {
     const out = renderMonth(2026, 9, {
       highlight: new Date(2026, 8, 8),
-      color: true,
+      color: false,
     });
     expect(out).not.toContain("\u001b[");
   });
@@ -124,6 +124,27 @@ describe("renderMonth - range color", () => {
       color: true,
     });
     expect(out).toContain("\u001b[7m  8\u001b[0m");
+  });
+});
+
+describe("renderMonth - holiday color", () => {
+  test("祝日・振替休日にcolor:trueで着色する", () => {
+    const out = renderMonth(2026, 5, { color: true });
+    // 5/3 憲法記念日・5/4 みどりの日・5/5 こどもの日・5/6 振替休日
+    expect(out).toContain("\u001b[31m  3\u001b[0m");
+    expect(out).toContain("\u001b[31m  6\u001b[0m");
+    // 5/8 は平日なので weekend 系の色（このスキームでは未設定）であって祝日色ではない
+    expect(out).not.toContain("\u001b[31m  8\u001b[0m");
+  });
+
+  test("color:falseでは祝日も着色しない", () => {
+    const out = renderMonth(2026, 5, { color: false });
+    expect(out).not.toContain("\u001b[");
+  });
+
+  test("holidayLocale を指定するとそのロケールで判定する", () => {
+    const out = renderMonth(2026, 5, { color: true, holidayLocale: "en" });
+    expect(out).not.toContain("\u001b[31m  6\u001b[0m");
   });
 });
 

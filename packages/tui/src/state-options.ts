@@ -20,6 +20,7 @@ export function sameStateOptions<T>(
     a.initialYear === b.initialYear &&
     a.initialMonth === b.initialMonth &&
     a.locale === b.locale &&
+    a.holidayLocale === b.holidayLocale &&
     a.weekStart === b.weekStart &&
     sameDateValue(a.today, b.today) &&
     sameDateValue(a.highlight, b.highlight) &&
@@ -40,6 +41,7 @@ export function updateStateOptions<T>(
   const options: ResolvedOptions<T> = resolveOptions<T>({
     today: next.today ?? state.options.today,
     locale: next.locale ?? state.options.locale,
+    holidayLocale: next.holidayLocale ?? state.options.holidayLocale,
     weekStart: next.weekStart ?? state.options.weekStart,
     highlight: next.highlight,
     range: next.range,

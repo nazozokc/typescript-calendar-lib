@@ -25,6 +25,7 @@ export function buildMonthData<T>(
 ): MonthData<T> {
   const {
     locale = "en",
+    holidayLocale,
     weekStart = "sunday",
     today = new Date(),
     highlight,
@@ -58,6 +59,7 @@ export function buildMonthData<T>(
           dayOfWeek,
           isCurrentMonth: false,
           isWeekend: false,
+          isHoliday: false,
           isToday: false,
           isHighlight: false,
           isInRange: false,
@@ -68,6 +70,7 @@ export function buildMonthData<T>(
       const date = createDate(ny, nm - 1, day);
       const state = getCalendarCellState(date, {
         today,
+        holidayLocale,
         highlight,
         range,
         isDateDisabled,

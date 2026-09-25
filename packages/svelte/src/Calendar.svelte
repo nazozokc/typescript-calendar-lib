@@ -29,6 +29,7 @@
     year: number;
     month: number;
     locale?: CalendarOptions["locale"];
+    holidayLocale?: CalendarOptions["holidayLocale"];
     weekStart?: CalendarOptions["weekStart"];
     highlight?: Date;
     /** 範囲強調 */
@@ -37,7 +38,7 @@
     rangePreview?: { from: Date; to: Date };
     /** 今日の基準日。カラースキームの today 着色に使用 */
     today?: Date;
-    /** 選択済み日付。該当セルに is-selected クラスと aria-selected が付く */
+    /** 選択済み日付。該当セルに is-selected クラスが付き、interactive 時は button に aria-pressed が付く */
     selected?: Date | null;
     /** カーソル位置の日付。該当セルに is-cursor クラスが付く */
     cursorDate?: Date | null;
@@ -88,6 +89,7 @@
     year,
     month,
     locale = "en",
+    holidayLocale,
     weekStart = "sunday",
     highlight,
     range,
@@ -114,10 +116,11 @@
 
   const cellDate = (day: number): Date => createDate(year, month - 1, day);
   const cellState = (day: number): CalendarCellState =>
-    getCalendarCellState(cellDate(day), { today, highlight, range, isDateDisabled });
+    getCalendarCellState(cellDate(day), { today, holidayLocale, highlight, range, isDateDisabled });
   const cellClass = (day: number): string | undefined =>
     getCellClasses(cellDate(day), {
       today,
+      holidayLocale,
       highlight,
       range,
       rangePreview,
@@ -175,14 +178,14 @@
   <div class="calendar-header">
     <h2>{getMonthName(locale, month)} {year}</h2>
   </div>
-  <table>
+  <table aria-label={`${getMonthName(locale, month)} ${year}`}>
     <thead>
       <tr>
         {#if showWeekNumbers}
-          <th class="calendar-week"></th>
+          <th class="calendar-week" scope="col" aria-label="Week number"></th>
         {/if}
         {#each getWeekdayHeaders(locale, weekStart) as day (day)}
-          <th>{day}</th>
+          <th scope="col">{day}</th>
         {/each}
       </tr>
     </thead>
@@ -191,13 +194,17 @@
         {#if !row.every((d) => d === null)}
           <tr>
             {#if showWeekNumbers}
-              <td class="calendar-week">{weekOf(row)}</td>
+              <th class="calendar-week" scope="row">{weekOf(row)}</th>
             {/if}
             {#each row as day, j (j)}
               {#if day === null}
                 <td></td>
               {:else}
-                <td class={cellClass(day)} aria-disabled={isDisabledDay(day) || undefined}>
+                <td
+                  class={cellClass(day)}
+                  aria-current={isTodayDay(day) ? "date" : undefined}
+                  aria-disabled={isDisabledDay(day) || undefined}
+                >
                   {#if interactive}
                     <button
                       type="button"
@@ -207,8 +214,7 @@
                       tabindex={isCursorDay(day) ? 0 : -1}
                       data-cursor={isCursorDay(day) ? "true" : undefined}
                       aria-label={formatCellLabel(locale, year, month, day)}
-                      aria-pressed={isSelectedDay(day) || undefined}
-                      aria-current={isTodayDay(day) ? "date" : undefined}
+                      aria-pressed={isSelectedDay(day)}
                       disabled={isDisabledDay(day)}
                     >
                       {#if renderCell}

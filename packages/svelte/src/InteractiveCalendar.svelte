@@ -22,6 +22,7 @@
     /** 表示開始月 (1-12)。範囲外は正規化される */
     initialMonth?: number;
     locale?: CalendarOptions["locale"];
+    holidayLocale?: CalendarOptions["holidayLocale"];
     weekStart?: CalendarOptions["weekStart"];
     /** ハイライト対象日 */
     highlight?: Date;
@@ -66,6 +67,7 @@
     initialYear,
     initialMonth,
     locale,
+    holidayLocale,
     weekStart,
     highlight,
     range,
@@ -88,6 +90,7 @@
     initialYear,
     initialMonth,
     locale,
+    holidayLocale,
     weekStart,
     today,
     highlight,
@@ -152,6 +155,7 @@
     year={cal.state.year}
     month={cal.state.month}
     locale={cal.state.options.locale}
+    holidayLocale={cal.state.options.holidayLocale}
     weekStart={cal.state.options.weekStart}
     highlight={cal.state.options.highlight}
     range={cal.state.options.range}

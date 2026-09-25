@@ -30,6 +30,7 @@ export interface UseCalendarStateOptions
   extends Pick<
     CalendarStateOptions,
     | "locale"
+    | "holidayLocale"
     | "weekStart"
     | "today"
     | "highlight"

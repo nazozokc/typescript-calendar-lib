@@ -126,6 +126,7 @@ describe("getCalendarCellState", () => {
       isHighlight: true,
       isInRange: true,
       isDisabled: false,
+      isHoliday: false,
     });
   });
 
@@ -136,6 +137,7 @@ describe("getCalendarCellState", () => {
       isHighlight: false,
       isInRange: false,
       isDisabled: false,
+      isHoliday: false,
     });
   });
 

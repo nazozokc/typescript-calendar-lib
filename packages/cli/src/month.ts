@@ -32,6 +32,7 @@ export function renderMonth(
 ): string {
   const {
     locale = "en",
+    holidayLocale,
     weekStart = "sunday",
     highlight,
     highlightStyle = "bracket",
@@ -75,6 +76,7 @@ export function renderMonth(
     const date = createDate(year, month - 1, day);
     const state = getCalendarCellState(date, {
       today,
+      holidayLocale,
       highlight,
       range,
       isDateDisabled,
@@ -86,13 +88,20 @@ export function renderMonth(
       return customRenderCell(day, date, state, data);
     }
 
-    const { isHighlight, isInRange, isToday, isDisabled, isWeekend } = state;
+    const {
+      isHighlight,
+      isInRange,
+      isToday,
+      isDisabled,
+      isWeekend,
+      isHoliday,
+    } = state;
 
     const text = (
       isHighlight && highlightStyle === "bracket" ? `[${day}]` : String(day)
     ).padStart(cellWidth);
 
-    // 優先順位: highlight > range > today > disabled > weekend > day
+    // 優先順位: highlight > range > today > disabled > weekend > holiday > day
     let code: number | undefined;
     if (isHighlight && highlightStyle === "reverse") {
       code = palette.highlight ?? 7;
@@ -104,6 +113,8 @@ export function renderMonth(
       code = palette.dim ?? 90;
     } else if (isWeekend && palette.weekend !== undefined) {
       code = palette.weekend;
+    } else if (isHoliday && palette.holiday !== undefined) {
+      code = palette.holiday;
     } else if (palette.day !== undefined) {
       code = palette.day;
     }

@@ -41,6 +41,7 @@ export interface CalendarProps {
   year: number;
   month: number;
   locale?: CalendarOptions["locale"];
+  holidayLocale?: CalendarOptions["holidayLocale"];
   weekStart?: CalendarOptions["weekStart"];
   /** 各週の先頭に週番号（ISO/年始基準）を表示する。既定は false */
   showWeekNumbers?: boolean;
@@ -77,7 +78,7 @@ export interface CalendarProps {
 
   // ── セル状態 ──
 
-  /** 選択済み日付。aria-selected と表示スタイルに使用 */
+  /** 選択済み日付。aria-selected・aria-pressed と表示スタイルに使用 */
   selectedDate?: Date | null;
   /** カーソル位置の日付。このセルだけ tabIndex=0（roving tabindex）になる */
   cursorDate?: Date | null;
@@ -104,6 +105,7 @@ export function Calendar({
   year,
   month,
   locale = "en",
+  holidayLocale,
   weekStart = "sunday",
   showWeekNumbers = false,
   highlight,
@@ -141,6 +143,7 @@ export function Calendar({
   const className = (day: number): string | undefined =>
     getCellClasses(cellDate(day), {
       today,
+      holidayLocale,
       highlight,
       range,
       rangePreview,
@@ -189,9 +192,18 @@ export function Calendar({
       <table role={gridRole} aria-label={title} onKeyDown={onKeyDown}>
         <thead>
           <tr>
-            {showWeekNumbers && <th key="week" className="calendar-week" />}
+            {showWeekNumbers && (
+              <th
+                key="week"
+                className="calendar-week"
+                scope="col"
+                aria-label="Week number"
+              />
+            )}
             {getWeekdayHeaders(locale, weekStart).map((day) => (
-              <th key={day}>{day}</th>
+              <th key={day} scope="col">
+                {day}
+              </th>
             ))}
           </tr>
         </thead>
@@ -203,9 +215,9 @@ export function Calendar({
               // biome-ignore lint/suspicious/noArrayIndexKey: 月グリッドは静的で並び順が変わらない
               <tr key={i}>
                 {showWeekNumbers && week !== null && (
-                  <td key="week" className="calendar-week">
+                  <th key="week" className="calendar-week" scope="row">
                     {week}
-                  </td>
+                  </th>
                 )}
                 {row.map((day, j) => {
                   if (day === null)
@@ -252,6 +264,7 @@ export function Calendar({
                           tabIndex={cursor ? 0 : -1}
                           data-cursor={cursor ? "true" : undefined}
                           aria-label={formatCellLabel(locale, year, month, day)}
+                          aria-pressed={selected}
                           disabled={state.isDisabled}
                         >
                           {renderCell

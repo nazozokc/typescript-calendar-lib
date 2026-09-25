@@ -500,9 +500,19 @@ describe("Calendar showWeekNumbers", () => {
         showWeekNumbers: true,
       },
     });
-    const week = container.querySelector("td.calendar-week");
+    const weekHeader = container.querySelector("th.calendar-week[scope='col']");
+    expect(weekHeader).not.toBeNull();
+    expect(weekHeader).toHaveAttribute("aria-label", "Week number");
+    const week = container.querySelector("th.calendar-week[scope='row']");
     expect(week).not.toBeNull();
     expect(week!.textContent).toBe("36");
+  });
+
+  test("曜日ヘッダーに scope=col がつく", () => {
+    const { container } = render(Calendar, {
+      props: { year: 2026, month: 9 },
+    });
+    expect(container.querySelectorAll("thead th[scope='col']")).toHaveLength(7);
   });
 
   test("showWeekNumbers 未指定では週番号セルが表示されない", () => {
@@ -516,6 +526,16 @@ describe("Calendar showWeekNumbers", () => {
 // ─── Calendar selected / cursorDate ──────────────────────
 
 describe("Calendar selected / cursorDate", () => {
+  test("table に aria-label がつく", () => {
+    const { container } = render(Calendar, {
+      props: { year: 2026, month: 9 },
+    });
+    expect(container.querySelector("table")).toHaveAttribute(
+      "aria-label",
+      "September 2026",
+    );
+  });
+
   test("selected の日にちに is-selected クラスが付く", () => {
     const { container } = render(Calendar, {
       props: {
@@ -571,7 +591,7 @@ describe("Calendar selected / cursorDate", () => {
     expect(pressed!.textContent).toBe("10");
   });
 
-  test("selected 以外の button には aria-pressed が付かない", () => {
+  test("selected 以外の button には aria-pressed=false が付く", () => {
     const { container } = render(Calendar, {
       props: {
         year: 2026,
@@ -585,16 +605,16 @@ describe("Calendar selected / cursorDate", () => {
     expect(buttons.length).toBeGreaterThan(1);
     for (const button of buttons) {
       if (button.textContent !== "10") {
-        expect(button.getAttribute("aria-pressed")).toBeNull();
+        expect(button).toHaveAttribute("aria-pressed", "false");
       }
     }
   });
 
-  test("today の button に aria-current=date が付く", () => {
+  test("today のセルに aria-current=date が付く", () => {
     const { container } = render(Calendar, {
       props: { year: 2026, month: 9, interactive: true, today: TODAY },
     });
-    const current = container.querySelector('button[aria-current="date"]');
+    const current = container.querySelector('td[aria-current="date"]');
     expect(current).not.toBeNull();
     expect(current!.textContent).toBe("15");
   });
@@ -955,6 +975,37 @@ describe("Calendar isDateDisabled", () => {
     ].find((b) => b.textContent === "15")!;
     await fireEvent.mouseEnter(btn);
     expect(onHover).not.toHaveBeenCalled();
+  });
+});
+
+// ─── holiday ────────────────────────────────────────────
+
+describe("Calendar holiday", () => {
+  const base = () => ({ year: 2026, month: 5, today: TODAY });
+
+  test("祝日・振替休日に is-holiday クラスがつく", () => {
+    // 2026-05-03 憲法記念日 / 05-04 みどりの日 / 05-05 こどもの日 /
+    // 05-06 は 5/3 が日曜のため振替休日
+    const { container } = render(Calendar, { props: base() });
+    const cells = container.querySelectorAll("td.is-holiday");
+    expect([...cells].map((c) => c.textContent).sort()).toEqual([
+      "3",
+      "4",
+      "5",
+      "6",
+    ]);
+  });
+
+  test("平日は is-holiday クラスがつかない", () => {
+    const { container } = render(Calendar, { props: base() });
+    expect(container.querySelector("td.is-holiday")?.textContent).not.toBe("8");
+  });
+
+  test("holidayLocale を指定するとそのロケールで判定する", () => {
+    const { container } = render(Calendar, {
+      props: { ...base(), holidayLocale: "en" },
+    });
+    expect(container.querySelectorAll("td.is-holiday")).toHaveLength(0);
   });
 });
 
