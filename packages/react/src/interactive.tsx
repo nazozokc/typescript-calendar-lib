@@ -1,4 +1,5 @@
 import type { CalendarOptions } from "@typescript-calendar-lib/core";
+import type { SelectionMode } from "@typescript-calendar-lib/tui";
 import { keyToAction } from "@typescript-calendar-lib/tui";
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useRef } from "react";
@@ -21,7 +22,10 @@ export interface InteractiveCalendarProps {
   /** 表示開始月 (1-12)。範囲外は正規化される */
   initialMonth?: number;
   locale?: CalendarOptions["locale"];
+  holidayLocale?: CalendarOptions["holidayLocale"];
   weekStart?: CalendarOptions["weekStart"];
+  /** 選択方式。既定は "single"。範囲選択時はクリックのたびにアンカー→確定→リセットを交互に行う */
+  selectionMode?: SelectionMode;
   /** ハイライト対象日 */
   highlight?: Date;
   /** 範囲プレビュー（ホバー等の候補範囲）。is-in-range-preview クラスで視覚化される */
@@ -70,7 +74,9 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     initialYear,
     initialMonth,
     locale,
+    holidayLocale,
     weekStart,
+    selectionMode,
     highlight,
     range,
     today,
@@ -92,7 +98,9 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     initialYear,
     initialMonth,
     locale,
+    holidayLocale,
     weekStart,
+    selectionMode,
     today,
     highlight,
     range,
@@ -127,8 +135,11 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     onDateLeave?.();
   }, [setHoveredDate, onDateLeave]);
 
-  // 選択済み日付とホバー日付の間を範囲プレビューとして表示する
-  const rangePreview = buildRangePreview(hook.selectedDate, hook.hoveredDate);
+  // 確定済みの選択範囲は、次のピックが始まるまでプレビューとして表示し続ける。
+  // 未確定なら選択済み日付とホバー日付の間を範囲プレビューとして表示する。
+  const rangePreview =
+    hook.selectedRange ??
+    buildRangePreview(hook.selectedDate, hook.hoveredDate);
 
   // カーソルが動いたときだけ、そのセルへフォーカスを移す（初回マウントでは動かさない）
   const prevCursorRef = useRef(state.cursor);
@@ -167,6 +178,7 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
       year={state.year}
       month={state.month}
       locale={state.options.locale}
+      holidayLocale={state.options.holidayLocale}
       weekStart={state.options.weekStart}
       highlight={state.options.highlight}
       range={state.options.range}

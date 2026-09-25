@@ -1,3 +1,4 @@
+import type { DateRange } from "@typescript-calendar-lib/core";
 import type {
   CalendarState,
   CalendarStateOptions,
@@ -9,6 +10,7 @@ import {
   createCalendarState,
   getCursorDate,
   getSelectedDate,
+  getSelectedRange,
   goToDate,
   goToMonth,
   goToToday,
@@ -18,6 +20,7 @@ import {
   sameStateOptions,
   selectDate,
   selectDateAt,
+  selectRange,
   setCursorToDate,
   updateStateOptions,
 } from "@typescript-calendar-lib/tui";
@@ -26,7 +29,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export interface UseCalendarStateOptions
   extends Pick<
     CalendarStateOptions,
-    "locale" | "weekStart" | "today" | "highlight" | "range" | "isDateDisabled"
+    | "locale"
+    | "holidayLocale"
+    | "weekStart"
+    | "today"
+    | "highlight"
+    | "range"
+    | "isDateDisabled"
+    | "selectionMode"
   > {
   initialYear?: number;
   initialMonth?: number;
@@ -56,12 +66,16 @@ export interface UseCalendarStateReturn {
   setCursorToDate: (date: Date) => void;
   /** 指定した日付を選択し、カーソルもそこへ移動する（当月に無ければ何もしない） */
   selectDateAt: (date: Date) => void;
+  /** 範囲を直接設定して選択する（from/to は自動で整列される） */
+  selectRange: (from: Date, to: Date) => void;
   /** 選択を解除 */
   clearSelection: () => void;
   /** カーソル位置の日付（null の場合あり） */
   cursorDate: Date | null;
   /** 選択済み日付（null の場合あり） */
   selectedDate: Date | null;
+  /** 確定した選択範囲（range モードで確定した範囲）。未確定なら null */
+  selectedRange: DateRange | null;
   /** ホバー中の日付（null の場合あり） */
   hoveredDate: Date | null;
   /** ホバー日付を更新する */
@@ -72,7 +86,7 @@ export interface UseCalendarStateReturn {
  * tui の不変状態マシンを包む React hook。
  * カレンダーのインタラクティブ操作をシンプルに利用できる。
  *
- * `options` の値（locale / weekStart / today / highlight / range /
+ * `options` の値（locale / weekStart / today / highlight / range / selectionMode /
  * initialYear / initialMonth）が変わると、カーソル・選択を保ったまま
  * 状態が再構築される。比較は値（Date は getTime）で行うため、インラインで
  * オプションを渡しても値が同じなら再構築されない。
@@ -154,12 +168,17 @@ export function useCalendarState(
       (date: Date) => setState((prev) => selectDateAt(prev, date)),
       [],
     ),
+    selectRange: useCallback(
+      (from: Date, to: Date) => setState((prev) => selectRange(prev, from, to)),
+      [],
+    ),
     clearSelection: useCallback(
       () => setState((prev) => clearSelection(prev)),
       [],
     ),
     cursorDate: getCursorDate(state),
     selectedDate: getSelectedDate(state),
+    selectedRange: getSelectedRange(state),
     hoveredDate,
     setHoveredDate,
   };

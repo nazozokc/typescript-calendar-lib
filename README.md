@@ -10,6 +10,9 @@ A TypeScript calendar library spanning the terminal and the web. Render month, y
 - **Highlight today** — bracket (`[8]`) or reverse-video styles
 - **Range coloring** — emphasize a span of dates (opt-in)
 - **Disabled dates** — block dates with an `isDateDisabled` predicate in every layer (cursor skips them, selection is blocked)
+- **Range selection** — `selectionMode: "range"` (React/Svelte/TUI) commits a start–end range with a click sequence: anchor → range → reset
+- **Week numbers** — `showWeekNumbers` prints the ISO/week-of-year number at the start of each row (CLI, React, Svelte)
+- **Date utilities** — a full `date-math` API: add/subtract, diffs, `startOf`/`endOf`, week (ISO/Year), day-of-year, compare, clamp, and `formatDate` token formatting
 - **Interactive React 19** — `useCalendarState` hook + clickable/keyboard cells
 - **Interactive Svelte 5** — the same headless state, as a runes-based `useCalendarState` hook + `Calendar` component
 - **Responsive web components (opt-in)** — a `responsive` prop (React/Svelte) shrinks cells, fonts, and padding so the 7-column grid stays inside phone screens
@@ -85,6 +88,26 @@ function App() {
 <Calendar year={2026} month={9} colorScheme="ocean" theme="modern" />
 ```
 
+### Server-side rendering
+
+The React and Svelte components render without browser globals. React can be rendered with `react-dom/server`; Svelte 5 provides `render` from `svelte/server`:
+
+```tsx
+import { renderToString } from "react-dom/server";
+import { Calendar } from "@typescript-calendar-lib/react";
+
+const html = renderToString(<Calendar year={2026} month={9} />);
+```
+
+```ts
+import { render } from "svelte/server";
+import Calendar from "@typescript-calendar-lib/svelte";
+
+const { body } = render(Calendar, { props: { year: 2026, month: 9 } });
+```
+
+Next.js App Router Server Components render React calendars on the server by default. SvelteKit pages are server-rendered by default. See the [React](packages/react/README.md#server-side-rendering) and [Svelte](packages/svelte/README.md#server-side-rendering) guides for framework examples and client-component boundaries.
+
 ### Responsive (React / Svelte)
 
 The React and Svelte calendars keep a fixed 7-column grid, which can overflow narrow phone screens. Pass `responsive` to make the grid shrink its cells, fonts, and padding below `480px` (and a touch more below `360px`) so it always fits:
@@ -98,6 +121,39 @@ The React and Svelte calendars keep a fixed 7-column grid, which can overflow na
 ```
 
 It is **off by default** — existing layouts are untouched. Both `Calendar` and `InteractiveCalendar` accept the prop.
+
+### Week numbers (CLI / React / Svelte)
+
+Pass `showWeekNumbers` to print the week number at the start of each row. With `weekStart: "monday"` it uses ISO 8601 week numbers; with `"sunday"` it uses the US convention (week containing January 1 is week 1):
+
+```ts
+console.log(calendar({ year: 2026, month: 9, weekStart: "monday", showWeekNumbers: true }));
+```
+
+```
+         September 2026
+ Mon Tue Wed Thu Fri Sat Sun
+ 36                         1   2   3   4   5   6
+ ...
+```
+
+```tsx
+<Calendar year={2026} month={9} weekStart="monday" showWeekNumbers />
+```
+
+```svelte
+<Calendar year={2026} month={9} weekStart="monday" showWeekNumbers />
+```
+
+### Range selection (React / Svelte)
+
+`selectionMode: "range"` commits a start–end range with two clicks. Clicking a third date starts a new selection:
+
+```tsx
+<InteractiveCalendar selectionMode="range" />
+```
+
+The committed range stays highlighted until the next pick starts; `useCalendarState` exposes it via `selectedRange` and `selectRange(from, to)`. The same mode is available headlessly in the TUI package.
 
 ### Output
 
@@ -126,6 +182,7 @@ Render a single month.
 | `highlight` | `Date` | — | Date to highlight (e.g. today) |
 | `highlightStyle` | `"bracket" \| "reverse"` | `"bracket"` | Highlight appearance |
 | `range` | `{ from: Date; to: Date }` | — | Dates to color |
+| `showWeekNumbers` | `boolean` | `false` | Print the week number at the start of each row (`monday` start → ISO 8601 week, `sunday` start → week-of-year containing Jan 1) |
 | `isDateDisabled` | `(date: Date) => boolean` | — | Dates to render dimmed as non-selectable |
 | `color` | `boolean` | `false` | Emit ANSI color codes |
 
@@ -246,7 +303,7 @@ import type {
 pnpm test
 ```
 
-The suite covers date utilities (leap years, month boundaries), locale headers, grid layout, highlight/range/disabled rendering, cursor movement, and public API integration across all packages.
+The suite covers date utilities (leap years, month boundaries, ISO/week-of-year numbers, DST-safe arithmetic), locale headers, grid layout, highlight/range/disabled/week-number rendering, cursor movement, single/range selection, and public API integration across all packages.
 
 ## Development
 

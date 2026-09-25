@@ -20,13 +20,15 @@ export function sameStateOptions<T>(
     a.initialYear === b.initialYear &&
     a.initialMonth === b.initialMonth &&
     a.locale === b.locale &&
+    a.holidayLocale === b.holidayLocale &&
     a.weekStart === b.weekStart &&
     sameDateValue(a.today, b.today) &&
     sameDateValue(a.highlight, b.highlight) &&
     sameDateValue(a.range?.from, b.range?.from) &&
     sameDateValue(a.range?.to, b.range?.to) &&
     a.isDateDisabled === b.isDateDisabled &&
-    a.cellData === b.cellData
+    a.cellData === b.cellData &&
+    a.selectionMode === b.selectionMode
   );
 }
 
@@ -39,11 +41,13 @@ export function updateStateOptions<T>(
   const options: ResolvedOptions<T> = resolveOptions<T>({
     today: next.today ?? state.options.today,
     locale: next.locale ?? state.options.locale,
+    holidayLocale: next.holidayLocale ?? state.options.holidayLocale,
     weekStart: next.weekStart ?? state.options.weekStart,
     highlight: next.highlight,
     range: next.range,
     isDateDisabled: next.isDateDisabled,
     cellData: next.cellData ?? state.options.cellData,
+    selectionMode: next.selectionMode ?? state.options.selectionMode,
   });
   const year =
     next.initialYear !== undefined && next.initialYear !== previous.initialYear
@@ -62,5 +66,6 @@ export function updateStateOptions<T>(
     state.selectedDate,
     options,
     monthData,
+    state.selectedRange,
   );
 }

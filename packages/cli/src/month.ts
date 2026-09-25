@@ -1,9 +1,12 @@
 import {
+  addDays,
   buildMonthGrid,
   createDate,
   getCalendarCellState,
+  getISOWeek,
   getMonthName,
   getWeekdayHeaders,
+  getWeekOfYear,
 } from "@typescript-calendar-lib/core";
 import {
   centerText,
@@ -16,6 +19,9 @@ import { bottomBorder, innerWidth, separatorRow, topBorder } from "./border.ts";
 import { resolveColorScheme, resolveTheme } from "./theme.ts";
 import type { RenderMonthOptions } from "./types.ts";
 
+/** 週番号の表示幅（最大 2 桁: 1-53） */
+const WEEK_WIDTH = 2;
+
 /**
  * 1ヶ月分のカレンダーテキストを描画する
  */
@@ -26,6 +32,7 @@ export function renderMonth(
 ): string {
   const {
     locale = "en",
+    holidayLocale,
     weekStart = "sunday",
     highlight,
     highlightStyle = "bracket",
@@ -37,6 +44,7 @@ export function renderMonth(
     isDateDisabled,
     cellData,
     renderCell: customRenderCell,
+    showWeekNumbers = false,
   } = options;
 
   const theme = resolveTheme(themeOption);
@@ -47,6 +55,7 @@ export function renderMonth(
   const weekdays = getWeekdayHeaders(locale, weekStart);
   const grid = buildMonthGrid(year, month, weekStart);
   const cols = weekdays.length;
+  const weekWidth = showWeekNumbers ? WEEK_WIDTH : 0;
 
   // セル幅はテーマ指定を基本としつつ、以下を満たすように広げる:
   // - 曜日ヘッダーの表示幅（fr の "dim." 等がセル幅を超えると列が崩れる）
@@ -67,6 +76,7 @@ export function renderMonth(
     const date = createDate(year, month - 1, day);
     const state = getCalendarCellState(date, {
       today,
+      holidayLocale,
       highlight,
       range,
       isDateDisabled,
@@ -78,13 +88,20 @@ export function renderMonth(
       return customRenderCell(day, date, state, data);
     }
 
-    const { isHighlight, isInRange, isToday, isDisabled, isWeekend } = state;
+    const {
+      isHighlight,
+      isInRange,
+      isToday,
+      isDisabled,
+      isWeekend,
+      isHoliday,
+    } = state;
 
     const text = (
       isHighlight && highlightStyle === "bracket" ? `[${day}]` : String(day)
     ).padStart(cellWidth);
 
-    // 優先順位: highlight > range > today > disabled > weekend > day
+    // 優先順位: highlight > range > today > disabled > weekend > holiday > day
     let code: number | undefined;
     if (isHighlight && highlightStyle === "reverse") {
       code = palette.highlight ?? 7;
@@ -96,6 +113,8 @@ export function renderMonth(
       code = palette.dim ?? 90;
     } else if (isWeekend && palette.weekend !== undefined) {
       code = palette.weekend;
+    } else if (isHoliday && palette.holiday !== undefined) {
+      code = palette.holiday;
     } else if (palette.day !== undefined) {
       code = palette.day;
     }
@@ -103,55 +122,95 @@ export function renderMonth(
     return colorize(text, code, color);
   };
 
+  /**
+   * 行の週番号を表示幅に揃えて返す。週の開始日（行の先頭セルの曜日位置から
+   * 逆算）の週番号を使う。weekStart が "monday" なら ISO 週番号、それ以外は
+   * 年始を含む週を第1週とする番号（北米の cal -w 相当）。
+   */
+  const weekLabel = (row: (number | null)[]): string => {
+    if (weekWidth === 0) return "";
+    const firstIdx = row.findIndex((d) => d !== null);
+    if (firstIdx === -1) return " ".repeat(weekWidth);
+    const firstDate = createDate(year, month - 1, row[firstIdx]!);
+    const weekStartDate = addDays(firstDate, -firstIdx);
+    const number =
+      weekStart === "monday"
+        ? getISOWeek(weekStartDate)
+        : getWeekOfYear(weekStartDate);
+    return String(number).padStart(weekWidth);
+  };
+
   const lines: string[] = [];
 
   if (frame === null) {
     // ── 枠なし（default） ──
-    const totalWidth = cols * cellWidth + (cols - 1) * sep.length;
+    const weekCol = weekWidth > 0 ? weekWidth + sep.length : 0;
+    const totalWidth = weekCol + cols * cellWidth + (cols - 1) * sep.length;
     lines.push(centerText(title, totalWidth));
+    const headerCells = weekdays
+      .map((d) => colorize(padStartWidth(d, cellWidth), palette.weekday, color))
+      .join(sep);
     lines.push(
-      weekdays
-        .map((d) =>
-          colorize(padStartWidth(d, cellWidth), palette.weekday, color),
-        )
-        .join(sep),
+      weekWidth > 0 ? " ".repeat(weekWidth) + sep + headerCells : headerCells,
     );
   } else {
     // ── 枠あり（modern） ──
     lines.push(
-      colorize(topBorder(frame, cellWidth, cols), palette.frame, color),
+      colorize(
+        topBorder(frame, cellWidth, cols, weekWidth),
+        palette.frame,
+        color,
+      ),
     );
     lines.push(
       colorize(
-        `${frame.v}${centerTextFull(title, innerWidth(cellWidth, cols))}${frame.v}`,
+        `${frame.v}${centerTextFull(title, innerWidth(cellWidth, cols, weekWidth))}${frame.v}`,
         palette.title,
         color,
       ),
     );
     lines.push(
-      colorize(separatorRow(frame, cellWidth, cols), palette.frame, color),
-    );
-    lines.push(
       colorize(
-        `${frame.v}${weekdays.map((d) => padStartWidth(d, cellWidth)).join(frame.v)}${frame.v}`,
-        palette.weekday,
+        separatorRow(frame, cellWidth, cols, weekWidth),
+        palette.frame,
         color,
       ),
     );
+    const headerCells = weekdays
+      .map((d) => padStartWidth(d, cellWidth))
+      .join(frame.v);
+    const header =
+      weekWidth > 0
+        ? " ".repeat(weekWidth) + frame.v + headerCells
+        : headerCells;
     lines.push(
-      colorize(separatorRow(frame, cellWidth, cols), palette.frame, color),
+      colorize(`${frame.v}${header}${frame.v}`, palette.weekday, color),
+    );
+    lines.push(
+      colorize(
+        separatorRow(frame, cellWidth, cols, weekWidth),
+        palette.frame,
+        color,
+      ),
     );
   }
 
   for (const row of grid) {
     if (row.every((d) => d === null)) continue;
     const cells = row.map(renderCell).join(sep);
-    lines.push(frame === null ? cells : `${frame.v}${cells}${frame.v}`);
+    const week = weekWidth > 0 ? weekLabel(row) + sep : "";
+    lines.push(
+      frame === null ? week + cells : `${frame.v}${week}${cells}${frame.v}`,
+    );
   }
 
   if (frame !== null) {
     lines.push(
-      colorize(bottomBorder(frame, cellWidth, cols), palette.frame, color),
+      colorize(
+        bottomBorder(frame, cellWidth, cols, weekWidth),
+        palette.frame,
+        color,
+      ),
     );
   }
 

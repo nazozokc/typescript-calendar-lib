@@ -64,6 +64,7 @@ All options from `@typescript-calendar-lib/core` are supported, plus these CLI-s
 | `today` | `Date` | `new Date()` | Reference date for "today" coloring |
 | `cellData` | `(date: Date) => unknown` | — | Resolve per-cell data; passed to `renderCell` |
 | `renderCell` | `(day, date, state, data?) => string` | — | Custom cell text; replaces the day cell verbatim |
+| `showWeekNumbers` | `boolean` | `false` | Print a 2-char week-number column at the start of each row. `weekStart: "monday"` → ISO 8601 week; `"sunday"` → week-containing-Jan-1 week (US `cal -w` convention) |
 
 ## CLI Binary
 
@@ -275,6 +276,31 @@ calendar({
 - `data` — the resolved `cellData` value for that date (`undefined` when none)
 
 The returned string replaces the cell **verbatim** — no padding, colorization, or highlight/range styling is applied, so you control cell width and any ANSI codes yourself. A bare `String(day)` in a wide `renderCell` can shift the column alignment of that row.
+
+### Week numbers
+
+`showWeekNumbers` adds a 2-char week-number column at the start of each row. With `weekStart: "monday"` the number is the ISO 8601 week of the row's week-start date:
+
+```ts
+calendar({
+  year: 2026,
+  month: 9,
+  weekStart: "monday",
+  showWeekNumbers: true,
+});
+```
+
+```
+        September 2026
+   Mon Tue Wed Thu Fri Sat Sun
+36       1   2   3   4   5   6
+37   7   8   9  10  11  12  13
+38  14  15  16  17  18  19  20
+39  21  22  23  24  25  26  27
+40  28  29  30
+```
+
+With `weekStart: "sunday"` it uses the convention where the week containing Jan 1 is week 1. Week numbers also render in framed themes (`modern`), where separator and frame lines get a week segment.
 
 ### Plain text output
 

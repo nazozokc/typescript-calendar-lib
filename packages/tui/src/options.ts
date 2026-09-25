@@ -7,15 +7,22 @@ import type { CalendarStateOptions, ResolvedOptions } from "./types.ts";
 export function resolveOptions<T>(
   options: CalendarStateOptions<T> = {},
 ): ResolvedOptions<T> {
-  const { today = new Date(), locale = "en", weekStart = "sunday" } = options;
+  const {
+    today = new Date(),
+    locale = "en",
+    holidayLocale = "ja",
+    weekStart = "sunday",
+  } = options;
   assertValidDate(today);
   return {
     locale,
+    holidayLocale,
     weekStart,
     today,
     highlight: options.highlight,
     range: options.range,
     isDateDisabled: options.isDateDisabled,
     cellData: options.cellData,
+    selectionMode: options.selectionMode ?? "single",
   };
 }

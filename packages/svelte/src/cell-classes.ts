@@ -1,3 +1,4 @@
+import type { Locale } from "@typescript-calendar-lib/core";
 import {
   getCalendarCellState,
   isDateInRange,
@@ -8,6 +9,8 @@ import {
 
 export interface CellStateOptions {
   today?: Date;
+  /** 祝日の判定に使うロケール。省略時は "ja" */
+  holidayLocale?: Locale;
   highlight?: Date;
   range?: { from: Date; to: Date };
   /** 範囲プレビュー（ホバー等の候補範囲）。is-in-range-preview クラスになる */
@@ -29,6 +32,7 @@ export function getCellClasses(date: Date, options: CellStateOptions): string {
   const state = getCalendarCellState(date, options);
   const classes: string[] = [];
   if (state.isWeekend) classes.push("is-weekend");
+  if (state.isHoliday) classes.push("is-holiday");
   if (state.isToday) classes.push("is-today");
   if (state.isHighlight) classes.push("is-highlight");
   if (state.isInRange) classes.push("is-in-range");

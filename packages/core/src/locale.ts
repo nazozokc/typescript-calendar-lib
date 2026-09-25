@@ -151,7 +151,7 @@ export const LOCALES: Record<Locale, LocaleData> = {
 };
 
 /** ロケールデータを取得する（未知のロケールは RangeError） */
-function getLocaleData(locale: Locale): LocaleData {
+export function getLocaleData(locale: Locale): LocaleData {
   const data = LOCALES[locale];
   if (data === undefined) {
     throw new RangeError(`Invalid locale: "${locale}"`);

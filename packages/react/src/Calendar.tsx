@@ -3,11 +3,14 @@ import type {
   CalendarOptions,
 } from "@typescript-calendar-lib/core";
 import {
+  addDays,
   buildMonthGrid,
   createDate,
   getCalendarCellState,
+  getISOWeek,
   getMonthName,
   getWeekdayHeaders,
+  getWeekOfYear,
   isSameDay,
 } from "@typescript-calendar-lib/core";
 import { formatCellLabel } from "@typescript-calendar-lib/web";
@@ -38,7 +41,10 @@ export interface CalendarProps {
   year: number;
   month: number;
   locale?: CalendarOptions["locale"];
+  holidayLocale?: CalendarOptions["holidayLocale"];
   weekStart?: CalendarOptions["weekStart"];
+  /** 各週の先頭に週番号（ISO/年始基準）を表示する。既定は false */
+  showWeekNumbers?: boolean;
   highlight?: Date;
   /** 範囲強調 */
   range?: { from: Date; to: Date };
@@ -72,7 +78,7 @@ export interface CalendarProps {
 
   // ── セル状態 ──
 
-  /** 選択済み日付。aria-selected と表示スタイルに使用 */
+  /** 選択済み日付。aria-selected・aria-pressed と表示スタイルに使用 */
   selectedDate?: Date | null;
   /** カーソル位置の日付。このセルだけ tabIndex=0（roving tabindex）になる */
   cursorDate?: Date | null;
@@ -99,7 +105,9 @@ export function Calendar({
   year,
   month,
   locale = "en",
+  holidayLocale,
   weekStart = "sunday",
+  showWeekNumbers = false,
   highlight,
   range,
   today,
@@ -123,9 +131,19 @@ export function Calendar({
   ref,
 }: CalendarProps) {
   const cellDate = (day: number): Date => createDate(year, month - 1, day);
+  const weekOf = (row: (number | null)[]): number | null => {
+    const firstIdx = row.findIndex((d) => d !== null);
+    if (firstIdx === -1) return null;
+    const firstDate = createDate(year, month - 1, row[firstIdx]!);
+    const weekStartDate = addDays(firstDate, -firstIdx);
+    return weekStart === "monday"
+      ? getISOWeek(weekStartDate)
+      : getWeekOfYear(weekStartDate);
+  };
   const className = (day: number): string | undefined =>
     getCellClasses(cellDate(day), {
       today,
+      holidayLocale,
       highlight,
       range,
       rangePreview,
@@ -174,17 +192,33 @@ export function Calendar({
       <table role={gridRole} aria-label={title} onKeyDown={onKeyDown}>
         <thead>
           <tr>
+            {showWeekNumbers && (
+              <th
+                key="week"
+                className="calendar-week"
+                scope="col"
+                aria-label="Week number"
+              />
+            )}
             {getWeekdayHeaders(locale, weekStart).map((day) => (
-              <th key={day}>{day}</th>
+              <th key={day} scope="col">
+                {day}
+              </th>
             ))}
           </tr>
         </thead>
         <tbody>
           {buildMonthGrid(year, month, weekStart).map((row, i) => {
             if (row.every((d) => d === null)) return null;
+            const week = weekOf(row);
             return (
               // biome-ignore lint/suspicious/noArrayIndexKey: 月グリッドは静的で並び順が変わらない
               <tr key={i}>
+                {showWeekNumbers && week !== null && (
+                  <th key="week" className="calendar-week" scope="row">
+                    {week}
+                  </th>
+                )}
                 {row.map((day, j) => {
                   if (day === null)
                     // biome-ignore lint/suspicious/noArrayIndexKey: パディングセルは位置が唯一の識別子
@@ -230,6 +264,7 @@ export function Calendar({
                           tabIndex={cursor ? 0 : -1}
                           data-cursor={cursor ? "true" : undefined}
                           aria-label={formatCellLabel(locale, year, month, day)}
+                          aria-pressed={selected}
                           disabled={state.isDisabled}
                         >
                           {renderCell

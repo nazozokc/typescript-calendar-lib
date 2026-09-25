@@ -99,7 +99,7 @@ describe("renderMonth - highlight", () => {
   test("color:falseではANSIエスケープを含まない", () => {
     const out = renderMonth(2026, 9, {
       highlight: new Date(2026, 8, 8),
-      color: true,
+      color: false,
     });
     expect(out).not.toContain("\u001b[");
   });
@@ -127,6 +127,27 @@ describe("renderMonth - range color", () => {
   });
 });
 
+describe("renderMonth - holiday color", () => {
+  test("祝日・振替休日にcolor:trueで着色する", () => {
+    const out = renderMonth(2026, 5, { color: true });
+    // 5/3 憲法記念日・5/4 みどりの日・5/5 こどもの日・5/6 振替休日
+    expect(out).toContain("\u001b[31m  3\u001b[0m");
+    expect(out).toContain("\u001b[31m  6\u001b[0m");
+    // 5/8 は平日なので weekend 系の色（このスキームでは未設定）であって祝日色ではない
+    expect(out).not.toContain("\u001b[31m  8\u001b[0m");
+  });
+
+  test("color:falseでは祝日も着色しない", () => {
+    const out = renderMonth(2026, 5, { color: false });
+    expect(out).not.toContain("\u001b[");
+  });
+
+  test("holidayLocale を指定するとそのロケールで判定する", () => {
+    const out = renderMonth(2026, 5, { color: true, holidayLocale: "en" });
+    expect(out).not.toContain("\u001b[31m  6\u001b[0m");
+  });
+});
+
 describe("renderMonth - themes", () => {
   const base = { today: new Date(2026, 8, 1) };
 
@@ -138,6 +159,23 @@ describe("renderMonth - themes", () => {
     expect(lines[2]).toBe("├───┬───┬───┬───┬───┬───┬───┤");
     expect(lines[3]).toBe("│Sun│Mon│Tue│Wed│Thu│Fri│Sat│");
     expect(lines[lines.length - 1]).toBe("└───┴───┴───┴───┴───┴───┴───┘");
+  });
+
+  test("modernテーマで週番号列を表示できる", () => {
+    const out = renderMonth(2026, 9, {
+      theme: "modern",
+      showWeekNumbers: true,
+      weekStart: "monday",
+      ...base,
+    });
+    const lines = out.split("\n");
+    // 上枠は連続線（既存仕様）。innerWidth = 7*3 + 6 + (2+1) = 30
+    expect(lines[0]).toBe(`┌${"─".repeat(30)}┐`);
+    // 区切り行は週番号列（幅2）とセル列（幅3）が別セグメントになる
+    expect(lines[2]).toBe("├──┬───┬───┬───┬───┬───┬───┬───┤");
+    expect(lines[3]).toBe("│  │Mon│Tue│Wed│Thu│Fri│Sat│Sun│");
+    expect(lines[5]).toContain("│36│");
+    expect(lines[lines.length - 1]).toBe("└──┴───┴───┴───┴───┴───┴───┴───┘");
   });
 
   test("modernテーマでも日付とハイライトは描画される", () => {

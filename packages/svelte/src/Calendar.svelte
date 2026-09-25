@@ -1,10 +1,13 @@
 <script lang="ts">
   import type { CalendarCellState, CalendarOptions } from "@typescript-calendar-lib/core";
   import {
+    addDays,
     buildMonthGrid,
     createDate,
     getCalendarCellState,
+    getISOWeek,
     getMonthName,
+    getWeekOfYear,
     getWeekdayHeaders,
     isSameDay,
   } from "@typescript-calendar-lib/core";
@@ -26,6 +29,7 @@
     year: number;
     month: number;
     locale?: CalendarOptions["locale"];
+    holidayLocale?: CalendarOptions["holidayLocale"];
     weekStart?: CalendarOptions["weekStart"];
     highlight?: Date;
     /** 範囲強調 */
@@ -34,7 +38,7 @@
     rangePreview?: { from: Date; to: Date };
     /** 今日の基準日。カラースキームの today 着色に使用 */
     today?: Date;
-    /** 選択済み日付。該当セルに is-selected クラスと aria-selected が付く */
+    /** 選択済み日付。該当セルに is-selected クラスが付き、interactive 時は button に aria-pressed が付く */
     selected?: Date | null;
     /** カーソル位置の日付。該当セルに is-cursor クラスが付く */
     cursorDate?: Date | null;
@@ -48,6 +52,8 @@
     size?: CalendarSize;
     /** 狭い画面（スマホ等）でセルサイズと余白を自動調整する。既定は false（無効） */
     responsive?: boolean;
+    /** 行の先頭に週番号を表示する。既定は false（非表示） */
+    showWeekNumbers?: boolean;
     /** root 要素に追加するスタイル。CSS変数（--cal-*）で自由に上書きできる */
     style?: CSSProperties;
 
@@ -83,6 +89,7 @@
     year,
     month,
     locale = "en",
+    holidayLocale,
     weekStart = "sunday",
     highlight,
     range,
@@ -95,6 +102,7 @@
     colorScheme = "default",
     size = "md",
     responsive = false,
+    showWeekNumbers = false,
     style,
     interactive = false,
     onDateClick,
@@ -108,10 +116,11 @@
 
   const cellDate = (day: number): Date => createDate(year, month - 1, day);
   const cellState = (day: number): CalendarCellState =>
-    getCalendarCellState(cellDate(day), { today, highlight, range, isDateDisabled });
+    getCalendarCellState(cellDate(day), { today, holidayLocale, highlight, range, isDateDisabled });
   const cellClass = (day: number): string | undefined =>
     getCellClasses(cellDate(day), {
       today,
+      holidayLocale,
       highlight,
       range,
       rangePreview,
@@ -127,6 +136,15 @@
     today != null && isSameDay(cellDate(day), today);
   const isCursorDay = (day: number): boolean =>
     cursorDate != null && isSameDay(cellDate(day), cursorDate);
+  const weekOf = (row: (number | null)[]): number | null => {
+    const firstIdx = row.findIndex((d) => d !== null);
+    if (firstIdx === -1) return null;
+    const firstDate = createDate(year, month - 1, row[firstIdx]!);
+    const weekStartDate = addDays(firstDate, -firstIdx);
+    return weekStart === "monday"
+      ? getISOWeek(weekStartDate)
+      : getWeekOfYear(weekStartDate);
+  };
   const handleCellClick = (day: number) => {
     if (interactive && onDateClick) {
       const date = cellDate(day);
@@ -160,11 +178,14 @@
   <div class="calendar-header">
     <h2>{getMonthName(locale, month)} {year}</h2>
   </div>
-  <table>
+  <table aria-label={`${getMonthName(locale, month)} ${year}`}>
     <thead>
       <tr>
+        {#if showWeekNumbers}
+          <th class="calendar-week" scope="col" aria-label="Week number"></th>
+        {/if}
         {#each getWeekdayHeaders(locale, weekStart) as day (day)}
-          <th>{day}</th>
+          <th scope="col">{day}</th>
         {/each}
       </tr>
     </thead>
@@ -172,11 +193,18 @@
       {#each buildMonthGrid(year, month, weekStart) as row, i (i)}
         {#if !row.every((d) => d === null)}
           <tr>
+            {#if showWeekNumbers}
+              <th class="calendar-week" scope="row">{weekOf(row)}</th>
+            {/if}
             {#each row as day, j (j)}
               {#if day === null}
                 <td></td>
               {:else}
-                <td class={cellClass(day)} aria-disabled={isDisabledDay(day) || undefined}>
+                <td
+                  class={cellClass(day)}
+                  aria-current={isTodayDay(day) ? "date" : undefined}
+                  aria-disabled={isDisabledDay(day) || undefined}
+                >
                   {#if interactive}
                     <button
                       type="button"
@@ -186,8 +214,7 @@
                       tabindex={isCursorDay(day) ? 0 : -1}
                       data-cursor={isCursorDay(day) ? "true" : undefined}
                       aria-label={formatCellLabel(locale, year, month, day)}
-                      aria-pressed={isSelectedDay(day) || undefined}
-                      aria-current={isTodayDay(day) ? "date" : undefined}
+                      aria-pressed={isSelectedDay(day)}
                       disabled={isDisabledDay(day)}
                     >
                       {#if renderCell}
