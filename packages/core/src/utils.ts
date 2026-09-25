@@ -1,4 +1,5 @@
-import type { WeekStart } from "./types.ts";
+import { isHoliday } from "./holidays.ts";
+import type { Locale, WeekStart } from "./types.ts";
 import {
   assertValidDate,
   assertValidWeekStart,
@@ -9,6 +10,8 @@ import {
 
 export interface CalendarCellState {
   isWeekend: boolean;
+  /** 祝日かどうか（holidayLocale に従って判定。指定なしは "ja"） */
+  isHoliday: boolean;
   isToday: boolean;
   isHighlight: boolean;
   isInRange: boolean;
@@ -119,11 +122,14 @@ export function getCalendarCellState(
     highlight?: Date;
     range?: { from: Date; to: Date };
     isDateDisabled?: (date: Date) => boolean;
+    /** 祝日判定に使うロケール。省略時は "ja"（isHoliday のデフォルト） */
+    holidayLocale?: Locale;
   } = {},
 ): CalendarCellState {
   assertValidDate(date);
   return {
     isWeekend: date.getDay() === 0 || date.getDay() === 6,
+    isHoliday: isHoliday(date, options.holidayLocale),
     isToday: options.today !== undefined && isSameDay(date, options.today),
     isHighlight:
       options.highlight !== undefined && isSameDay(date, options.highlight),

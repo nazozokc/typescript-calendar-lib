@@ -25,8 +25,10 @@ export {
 export {
   clearSelection,
   getSelectedDate,
+  getSelectedRange,
   selectDate,
   selectDateAt,
+  selectRange,
 } from "./selection.ts";
 export { createCalendarState, rebuildState } from "./state.ts";
 export { sameStateOptions, updateStateOptions } from "./state-options.ts";
@@ -53,4 +55,5 @@ export type {
   MonthDataOptions,
   MonthDirection,
   ResolvedOptions,
+  SelectionMode,
 } from "./types.ts";

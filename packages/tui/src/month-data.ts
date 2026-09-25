@@ -1,11 +1,10 @@
 import {
   assertValidDate,
   buildMonthGrid,
-  createDate,
-  getCalendarCellState,
   getMonthName,
   getWeekdayHeaders,
 } from "@typescript-calendar-lib/core";
+import { buildMonthCell, getVisibleRowCount } from "./month-cell.ts";
 import { shiftMonth } from "./month-math.ts";
 import type { CalendarCell, MonthData, MonthDataOptions } from "./types.ts";
 
@@ -25,6 +24,7 @@ export function buildMonthData<T>(
 ): MonthData<T> {
   const {
     locale = "en",
+    holidayLocale,
     weekStart = "sunday",
     today = new Date(),
     highlight,
@@ -50,50 +50,24 @@ export function buildMonthData<T>(
   const rawGrid = buildMonthGrid(ny, nm, weekStart);
 
   const cells: CalendarCell<T>[][] = rawGrid.map((row) =>
-    row.map((day, dayOfWeek) => {
-      if (day === null) {
-        return {
-          day: null,
-          date: null,
-          dayOfWeek,
-          isCurrentMonth: false,
-          isWeekend: false,
-          isToday: false,
-          isHighlight: false,
-          isInRange: false,
-          isDisabled: false,
-        };
-      }
-
-      const date = createDate(ny, nm - 1, day);
-      const state = getCalendarCellState(date, {
+    row.map((day, dayOfWeek) =>
+      buildMonthCell(ny, nm, day, dayOfWeek, {
         today,
+        holidayLocale,
         highlight,
         range,
         isDateDisabled,
-      });
-
-      const cell: CalendarCell<T> = {
-        day,
-        date,
-        dayOfWeek,
-        isCurrentMonth: true,
-        ...state,
-      };
-      const data = cellData?.(date);
-      if (data !== undefined) cell.data = data;
-      return cell;
-    }),
+        cellData,
+      }),
+    ),
   );
 
-  // 末尾の全 null 行を除外した行数
-  let visibleRows = cells.length;
-  while (
-    visibleRows > 0 &&
-    cells[visibleRows - 1]!.every((c) => c.day === null)
-  ) {
-    visibleRows--;
-  }
-
-  return { year: ny, month: nm, title, weekdays, cells, visibleRows };
+  return {
+    year: ny,
+    month: nm,
+    title,
+    weekdays,
+    cells,
+    visibleRows: getVisibleRowCount(cells),
+  };
 }

@@ -5,6 +5,7 @@
   --cal-fg: #1e293b;
   --cal-accent: #dc2626;
   --cal-weekend-fg: #94a3b8;
+  --cal-holiday-fg: #d33;
   --cal-border: #e2e8f0;
   --cal-header-bg: #f8fafc;
   --cal-highlight-bg: #dc2626;
@@ -49,6 +50,16 @@
   font-weight: 600;
 }
 
+/* 週番号列（showWeekNumbers 時） */
+.calendar th.calendar-week,
+.calendar td.calendar-week {
+  width: calc(var(--cal-cell-w) * 0.6);
+  min-width: 1.25rem;
+  color: var(--cal-weekend-fg);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
 .calendar .calendar-header {
   text-align: center;
   margin-bottom: 0.5rem;
@@ -64,6 +75,11 @@
 
 .calendar td.is-weekend {
   color: var(--cal-weekend-fg);
+}
+
+/* 祝日・振替休日。weekend より優先して祝日色を入れる */
+.calendar td.is-holiday {
+  color: var(--cal-holiday-fg, #d33);
 }
 
 /* 選択不可日付。色を弱め、ポインターイベント無効化は各インタラクティブ層で行う */

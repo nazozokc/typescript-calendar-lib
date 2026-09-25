@@ -4,6 +4,8 @@ export type HighlightStyle = "bracket" | "reverse";
 
 interface BaseCalendarOptions {
   locale?: Locale;
+  /** 祝日判定に使うロケール。省略時は "ja"（日本の祝日） */
+  holidayLocale?: Locale;
   weekStart?: WeekStart;
   highlight?: Date;
   highlightStyle?: HighlightStyle;

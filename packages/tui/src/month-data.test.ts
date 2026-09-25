@@ -151,6 +151,45 @@ describe("buildMonthData", () => {
     }
   });
 
+  test("空欄セルは isHoliday が false", () => {
+    const data = buildMonthData(2026, 9, { today: TODAY });
+    const nullCells = data.cells.flat().filter((c) => c.day === null);
+    expect(nullCells.length).toBeGreaterThan(0);
+    for (const cell of nullCells) {
+      expect(cell.isHoliday).toBe(false);
+    }
+  });
+
+  test("振替休日に isHoliday が立つ（既定は ja）", () => {
+    // 2026-05-06 は 5/3（憲法記念日・日曜）の振替休日
+    const data = buildMonthData(2026, 5, { today: TODAY });
+    const day6 = data.cells
+      .flat()
+      .find((c) => c.date?.getDate() === 6 && c.isCurrentMonth);
+    expect(day6?.isHoliday).toBe(true);
+  });
+
+  test("平日は isHoliday が false", () => {
+    // 2026-05-08 は平日
+    const data = buildMonthData(2026, 5, { today: TODAY });
+    const day8 = data.cells
+      .flat()
+      .find((c) => c.date?.getDate() === 8 && c.isCurrentMonth);
+    expect(day8?.isHoliday).toBe(false);
+  });
+
+  test("holidayLocale を指定するとそのロケールで判定する", () => {
+    // "en" の祝日データには 2026-05-06 がないため false
+    const data = buildMonthData(2026, 5, {
+      today: TODAY,
+      holidayLocale: "en",
+    });
+    const day6 = data.cells
+      .flat()
+      .find((c) => c.date?.getDate() === 6 && c.isCurrentMonth);
+    expect(day6?.isHoliday).toBe(false);
+  });
+
   test("visibleRows は日付を含む行数（2026-09 は5行）", () => {
     const data = buildMonthData(2026, 9, { today: TODAY });
     expect(data.visibleRows).toBe(5);

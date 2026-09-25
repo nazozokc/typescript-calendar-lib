@@ -31,6 +31,8 @@ export interface CliExtraOptions {
     state: CalendarCellState,
     data?: unknown,
   ) => string;
+  /** 各行の先頭に週番号を表示する。既定は false。weekStart が "monday" なら ISO 週番号、それ以外は年始を含む週を第1週とする番号 */
+  showWeekNumbers?: boolean;
 }
 
 export type CalendarOptions = CoreCalendarOptions & CliExtraOptions;

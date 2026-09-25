@@ -1,4 +1,8 @@
-import type { Locale, WeekStart } from "@typescript-calendar-lib/core";
+import type {
+  DateRange,
+  Locale,
+  WeekStart,
+} from "@typescript-calendar-lib/core";
 
 // ─── Cell ────────────────────────────────────────────────
 
@@ -14,6 +18,8 @@ export interface CalendarCell<T = unknown> {
   isCurrentMonth: boolean;
   /** 土曜 or 日曜か */
   isWeekend: boolean;
+  /** 祝日か（holidayLocale に従って判定。指定なしは "ja"） */
+  isHoliday: boolean;
   /** 今日の日付か */
   isToday: boolean;
   /** ハイライト対象か */
@@ -45,9 +51,14 @@ export interface MonthData<T = unknown> {
 
 // ─── Options ─────────────────────────────────────────────
 
+/** 日付の選択方式 */
+export type SelectionMode = "single" | "range";
+
 /** buildMonthData に渡すオプション（プレゼンテーション情報は含まない） */
 export interface MonthDataOptions<T = unknown> {
   locale?: Locale;
+  /** 祝日の判定に使うロケール。省略時は "ja" */
+  holidayLocale?: Locale;
   weekStart?: WeekStart;
   /** 今日の基準日。省略時は new Date() */
   today?: Date;
@@ -74,6 +85,8 @@ export interface CalendarStateOptions<T = unknown> {
   /** 今日の基準日。省略時は生成時に new Date() で解決され、状態に固定される */
   today?: Date;
   locale?: Locale;
+  /** 祝日の判定に使うロケール。省略時は "ja" */
+  holidayLocale?: Locale;
   weekStart?: WeekStart;
   /** ハイライト対象日 */
   highlight?: Date;
@@ -83,11 +96,15 @@ export interface CalendarStateOptions<T = unknown> {
   isDateDisabled?: (date: Date) => boolean;
   /** 各セルに付与するユーザー定義データを解決する関数。実セルのみに呼ばれる */
   cellData?: (date: Date) => T | undefined;
+  /** 選択方式。既定は "single" */
+  selectionMode?: SelectionMode;
 }
 
 /** 状態に保持される解決済みオプション（月移動時も引き継がれる） */
 export interface ResolvedOptions<T = unknown> {
   locale: Locale;
+  /** 祝日の判定に使うロケール。既定は "ja" */
+  holidayLocale: Locale;
   weekStart: WeekStart;
   today: Date;
   highlight?: Date;
@@ -96,6 +113,8 @@ export interface ResolvedOptions<T = unknown> {
   isDateDisabled?: (date: Date) => boolean;
   /** 各セルに付与するユーザー定義データを解決する関数。実セルのみに呼ばれる */
   cellData?: (date: Date) => T | undefined;
+  /** 選択方式。既定は "single" */
+  selectionMode: SelectionMode;
 }
 
 /** インタラクティブカレンダーの状態 */
@@ -105,8 +124,13 @@ export interface CalendarState<T = unknown> {
   month: number;
   /** カーソル位置。null なら未フォーカス */
   cursor: { row: number; col: number } | null;
-  /** 選択済み日付。未選択なら null */
+  /** 最後に選択された日付。range 方式では「アンカー」または範囲の終端になる。未選択なら null */
   selectedDate: Date | null;
+  /**
+   * 確定した選択範囲。range 方式で 2 回目の選択時に設定され、
+   * 次の選択（新たなアンカー開始）で null に戻る。single 方式では常に null。
+   */
+  selectedRange: DateRange | null;
   /** 状態生成時に解決されたオプション */
   options: ResolvedOptions<T>;
   /** 現在表示中の月データ（キャッシュ） */

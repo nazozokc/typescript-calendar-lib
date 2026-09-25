@@ -1,7 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { defineConfig } from "vite";
-import markdown, { Mode } from "vite-plugin-markdown";
+import { Mode, plugin as markdown } from "vite-plugin-markdown";
 
 // Docs site SPA.
 //

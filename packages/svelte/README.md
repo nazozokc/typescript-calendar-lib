@@ -31,6 +31,33 @@ bun add @typescript-calendar-lib/svelte
 <Calendar year={2026} month={9} colorScheme="ocean" theme="modern" />
 ```
 
+## Server-side rendering
+
+SvelteKit enables SSR for `+page.svelte` by default. Render the component normally and SvelteKit will produce the initial HTML before hydrating it in the browser:
+
+```svelte
+<!-- src/routes/+page.svelte -->
+<script lang="ts">
+  import Calendar from "@typescript-calendar-lib/svelte";
+  import "@typescript-calendar-lib/svelte/calendar.css";
+</script>
+
+<Calendar year={2026} month={9} today={new Date(2026, 8, 15)} />
+```
+
+For a standalone Svelte 5 server render, use `render` from `svelte/server`:
+
+```ts
+import { render } from "svelte/server";
+import Calendar from "@typescript-calendar-lib/svelte";
+
+const { body, head } = render(Calendar, {
+  props: { year: 2026, month: 9, today: new Date(2026, 8, 15) },
+});
+```
+
+Run the component through a Svelte compiler such as Vite or SvelteKit; the package ships `.svelte` sources and is not a bare-Node component entry.
+
 ## Component API
 
 ### `Calendar`
@@ -49,13 +76,14 @@ bun add @typescript-calendar-lib/svelte
 | `range` | `{ from: Date; to: Date }` | — | Dates to emphasize |
 | `rangePreview` | `{ from: Date; to: Date }` | — | Candidate range preview (hover preview), rendered with the `is-in-range-preview` class |
 | `today` | `Date` | — | Reference date for "today" styling |
-| `selected` | `Date \| null` | — | Selected date (`.is-selected` class, `aria-pressed` in interactive mode) |
+| `selected` | `Date \| null` | — | Selected date (`.is-selected` class, `aria-pressed="true"` in interactive mode; other buttons are `"false"`) |
 | `cursorDate` | `Date \| null` | — | Cursor position (`.is-cursor` class) |
 | `hoveredDate` | `Date \| null` | — | Hovered date (`.is-hovered` class) |
 | `theme` | `ThemeName \| SvelteTheme` | `"default"` | CSS class-based theme |
 | `colorScheme` | `ColorSchemeName \| SvelteColorScheme` | `"default"` | CSS variable-based colors |
 | `size` | `CalendarSize` | `"md"` | Cell size |
 | `responsive` | `boolean` | `false` | Shrink cells & padding below `480px` so the grid fits phone screens |
+| `showWeekNumbers` | `boolean` | `false` | Render a leading week-number column (`th[scope="row"]` with class `calendar-week`); the number follows `weekStart` (`"monday"` → ISO week, `"sunday"` → week-containing-Jan-1 week) |
 | `style` | `CSSProperties` | — | Extra styles for the root element |
 | `interactive` | `boolean` | `false` | Enable cell click/hover/keyboard selection |
 | `onDateClick` | `(date: Date, data?: unknown) => void` | — | Called when a day cell is clicked (or Enter/Space pressed); `data` is that cell's `cellData` value (`undefined` when none) |
@@ -105,6 +133,7 @@ Combines `useCalendarState` options, `Calendar` visual props, and event callback
 | `initialMonth` | `number` | Starting month `1`–`12` (normalized if out of range) |
 | `locale` | `Locale` | Language |
 | `weekStart` | `WeekStart` | First day of the week |
+| `selectionMode` | `SelectionMode` | Selection mode: `"single"` \| `"range"` (default `"single"`; range commits on the 2nd pick) |
 | `highlight` | `Date` | Date to highlight |
 | `range` | `{ from: Date; to: Date }` | Dates to emphasize |
 | `today` | `Date` | Reference date for "today" styling |
@@ -121,7 +150,7 @@ Combines `useCalendarState` options, `Calendar` visual props, and event callback
 
 ## Interactive Mode
 
-Set `interactive` to make day cells clickable. Each cell becomes a `<button class="calendar-day-btn">` — clickable, hoverable, and keyboard-accessible (Enter / Space). Buttons are announced with a localized `aria-label`; today gets `aria-current="date"` and a `selected` date gets `aria-pressed="true"`:
+Set `interactive` to make day cells clickable. Each cell becomes a `<button class="calendar-day-btn">` — clickable, hoverable, and keyboard-accessible (Enter / Space). Buttons are announced with a localized `aria-label` and an explicit `aria-pressed="true"` or `"false"`; today's cell gets `aria-current="date"`. The table has an `aria-label`, weekday headers use `scope="col"`, and week-number cells use `th[scope="row"]`:
 
 ```svelte
 <Calendar
@@ -198,12 +227,45 @@ For full interactivity (cursor movement, month navigation, selection), use the `
 | `moveCursor` | `(direction: Direction) => void` | Move cursor: `"up"` / `"down"` / `"left"` / `"right"` |
 | `selectDate` | `() => void` | Select the date under the cursor |
 | `selectDateAt` | `(date: Date) => void` | Move cursor to a date and select it (useful for mouse click) |
+| `selectRange` | `(from: Date, to: Date) => void` | Set a committed range directly (range mode) |
 | `setCursorToDate` | `(date: Date) => void` | Move the cursor to a specific date (no-op if outside current month) |
 | `clearSelection` | `() => void` | Clear the selection |
 | `cursorDate` | `Date \| null` | Date under the cursor |
 | `selectedDate` | `Date \| null` | Currently selected date |
+| `selectedRange` | `DateRange \| null` | Committed selection range (range mode) |
 | `hoveredDate` | `Date \| null` | Currently hovered date |
 | `setHoveredDate` | `(date: Date \| null) => void` | Set or clear the hovered date |
+
+## Range selection
+
+Pass `selectionMode="range"` to select a date range instead of a single date. Clicking alternates between **anchor → range → reset**: the 1st click sets an anchor, the 2nd commits the range, and the 3rd starts a new anchor. The committed range stays visible as the preview until the next pick begins.
+
+```svelte
+<InteractiveCalendar
+  initialYear={2026}
+  initialMonth={9}
+  selectionMode="range"
+/>
+```
+
+With the raw hook, set the range explicitly via `selectRange(from, to)` and read it back from the `selectedRange` return value:
+
+```svelte
+<script lang="ts">
+  import { useCalendarState } from "@typescript-calendar-lib/svelte";
+
+  const cal = useCalendarState({
+    initialYear: 2026,
+    initialMonth: 9,
+    selectionMode: "range",
+  });
+
+  function pick() {
+    cal.selectRange(new Date(2026, 8, 1), new Date(2026, 8, 15));
+    console.log(cal.selectedRange); // { from, to } | null
+  }
+</script>
+```
 
 ## Themes
 
@@ -336,7 +398,7 @@ It's **off by default** to keep existing layouts unchanged. The calendar root ge
 
 ## Cell Classes
 
-Each day cell gets semantic classes you can target with CSS:
+Each day cell gets semantic classes you can target with CSS. The table has an `aria-label`, weekday headers use `scope="col"`, week-number cells use `th[scope="row"]`, today's cell uses `aria-current="date"`, and interactive day buttons expose `aria-pressed="true"` or `"false"`:
 
 | Class | When |
 | :--- | :--- |

@@ -36,6 +36,43 @@ export function App() {
 }
 ```
 
+## Server-side rendering
+
+`Calendar` and `InteractiveCalendar` do not access browser APIs while rendering, so they can be rendered on the server:
+
+```tsx
+import { renderToString } from "react-dom/server";
+import { Calendar } from "@typescript-calendar-lib/react";
+
+const html = renderToString(
+  <Calendar year={2026} month={9} today={new Date(2026, 8, 15)} />,
+);
+```
+
+In the Next.js App Router, a Server Component renders the calendar on the server by default:
+
+```tsx
+// app/page.tsx
+import { Calendar } from "@typescript-calendar-lib/react";
+
+export default function Page() {
+  return <Calendar year={2026} month={9} />;
+}
+```
+
+Use a Client Component when the calendar needs browser interaction:
+
+```tsx
+// app/calendar-panel.tsx
+"use client";
+
+import { InteractiveCalendar } from "@typescript-calendar-lib/react";
+
+export function CalendarPanel() {
+  return <InteractiveCalendar initialYear={2026} initialMonth={9} />;
+}
+```
+
 ## Component API
 
 ### `Calendar`
@@ -58,13 +95,14 @@ export function App() {
 | `colorScheme` | `ColorSchemeName \| ReactColorScheme` | `"default"` | CSS variable-based colors |
 | `size` | `CalendarSize` | `"md"` | Cell size |
 | `responsive` | `boolean` | `false` | Shrink cells & padding below `480px` so the grid fits phone screens |
+| `showWeekNumbers` | `boolean` | `false` | Render a leading week-number column (`th[scope="row"]` with class `calendar-week`); the number follows `weekStart` (`"monday"` → ISO week, `"sunday"` → week-containing-Jan-1 week) |
 | `style` | `CSSProperties` | — | Extra styles for the root element |
 | `interactive` | `boolean` | `false` | Enable cell click/hover/keyboard selection |
 | `onDateClick` | `(date: Date, data?: unknown) => void` | — | Called when a day cell is clicked (or Enter/Space pressed); `data` is that cell's `cellData` value (`undefined` when none) |
 | `onDateHover` | `(date: Date) => void` | — | Called when a day cell is hovered |
 | `onDateLeave` | `() => void` | — | Called when the mouse leaves the calendar |
 | `onKeyDown` | `(e: KeyboardEvent) => void` | — | Keyboard handler on the grid element |
-| `selectedDate` | `Date \| null` | `null` | Marks the cell `aria-selected` |
+| `selectedDate` | `Date \| null` | `null` | Marks the gridcell `aria-selected` and its interactive button `aria-pressed` |
 | `cursorDate` | `Date \| null` | `null` | The cell that gets `tabIndex=0` (roving tabindex) |
 | `hoveredDate` | `Date \| null` | `null` | Marks the hovered cell with the `is-hovered` class |
 | `cellData` | `(date: Date) => unknown` | — | Resolve per-cell data; passed to `renderCell` and `onDateClick` |
@@ -109,9 +147,11 @@ function App() {
     selectDate,   // () => void — select date under cursor
     setCursorToDate, // (date) => void — move cursor to a date (same month only)
     selectDateAt, // (date) => void — move cursor to a date and select it
+    selectRange,  // (from, to) => void — set a committed range (range mode)
     clearSelection,
     cursorDate,   // Date | null
     selectedDate, // Date | null
+    selectedRange, // DateRange | null — committed range (range mode)
     hoveredDate,  // Date | null
     setHoveredDate, // (date | null) => void
   } = useCalendarState({
@@ -135,7 +175,7 @@ function App() {
 }
 ```
 
-`options` also accepts `onMonthChange: (year, month) => void`, called whenever the displayed month changes.
+`options` also accepts `selectionMode: "single" | "range"` (default `"single"`) and `onMonthChange: (year, month) => void`, called whenever the displayed month changes.
 
 ## InteractiveCalendar
 
@@ -147,6 +187,7 @@ function App() {
 | Hover a cell | Tracks the hovered date (adds `is-hovered` class); fires `onDateHover` |
 | Mouse leaves | Clears the hover state; fires `onDateLeave` |
 | Selection + hover | Shows a range preview between the selected date and the hovered date (`is-in-range-preview` class) |
+| Picking (range mode) | Alternates anchor → committed range → new anchor (`selectionMode="range"`) |
 | Arrow keys | Move the cursor (focus follows the cursor cell) |
 | `PageUp` / `PageDown` | Previous / next month |
 | Enter / Space | Same as clicking the focused cell (selects it) |
@@ -170,7 +211,29 @@ function App() {
 }
 ```
 
-It accepts the `useCalendarState` options (`initialYear`, `initialMonth`, `locale`, `weekStart`, `highlight`, `range`, `today`, `onMonthChange`) plus the `Calendar` visual props (`theme`, `colorScheme`, `size`, `responsive`, `style`, `cellData`, `renderCell`) and event callbacks (`onDateClick`, `onDateHover`, `onDateLeave`).
+It accepts the `useCalendarState` options (`initialYear`, `initialMonth`, `locale`, `weekStart`, `selectionMode`, `highlight`, `range`, `today`, `onMonthChange`) plus the `Calendar` visual props (`theme`, `colorScheme`, `size`, `responsive`, `style`, `cellData`, `renderCell`) and event callbacks (`onDateClick`, `onDateHover`, `onDateLeave`).
+
+## Range selection
+
+Pass `selectionMode="range"` to select a date range by clicking. Selection alternates between **anchor → range → reset**: the 1st click sets an anchor, the 2nd commits the range, and the 3rd starts a new anchor. The committed range is kept as the preview until the next pick begins.
+
+```tsx
+<InteractiveCalendar
+  initialYear={2026}
+  initialMonth={9}
+  selectionMode="range"
+/>
+```
+
+With the raw hook, use `selectRange(from, to)` to set the range explicitly and read it back from the `selectedRange` return value:
+
+```tsx
+const { state, selectRange, selectedRange } = useCalendarState({
+  initialYear: 2026,
+  initialMonth: 9,
+  selectionMode: "range",
+});
+```
 
 ## Custom Cell Rendering
 
@@ -351,7 +414,7 @@ The `style` prop can override any CSS variable or add custom styles:
 
 ## Cell Classes
 
-Each day cell gets semantic classes you can target with CSS. In interactive mode, the grid is exposed as a `role="grid"` table with `role="gridcell"` cells (WAI-ARIA APG calendar pattern): today's cell gets `aria-current="date"`, the selected date gets `aria-selected`, and only the cursor cell is tabbable (`tabIndex=0`, roving tabindex).
+Each day cell gets semantic classes you can target with CSS. The table has an `aria-label`, weekday headers use `scope="col"`, and week-number cells use `th[scope="row"]`. In interactive mode, the grid is exposed as a `role="grid"` table with `role="gridcell"` cells (WAI-ARIA APG calendar pattern): today's cell gets `aria-current="date"`, the selected date gets `aria-selected` on the gridcell and `aria-pressed` on its button, and only the cursor cell is tabbable (`tabIndex=0`, roving tabindex).
 
 | Class | When |
 | :--- | :--- |

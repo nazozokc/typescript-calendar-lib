@@ -437,6 +437,47 @@ describe("Calendar interactive", () => {
   });
 });
 
+describe("Calendar showWeekNumbers", () => {
+  test("showWeekNumbers で先頭に週番号列が表示される", () => {
+    const { container } = render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 9,
+        weekStart: "monday",
+        showWeekNumbers: true,
+      }),
+    );
+    // thead 先頭に空の th が並ぶ
+    const weekHeader = container.querySelector("th.calendar-week[scope='col']");
+    expect(weekHeader).not.toBeNull();
+    expect(weekHeader).toHaveAttribute("aria-label", "Week number");
+    const weekCells = container.querySelectorAll(
+      "th.calendar-week[scope='row']",
+    );
+    expect(weekCells.length).toBeGreaterThan(0);
+    // 先頭の実行（2026-09 月曜始まり）の週番号は 36
+    expect([...weekCells].some((td) => td.textContent === "36")).toBe(true);
+    // 全行に空行なし・グリッド内容は維持される
+    expect(weekCells.length).toBe(
+      [...container.querySelectorAll("tbody tr")].length,
+    );
+  });
+
+  test("曜日ヘッダーに scope=col がつく", () => {
+    const { container } = render(
+      createElement(Calendar, { year: 2026, month: 9 }),
+    );
+    expect(container.querySelectorAll("thead th[scope='col']")).toHaveLength(7);
+  });
+
+  test("showWeekNumbers 未指定では週番号要素が存在しない", () => {
+    const { container } = render(
+      createElement(Calendar, { year: 2026, month: 9 }),
+    );
+    expect(container.querySelectorAll(".calendar-week")).toHaveLength(0);
+  });
+});
+
 describe("Calendar isDateDisabled", () => {
   const disabled15 = (d: Date) => d.getDate() === 15;
 
@@ -520,6 +561,44 @@ describe("Calendar isDateDisabled", () => {
     ].find((b) => b.textContent === "15")!;
     fireEvent.mouseEnter(btn);
     expect(onHover).not.toHaveBeenCalled();
+  });
+});
+
+// ─── holiday ────────────────────────────────────────────
+
+describe("Calendar holiday", () => {
+  test("祝日・振替休日に is-holiday クラスがつく", () => {
+    // 2026-05-03 憲法記念日 / 05-04 みどりの日 / 05-05 こどもの日 /
+    // 05-06 は 5/3 が日曜のため振替休日
+    const { container } = render(
+      createElement(Calendar, { year: 2026, month: 5, today: TODAY }),
+    );
+    const holidayCells = container.querySelectorAll("td.is-holiday");
+    expect([...holidayCells].map((c) => c.textContent).sort()).toEqual([
+      "3",
+      "4",
+      "5",
+      "6",
+    ]);
+  });
+
+  test("平日は is-holiday クラスがつかない", () => {
+    const { container } = render(
+      createElement(Calendar, { year: 2026, month: 5, today: TODAY }),
+    );
+    expect(container.querySelector("td.is-holiday")?.textContent).not.toBe("8");
+  });
+
+  test("holidayLocale を指定するとそのロケールで判定する", () => {
+    const { container } = render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 5,
+        today: TODAY,
+        holidayLocale: "en",
+      }),
+    );
+    expect(container.querySelectorAll("td.is-holiday")).toHaveLength(0);
   });
 });
 
@@ -708,6 +787,84 @@ describe("useCalendarState options 更新", () => {
   });
 });
 
+// ─── useCalendarState range モード ──────────────────────
+
+function RangeHarness({ reverse = false }: { reverse?: boolean }) {
+  const { selectDateAt, selectRange, selectedRange } = useCalendarState({
+    selectionMode: "range",
+    initialYear: 2026,
+    initialMonth: 9,
+    today: TODAY,
+  });
+  const from = reverse ? new Date(2026, 8, 15) : new Date(2026, 8, 10);
+  const to = reverse ? new Date(2026, 8, 10) : new Date(2026, 8, 15);
+  return createElement(
+    "div",
+    null,
+    createElement(
+      "button",
+      {
+        type: "button",
+        "data-testid": "from",
+        onClick: () => selectDateAt(from),
+      },
+      "From",
+    ),
+    createElement(
+      "button",
+      { type: "button", "data-testid": "to", onClick: () => selectDateAt(to) },
+      "To",
+    ),
+    createElement(
+      "button",
+      {
+        type: "button",
+        "data-testid": "set-range",
+        onClick: () =>
+          selectRange(new Date(2026, 8, 25), new Date(2026, 8, 20)),
+      },
+      "SetRange",
+    ),
+    createElement(
+      "span",
+      { "data-testid": "range" },
+      selectedRange
+        ? `${selectedRange.from.toISOString()}〜${selectedRange.to.toISOString()}`
+        : "null",
+    ),
+  );
+}
+
+describe("useCalendarState range モード", () => {
+  test("2回の selectDateAt で範囲が確定する", () => {
+    render(createElement(RangeHarness));
+    fireEvent.click(screen.getByTestId("from"));
+    // 1回目はアンカー設定のみで範囲は未確定
+    expect(screen.getByTestId("range").textContent).toBe("null");
+    fireEvent.click(screen.getByTestId("to"));
+    expect(screen.getByTestId("range").textContent).toBe(
+      `${new Date(2026, 8, 10).toISOString()}〜${new Date(2026, 8, 15).toISOString()}`,
+    );
+  });
+
+  test("逆順クリックでも範囲がソートされる", () => {
+    render(createElement(RangeHarness, { reverse: true }));
+    fireEvent.click(screen.getByTestId("from"));
+    fireEvent.click(screen.getByTestId("to"));
+    expect(screen.getByTestId("range").textContent).toBe(
+      `${new Date(2026, 8, 10).toISOString()}〜${new Date(2026, 8, 15).toISOString()}`,
+    );
+  });
+
+  test("selectRange は順序を問わずソート済み範囲を設定する", () => {
+    render(createElement(RangeHarness));
+    fireEvent.click(screen.getByTestId("set-range"));
+    expect(screen.getByTestId("range").textContent).toBe(
+      `${new Date(2026, 8, 20).toISOString()}〜${new Date(2026, 8, 25).toISOString()}`,
+    );
+  });
+});
+
 // ─── Calendar の堅牢性 ─────────────────────────────────
 
 describe("Calendar の入力検証・正規化", () => {
@@ -873,6 +1030,16 @@ describe("Calendar ARIA", () => {
     expect(grid).toHaveAttribute("aria-label", "September 2026");
   });
 
+  test("非 interactive でも table に aria-label がつく", () => {
+    const { container } = render(
+      createElement(Calendar, { year: 2026, month: 9 }),
+    );
+    expect(container.querySelector("table")).toHaveAttribute(
+      "aria-label",
+      "September 2026",
+    );
+  });
+
   test("非 interactive ではネイティブ table セマンティクスのまま", () => {
     const { container } = render(
       createElement(Calendar, { year: 2026, month: 9 }),
@@ -904,6 +1071,25 @@ describe("Calendar ARIA", () => {
     );
     const btn = screen.getByRole("button", { name: /September 10, 2026/ });
     expect(btn.closest("td")).toHaveAttribute("aria-selected", "true");
+    expect(btn).toHaveAttribute("aria-pressed", "true");
+  });
+
+  test("selected 以外の button には aria-pressed=false が付く", () => {
+    render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 9,
+        interactive: true,
+        selectedDate: new Date(2026, 8, 10),
+      }),
+    );
+    const buttons = screen.getAllByRole("button");
+    expect(buttons.length).toBeGreaterThan(1);
+    for (const button of buttons) {
+      if (button.textContent !== "10") {
+        expect(button).toHaveAttribute("aria-pressed", "false");
+      }
+    }
   });
 
   test("cursorDate のセルだけ tabIndex=0 になる（roving tabindex）", () => {
@@ -1216,6 +1402,34 @@ describe("InteractiveCalendar", () => {
     );
     const mid = screen.getByRole("button", { name: /September 12, 2026/ });
     expect(mid.closest("td")).not.toHaveClass("is-in-range-preview");
+  });
+
+  test("range モードでは2回のクリックで範囲が確定してプレビュー表示される", () => {
+    const { container } = render(
+      createElement(InteractiveCalendar, {
+        selectionMode: "range",
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /September 10, 2026/ }));
+    // 1回目はアンカーのみなのでプレビューは出ない
+    expect(container.querySelector("td.is-in-range-preview")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /September 15, 2026/ }));
+    // 確定範囲（10〜15日）がプレビューとして表示される
+    const d10 = screen.getByRole("button", { name: /September 10, 2026/ });
+    const d15 = screen.getByRole("button", { name: /September 15, 2026/ });
+    const mid = screen.getByRole("button", { name: /September 12, 2026/ });
+    expect(d10.closest("td")).toHaveClass("is-in-range-preview");
+    expect(mid.closest("td")).toHaveClass("is-in-range-preview");
+    expect(d15.closest("td")).toHaveClass("is-in-range-preview");
+    const out = screen.getByRole("button", { name: /September 17, 2026/ });
+    expect(out.closest("td")).not.toHaveClass("is-in-range-preview");
+    // 10〜15日の6セルにクラスがつく
+    expect(container.querySelectorAll("td.is-in-range-preview")).toHaveLength(
+      6,
+    );
   });
 
   test("逆順ホバー（選択より前の日付）でもプレビュー範囲が正しく出る", () => {
