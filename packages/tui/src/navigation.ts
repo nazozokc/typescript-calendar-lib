@@ -34,6 +34,8 @@ function withMonth<T>(
     state.cursor,
     state.selectedDate,
     state.options,
+    undefined,
+    state.selectedRange,
   );
 }
 
@@ -52,6 +54,7 @@ function jumpTo<T>(
     state.selectedDate,
     state.options,
     data,
+    state.selectedRange,
   );
 }
 
@@ -111,6 +114,7 @@ export function goToDate<T>(
     state.selectedDate,
     state.options,
     data,
+    state.selectedRange,
   );
 }
 

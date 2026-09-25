@@ -17,5 +17,6 @@ export function resolveOptions<T>(
     range: options.range,
     isDateDisabled: options.isDateDisabled,
     cellData: options.cellData,
+    selectionMode: options.selectionMode ?? "single",
   };
 }

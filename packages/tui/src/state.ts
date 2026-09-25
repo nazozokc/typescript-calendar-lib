@@ -1,3 +1,4 @@
+import type { DateRange } from "@typescript-calendar-lib/core";
 import { clampCursor, snapCursor } from "./cursor.ts";
 import { buildMonthData } from "./month-data.ts";
 import { shiftMonth } from "./month-math.ts";
@@ -41,6 +42,7 @@ export function createCalendarState<T>(
     month,
     cursor,
     selectedDate: null,
+    selectedRange: null,
     options: resolved,
     monthData,
   };
@@ -59,6 +61,7 @@ export function createCalendarState<T>(
  * 新月で空欄（パディング）または選択不可セルになっている場合は、最も近い
  * 有効セルへスナップされる（例: 月初の 1 日から翌月に移動して先頭行が
  * 空欄になった場合）。有効セルが無ければカーソルは null のままになる。
+ * `selectedRange` は range 方式の確定範囲。省略時は null。
  */
 export function rebuildState<T>(
   year: number,
@@ -67,6 +70,7 @@ export function rebuildState<T>(
   selectedDate: Date | null,
   options: ResolvedOptions<T>,
   monthData?: MonthData<T>,
+  selectedRange: DateRange | null = null,
 ): CalendarState<T> {
   const { year: ny, month: nm } = shiftMonth(year, month, 0);
   const data = monthData ?? buildMonthData<T>(ny, nm, options);
@@ -82,6 +86,7 @@ export function rebuildState<T>(
     month: nm,
     cursor: nextCursor,
     selectedDate,
+    selectedRange,
     options,
     monthData: data,
   };

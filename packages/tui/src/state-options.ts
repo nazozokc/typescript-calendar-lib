@@ -26,7 +26,8 @@ export function sameStateOptions<T>(
     sameDateValue(a.range?.from, b.range?.from) &&
     sameDateValue(a.range?.to, b.range?.to) &&
     a.isDateDisabled === b.isDateDisabled &&
-    a.cellData === b.cellData
+    a.cellData === b.cellData &&
+    a.selectionMode === b.selectionMode
   );
 }
 
@@ -44,6 +45,7 @@ export function updateStateOptions<T>(
     range: next.range,
     isDateDisabled: next.isDateDisabled,
     cellData: next.cellData ?? state.options.cellData,
+    selectionMode: next.selectionMode ?? state.options.selectionMode,
   });
   const year =
     next.initialYear !== undefined && next.initialYear !== previous.initialYear
@@ -62,5 +64,6 @@ export function updateStateOptions<T>(
     state.selectedDate,
     options,
     monthData,
+    state.selectedRange,
   );
 }
