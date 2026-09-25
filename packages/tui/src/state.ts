@@ -1,4 +1,4 @@
-import { clampCursor } from "./cursor.ts";
+import { clampCursor, snapCursor } from "./cursor.ts";
 import { buildMonthData } from "./month-data.ts";
 import { shiftMonth } from "./month-math.ts";
 import { resolveOptions } from "./options.ts";
@@ -54,6 +54,11 @@ export function createCalendarState<T>(
  * ナビゲーション（月移動・年移動・ジャンプ）から利用される。
  * `year`/`month` は shiftMonth で正規化される（例: month=13 → 翌年1月）。
  * `monthData` を渡すと構築を省略できる（検索済みの月データを使い回す場合）。
+ *
+ * カーソルは前月の row/col を引き継ぎ範囲にクランプされるが、その位置が
+ * 新月で空欄（パディング）または選択不可セルになっている場合は、最も近い
+ * 有効セルへスナップされる（例: 月初の 1 日から翌月に移動して先頭行が
+ * 空欄になった場合）。有効セルが無ければカーソルは null のままになる。
  */
 export function rebuildState<T>(
   year: number,
@@ -65,10 +70,17 @@ export function rebuildState<T>(
 ): CalendarState<T> {
   const { year: ny, month: nm } = shiftMonth(year, month, 0);
   const data = monthData ?? buildMonthData<T>(ny, nm, options);
+  let nextCursor = clampCursor(cursor, data);
+  if (nextCursor !== null) {
+    const cell = data.cells[nextCursor.row]?.[nextCursor.col];
+    if (cell === undefined || cell.day === null || cell.isDisabled) {
+      nextCursor = snapCursor(nextCursor, data);
+    }
+  }
   return {
     year: ny,
     month: nm,
-    cursor: clampCursor(cursor, data),
+    cursor: nextCursor,
     selectedDate,
     options,
     monthData: data,

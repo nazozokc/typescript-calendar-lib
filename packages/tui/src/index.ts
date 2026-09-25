@@ -3,6 +3,7 @@ export {
   getCursorDate,
   moveCursor,
   setCursorToDate,
+  snapCursor,
 } from "./cursor.ts";
 export type { CalendarKeyAction } from "./keyboard.ts";
 export { keyToAction } from "./keyboard.ts";

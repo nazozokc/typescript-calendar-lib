@@ -26,6 +26,33 @@ export function clampCursor(
   };
 }
 
+/** 指定位置から最も近い有効セル（空欄でも選択不可でもないセル）を探す。
+ * 有効セルが 1 つも無ければ null を返す。距離は行方向を優先して重み付けする。 */
+export function snapCursor(
+  cursor: { row: number; col: number },
+  monthData: MonthData,
+): { row: number; col: number } | null {
+  const rows = monthData.visibleRows;
+  const cols = monthData.cells[0]?.length ?? 0;
+  if (rows <= 0 || cols <= 0) return null;
+
+  let best: { row: number; col: number } | null = null;
+  let bestScore = Infinity;
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const cell = monthData.cells[row]?.[col];
+      if (cell === undefined || cell.day === null || cell.isDisabled) continue;
+      const score =
+        Math.abs(row - cursor.row) * cols + Math.abs(col - cursor.col);
+      if (score < bestScore) {
+        bestScore = score;
+        best = { row, col };
+      }
+    }
+  }
+  return best;
+}
+
 /** カーソルを移動する。カーソル未設定時は今日（なければ先頭の日付）にスナップする。
  * 選択不可セルは同じ方向にスキップされ、全セルが選択不可なら状態を変えない。 */
 export function moveCursor<T>(

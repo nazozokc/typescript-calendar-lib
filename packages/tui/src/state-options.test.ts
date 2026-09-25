@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { getCursorDate } from "./cursor.ts";
 import { createCalendarState } from "./state.ts";
 import { sameStateOptions, updateStateOptions } from "./state-options.ts";
 
@@ -189,6 +190,23 @@ describe("updateStateOptions", () => {
       {},
     );
     expect(next.cursor).toEqual({ row: 2, col: 3 });
+  });
+
+  test("年月変更でカーソル位置のセルが空欄なら有効セルへスナップされる", () => {
+    // 2026-09-01（row0 col2）→ 2027-09 の row0 col2 は空欄（2027-09-01 は水曜 col3）
+    const state = createCalendarState({
+      today: TODAY,
+      initialCursor: { row: 0, col: 2 }, // 9月1日
+    });
+    const next = updateStateOptions(
+      state,
+      { initialYear: 2027, initialMonth: 9 },
+      { initialYear: 2026, initialMonth: 9 },
+    );
+    expect(next.year).toBe(2027);
+    expect(next.cursor).not.toBeNull();
+    expect(getCursorDate(next)).toEqual(new Date(2027, 8, 1));
+    expect(next.cursor).toEqual({ row: 0, col: 3 });
   });
 
   test("選択状態が維持される", () => {

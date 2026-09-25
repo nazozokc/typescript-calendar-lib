@@ -135,6 +135,8 @@ Releases are triggered by GitHub Releases (`.github/workflows/publish-*.yml`):
 2. The version from the tag is synced to all packages, then `pnpm -r run build` runs before publishing to npm.
 3. If the release notes contain a `publish:` line, only the listed packages are published (e.g. `publish: cli, react`). Without that line, all packages are published.
 
+> **Risk: `@typescript-calendar-lib/web@1.0.0` already exists on npm.** It was published ahead of the other packages with a stale `@typescript-calendar-lib/core@^0.5.1` dependency. Publishing a tag `v1.0.0` again fails for `web` with `409` (version already exists). **Start the next release from a tag higher than `v1.0.0` (e.g. `v1.0.1`)** so `web` republishes with the corrected `core@^1.0.0` range. Until then, consumers of `react`/`svelte` that resolve `web@1.0.0` install it with `core@0.5.x` (duplicate `core` in the tree).
+
 ## Docs
 
 The docs site is an SPA built with Vite (`docs/vite.config.ts` → `docs/dist`) and deployed to GitHub Pages by `.github/workflows/deploy-docs.yml`.

@@ -4,6 +4,7 @@ import {
   getCursorDate,
   moveCursor,
   setCursorToDate,
+  snapCursor,
 } from "./cursor.ts";
 import { buildMonthData } from "./month-data.ts";
 import {
@@ -226,6 +227,47 @@ describe("clampCursor の入力防御", () => {
       row: 1,
       col: 2,
     });
+  });
+});
+
+describe("snapCursor", () => {
+  // 2026-09: 1日は火曜（row0 col2）。row0 の col0〜1 は空欄
+  const data = buildMonthData(2026, 9);
+
+  test("空欄セルから最も近い有効セルへスナップする", () => {
+    expect(snapCursor({ row: 0, col: 0 }, data)).toEqual({ row: 0, col: 2 });
+  });
+
+  test("有効セルに対してはその位置を返す", () => {
+    expect(snapCursor({ row: 2, col: 2 }, data)).toEqual({ row: 2, col: 2 });
+  });
+
+  test("範囲外の位置でも最も近い有効セルを返す", () => {
+    const pos = snapCursor({ row: 99, col: 99 }, data);
+    expect(pos).not.toBeNull();
+    const cell = data.cells[pos!.row]![pos!.col]!;
+    expect(cell.day).not.toBeNull();
+    expect(cell.isDisabled).toBe(false);
+  });
+
+  test("選択不可セルはスキップされる", () => {
+    const data2 = buildMonthData(2026, 9, {
+      isDateDisabled: (d: Date) => d.getDate() === 1,
+    });
+    // row0 col2（9/1）は disabled → 隣の 9/2（row0 col3）へ
+    expect(snapCursor({ row: 0, col: 2 }, data2)).toEqual({ row: 0, col: 3 });
+  });
+
+  test("有効セルが無ければ null を返す", () => {
+    const allDisabled = buildMonthData(2026, 9, {
+      isDateDisabled: () => true,
+    });
+    expect(snapCursor({ row: 0, col: 0 }, allDisabled)).toBeNull();
+  });
+
+  test("セルのないグリッドでは null を返す", () => {
+    const emptyGrid = { ...data, cells: [], visibleRows: 0 };
+    expect(snapCursor({ row: 0, col: 0 }, emptyGrid)).toBeNull();
   });
 });
 
