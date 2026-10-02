@@ -22,7 +22,7 @@
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@vitest/coverage-v8": "^5.0.1",
-    "dompurify": "^3.2.4",
+    "dompurify": "^3.4.16",
     "fast-check": "^4.10.2",
     "highlight.js": "^11.12.0",
     "svelte": "^5.57.1",
