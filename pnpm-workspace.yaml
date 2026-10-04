@@ -4,6 +4,10 @@ allowBuilds:
   esbuild: true
 overrides:
   linkify-it: ">=5.0.2"
+  # GHSA-j22f-vq7h-c4qm: devalue の uneval が共有メモリを直列化し二次複雑度膨張する
+  # （stringify も同様）。修正版 >=5.9.3。svelte の推移的依存のため直接指定できない。
+  # svelte が宣言する範囲は ^5.9.2 なので、5.x に留めて据え置く（6.x は breaking）。
+  devalue: ">=5.9.3 <6"
   # GHSA-6v5v-wf23-fmfq: markdown-it smartquotes の二次複雑度 DoS（修正版 >=14.2.0）。
   # vite-plugin-markdown は ^12 を要求しているが API 互換のため override で引き上げる。
   markdown-it: ">=14.2.0"
