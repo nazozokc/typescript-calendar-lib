@@ -4,8 +4,8 @@ import InteractiveCalendar from "./InteractiveCalendar.svelte";
 export { Calendar, InteractiveCalendar };
 export default Calendar;
 
-export type { CellStateOptions } from "./cell-classes.js";
-export { getCellClasses } from "./cell-classes.js";
+export type { CellStateOptions } from "@typescript-calendar-lib/web";
+export { getBlankClasses, getCellClasses } from "@typescript-calendar-lib/web";
 export { buildRangePreview } from "./range-preview.js";
 export type {
   CalendarCustomSize,

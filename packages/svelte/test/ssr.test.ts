@@ -19,7 +19,11 @@ describe("server rendering", () => {
       },
     });
 
-    expect(body).toContain('aria-label="September 2026"');
+    // SSR でも h2 の id と table の aria-labelledby が対応している
+    const headingId = body.match(/<h2 id="([^"]+)">/)?.[1];
+    expect(headingId).toBeTruthy();
+    expect(body).toContain(`aria-labelledby="${headingId}"`);
+    expect(body).toContain("September 2026");
     expect(body).toContain('scope="col"');
     expect(body).toContain('scope="row"');
     expect(body).toContain('aria-current="date"');

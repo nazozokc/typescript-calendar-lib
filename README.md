@@ -36,8 +36,6 @@ A TypeScript calendar library spanning the terminal and the web. Render month, y
 pnpm add @typescript-calendar-lib/cli
 # or
 npm install @typescript-calendar-lib/cli
-# or
-bun add @typescript-calendar-lib/cli
 ```
 
 ## Usage
@@ -130,11 +128,14 @@ Pass `showWeekNumbers` to print the week number at the start of each row. With `
 console.log(calendar({ year: 2026, month: 9, weekStart: "monday", showWeekNumbers: true }));
 ```
 
-```
-         September 2026
- Mon Tue Wed Thu Fri Sat Sun
- 36                         1   2   3   4   5   6
- ...
+```text
+        September 2026
+   Mon Tue Wed Thu Fri Sat Sun
+36       1   2   3   4   5   6
+37   7   8   9  10  11  12  13
+38  14  15  16  17  18  19  20
+39  21  22  23  24  25  26  27
+40  28  29  30
 ```
 
 ```tsx

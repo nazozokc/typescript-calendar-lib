@@ -2,7 +2,7 @@
 
 Shared, framework-agnostic calendar utilities: date math, locale data, and grid building. Zero runtime dependencies.
 
-> **Tip:** You normally don't need `core` directly — the `cli`, `react`, `svelte`, and `tui` packages re-export the types and utilities you'll need. Reach for `core` when building your own renderer.
+> **Tip:** You normally don't need `core` directly. The `cli`, `react`, `svelte`, and `tui` packages build on `core`, but each exposes only its own surface — reach for `core` directly when you want the date math, locale tables, or grid builder itself.
 
 ## Installation
 
@@ -10,8 +10,6 @@ Shared, framework-agnostic calendar utilities: date math, locale data, and grid 
 pnpm add @typescript-calendar-lib/core
 # or
 npm install @typescript-calendar-lib/core
-# or
-bun add @typescript-calendar-lib/core
 ```
 
 ## Types
@@ -45,6 +43,7 @@ interface CalendarOptions {
   year: number;
   month: number; // 1-indexed (1–12)
   locale?: Locale;          // default: "en"
+  holidayLocale?: Locale;   // default: "ja" (see Holidays)
   weekStart?: WeekStart;    // default: "sunday"
   highlight?: Date;         // date to highlight (e.g. today)
   highlightStyle?: HighlightStyle; // default: "bracket"
@@ -61,6 +60,7 @@ Same as `CalendarOptions` minus `month` — renders a full year:
 interface CalendarYearOptions {
   year: number;
   locale?: Locale;
+  holidayLocale?: Locale; // default: "ja"
   weekStart?: WeekStart;
   highlight?: Date;
   highlightStyle?: HighlightStyle;
@@ -78,6 +78,7 @@ interface CalendarRangeOptions {
   from: Date;
   to: Date;
   locale?: Locale;
+  holidayLocale?: Locale; // default: "ja"
   weekStart?: WeekStart;
   highlight?: Date;
   highlightStyle?: HighlightStyle;
@@ -103,6 +104,12 @@ Contains month names, weekday headers, and short weekday headers for each locale
 ### `MIN_YEAR` / `MAX_YEAR`
 
 The supported year range (`1` / `9999`). Values outside this range are rejected by validation.
+
+### `HOLIDAY_MIN_YEAR` / `HOLIDAY_MAX_YEAR`
+
+The year range for which holiday rules are implemented (`1949` / `2100`). Outside that
+range the holiday functions report "no holiday" rather than throwing — see
+[Holidays](#holidays).
 
 ## Functions
 
@@ -346,6 +353,49 @@ formatDate(date, "yyyy年M月d日", "ja");   // "2026年9月25日"
 
 > **Note:** all of the above validate their inputs and throw `RangeError` on invalid values: dates are checked with `assertValidDate`, `add*` amounts must be integers, and `weekStart` must be `"sunday" | "monday"`.
 
+
+## Holidays
+
+`core` ships a complete Japanese holiday table — fixed-date holidays, happy-Monday
+rules, and the equinox-based `春分の日` / `秋分の日` approximations — plus the
+2019/2020/2021 reforms and the pre-1973 fixed-date rules.
+
+```ts
+import { getHolidayName, isHoliday } from "@typescript-calendar-lib/core";
+
+isHoliday(new Date(2026, 4, 4));        // true
+getHolidayName(new Date(2026, 4, 4));   // "みどりの日"
+isHoliday(new Date(2026, 4, 6));        // true
+getHolidayName(new Date(2026, 4, 6));   // "振替休日"  (happy-Monday rule)
+isHoliday(new Date(2026, 8, 22));        // true
+getHolidayName(new Date(2026, 8, 22));   // "国民の休日"
+isHoliday(new Date(2026, 8, 24));        // false
+getHolidayName(new Date(2026, 8, 24));   // undefined
+```
+
+> **Note:** `holidayLocale` defaults to `"ja"` — *independently of `locale`*. Calling
+> `isHoliday(date)` with no arguments answers the **Japanese** calendar question, so an
+> `locale: "en"` calendar still flags Japanese holidays. Pass `holidayLocale` explicitly
+> if that is not what you want.
+
+Rules are implemented for `HOLIDAY_MIN_YEAR` (`1949`) through `HOLIDAY_MAX_YEAR`
+(`2100`). Outside that window the functions report "no holiday" rather than throwing.
+Only `"ja"` has a rule table today: any other `holidayLocale` behaves as "no holidays",
+which lets a caller opt out explicitly instead of relying on the default.
+
+### Business days
+
+```ts
+import { addBusinessDays, diffInBusinessDays, isBusinessDay } from "@typescript-calendar-lib/core";
+
+isBusinessDay(new Date(2026, 8, 5));                                  // false — Saturday
+addBusinessDays(new Date(2026, 8, 4), 1);                            // Mon Sep 7 2026
+diffInBusinessDays(new Date(2026, 8, 4), new Date(2026, 8, 7));     // 1
+```
+
+A business day is a day that is neither a weekend nor a holiday under `holidayLocale`.
+All three take an optional trailing `holidayLocale`.
+
 ## Input validation
 
 All functions validate their inputs and throw `RangeError` on invalid values instead of silently producing wrong results:
@@ -379,9 +429,12 @@ import type {
 
 // Values
 import {
+  HOLIDAY_MAX_YEAR,
+  HOLIDAY_MIN_YEAR,
   LOCALES,
   MAX_YEAR,
   MIN_YEAR,
+  addBusinessDays,
   addDays,
   addMonths,
   addWeeks,
@@ -391,6 +444,7 @@ import {
   clampDate,
   createDate,
   daysInMonth,
+  diffInBusinessDays,
   diffInCalendarDays,
   diffInCalendarMonths,
   diffInCalendarYears,
@@ -402,6 +456,7 @@ import {
   formatDate,
   getCalendarCellState,
   getDayOfYear,
+  getHolidayName,
   getISOWeek,
   getLocaleData,
   getMonthName,
@@ -410,7 +465,9 @@ import {
   getWeekdayHeaders,
   isAfter,
   isBefore,
+  isBusinessDay,
   isDateInRange,
+  isHoliday,
   isLeapYear,
   isSameDay,
   isSameMonth,

@@ -24,6 +24,8 @@ export interface InteractiveCalendarProps {
   locale?: CalendarOptions["locale"];
   holidayLocale?: CalendarOptions["holidayLocale"];
   weekStart?: CalendarOptions["weekStart"];
+  /** 各週の先頭に週番号（ISO/年始基準）を表示する */
+  showWeekNumbers?: boolean;
   /** 選択方式。既定は "single"。範囲選択時はクリックのたびにアンカー→確定→リセットを交互に行う */
   selectionMode?: SelectionMode;
   /** ハイライト対象日 */
@@ -76,6 +78,7 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     locale,
     holidayLocale,
     weekStart,
+    showWeekNumbers,
     selectionMode,
     highlight,
     range,
@@ -180,6 +183,7 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
       locale={state.options.locale}
       holidayLocale={state.options.holidayLocale}
       weekStart={state.options.weekStart}
+      showWeekNumbers={showWeekNumbers}
       highlight={state.options.highlight}
       range={state.options.range}
       today={state.options.today}

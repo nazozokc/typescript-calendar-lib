@@ -14,8 +14,6 @@ A `<Calendar />` React component with CSS-based themes and color schemes, plus a
 pnpm add @typescript-calendar-lib/react
 # or
 npm install @typescript-calendar-lib/react
-# or
-bun add @typescript-calendar-lib/react
 ```
 
 ## Quick Start
@@ -392,9 +390,18 @@ The `style` prop can override any CSS variable or add custom styles:
 />
 ```
 
+## Accessibility notes
+
+- The `<table>` is labelled by the visible `<h2>` heading through `aria-labelledby`, so screen readers announce the same month text you see - exactly once, instead of a duplicated `aria-label`.
+- In interactive mode the heading itself is the live region (`aria-live="polite"` + `aria-atomic="true"`), so navigating to another month is announced (WAI-ARIA APG Date Picker Dialog). The month name is **not** copied into a separate hidden element, which would put it into the accessibility tree twice.
+- In interactive mode the table becomes `role="grid"` with `role="gridcell"` cells; the non-interactive table keeps native table semantics.
+- Padding cells carry the `is-blank` class instead of relying on `td:empty`, so grid lines do not break when a renderer emits stray whitespace or comments inside a cell.
+- Heading `id` values come from React's `useId()`, so several calendars of the same month can coexist on one page without duplicate ids.
+- All colour schemes keep text at 4.5:1 or better against its background; grid borders target 2:1 (decorative), and `prefers-reduced-motion` / `forced-colors` are honoured.
+
 ## Cell Classes
 
-Each day cell gets semantic classes you can target with CSS. The table has an `aria-label`, weekday headers use `scope="col"`, and week-number cells use `th[scope="row"]`. In interactive mode, the grid is exposed as a `role="grid"` table with `role="gridcell"` cells (WAI-ARIA APG calendar pattern): today's cell gets `aria-current="date"`, the selected date gets `aria-selected` on the gridcell and `aria-pressed` on its button, and only the cursor cell is tabbable (`tabIndex=0`, roving tabindex).
+Each day cell gets semantic classes you can target with CSS. The table is labelled by the visible `<h2>` heading via `aria-labelledby`, weekday headers use `scope="col"`, and week-number cells use `th[scope="row"]`. In interactive mode, the grid is exposed as a `role="grid"` table with `role="gridcell"` cells (WAI-ARIA APG calendar pattern): today's cell gets `aria-current="date"`, the selected date gets `aria-selected` on the gridcell and `aria-pressed` on its button, and only the cursor cell is tabbable (`tabIndex=0`, roving tabindex).
 
 | Class | When |
 | :--- | :--- |

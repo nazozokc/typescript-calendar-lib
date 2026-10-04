@@ -132,25 +132,38 @@ Combines `useCalendarState` options, `Calendar` visual props, and event callback
 | `initialYear` | `number` | Starting year (defaults to today's year) |
 | `initialMonth` | `number` | Starting month `1`–`12` (normalized if out of range) |
 | `locale` | `Locale` | Language |
+| `holidayLocale` | `Locale` | Locale used for holiday detection (defaults to `ja`) |
 | `weekStart` | `WeekStart` | First day of the week |
+| `showWeekNumbers` | `boolean` | Render the leading week-number column |
 | `selectionMode` | `SelectionMode` | Selection mode: `"single"` \| `"range"` (default `"single"`; range commits on the 2nd pick) |
 | `highlight` | `Date` | Date to highlight |
 | `range` | `{ from: Date; to: Date }` | Dates to emphasize |
 | `today` | `Date` | Reference date for "today" styling |
+| `isDateDisabled` | `(date: Date) => boolean` | Mark dates as non-selectable |
+| `onMonthChange` | `(year: number, month: number) => void` | Called when the displayed month changes |
 | `theme` | `ThemeName \| SvelteTheme` | CSS class-based theme |
 | `colorScheme` | `ColorSchemeName \| SvelteColorScheme` | CSS variable-based colors |
 | `size` | `CalendarSize` | Cell size |
 | `responsive` | `boolean` | Shrink cells & padding below `480px` so the grid fits phone screens |
 | `style` | `CSSProperties` | Extra styles for the root element |
 | `cellData` | `(date: Date) => unknown` | Resolve per-cell data; passed to `renderCell` and `onDateClick` |
-| `renderCell` | `(day, date, state, data?) => string` | Custom cell content (plain text, XSS-safe) |
+| `renderCell` | `(day, date, state, data?) => string \| Snippet` | Custom cell content (plain text is XSS-safe; a `Snippet` renders markup) |
 | `onDateClick` | `(date: Date, data?: unknown) => void` | Called when a date is selected; `data` is the cell's `cellData` value |
 | `onDateHover` | `(date: Date) => void` | Called on cell hover |
 | `onDateLeave` | `() => void` | Called when the mouse leaves the calendar |
 
+## Accessibility notes
+
+- The `<table>` is labelled by the visible `<h2>` heading through `aria-labelledby`, so screen readers announce the same month text you see - exactly once, instead of a duplicated `aria-label`.
+- In interactive mode the heading itself is the live region (`aria-live="polite"` + `aria-atomic="true"`), so navigating to another month is announced (WAI-ARIA APG Date Picker Dialog). The month name is **not** copied into a separate hidden element, which would put it into the accessibility tree twice.
+- In interactive mode the table becomes `role="grid"` with `role="gridcell"` cells; the non-interactive table keeps native table semantics.
+- Padding cells carry the `is-blank` class instead of relying on `td:empty`, so grid lines do not break when a renderer emits stray whitespace or comments inside a cell.
+- Heading `id` values are allocated per component instance, so several calendars of the same month can coexist on one page without duplicate ids.
+- All colour schemes keep text at 4.5:1 or better against its background; grid borders target 2:1 (decorative), and `prefers-reduced-motion` / `forced-colors` are honoured.
+
 ## Interactive Mode
 
-Set `interactive` to make day cells clickable. Each cell becomes a `<button class="calendar-day-btn">` — clickable, hoverable, and keyboard-accessible (Enter / Space). Buttons are announced with a localized `aria-label` and an explicit `aria-pressed="true"` or `"false"`; today's cell gets `aria-current="date"`. The table has an `aria-label`, weekday headers use `scope="col"`, and week-number cells use `th[scope="row"]`:
+Set `interactive` to make day cells clickable. Each cell becomes a `<button class="calendar-day-btn">` — clickable, hoverable, and keyboard-accessible (Enter / Space). Buttons are announced with a localized `aria-label` and an explicit `aria-pressed="true"` or `"false"`; today's cell gets `aria-current="date"`. The table is labelled by the visible `<h2>` heading via `aria-labelledby`, weekday headers use `scope="col"`, and week-number cells use `th[scope="row"]`. In interactive mode it is exposed as a `role="grid"` table with `role="gridcell"` cells (WAI-ARIA APG calendar pattern), today's cell gets `aria-current="date"`, the selected date gets `aria-selected`, and only the cursor cell is tabbable (roving tabindex):
 
 ```svelte
 <Calendar
@@ -224,6 +237,9 @@ For full interactivity (cursor movement, month navigation, selection), use the `
 | `goNext` | `() => void` | Move to next month |
 | `goPrev` | `() => void` | Move to previous month |
 | `goToday` | `() => void` | Jump to today's month |
+| `navigateYear` | `(direction: MonthDirection) => void` | Move to the previous/next year (`"prev"` / `"next"`) |
+| `goToMonth` | `(year: number, month: number) => void` | Jump to a specific year and month |
+| `goToDate` | `(date: Date) => void` | Jump to a date's month and put the cursor on that date |
 | `moveCursor` | `(direction: Direction) => void` | Move cursor: `"up"` / `"down"` / `"left"` / `"right"` |
 | `selectDate` | `() => void` | Select the date under the cursor |
 | `selectDateAt` | `(date: Date) => void` | Move cursor to a date and select it (useful for mouse click) |
@@ -398,7 +414,7 @@ It's **off by default** to keep existing layouts unchanged. The calendar root ge
 
 ## Cell Classes
 
-Each day cell gets semantic classes you can target with CSS. The table has an `aria-label`, weekday headers use `scope="col"`, week-number cells use `th[scope="row"]`, today's cell uses `aria-current="date"`, and interactive day buttons expose `aria-pressed="true"` or `"false"`:
+Each day cell gets semantic classes you can target with CSS. The table is labelled by the visible `<h2>` heading via `aria-labelledby`, weekday headers use `scope="col"`, week-number cells use `th[scope="row"]`, today's cell uses `aria-current="date"`, and interactive day buttons expose `aria-pressed="true"` or `"false"`:
 
 | Class | When |
 | :--- | :--- |

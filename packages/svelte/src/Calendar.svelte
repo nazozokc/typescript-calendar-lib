@@ -11,8 +11,8 @@
     getWeekdayHeaders,
     isSameDay,
   } from "@typescript-calendar-lib/core";
-  import { formatCellLabel } from "@typescript-calendar-lib/web";
-  import { getCellClasses } from "./cell-classes.js";
+  import { formatCellLabel, uiString } from "@typescript-calendar-lib/web";
+  import { getBlankClasses, getCellClasses } from "@typescript-calendar-lib/web";
   import type { CalendarSize } from "./size.js";
   import { buildSizeStyle, isSizeName } from "./size.js";
   import type { CSSProperties } from "./style.js";
@@ -23,7 +23,8 @@
     SvelteTheme,
     ThemeName,
   } from "./themes.js";
-  import { resolveColorScheme, resolveTheme } from "./themes.js";
+  import type { Snippet } from "svelte";
+  import { mergeColorScheme, resolveTheme } from "./themes.js";
 
   interface CalendarProps {
     year: number;
@@ -72,13 +73,16 @@
 
     // ── セル状態 ──
 
-    /** セル内容のカスタムレンダリング。interactive 時は button の子として描画される。第4引数に該当日のデータが渡る */
+    /**
+     * セル内容のカスタムレンダリング。interactive 時は button の子として描画される。
+     * Snippet（markup）または文字列のどちらでも受け付ける。第4引数に該当日のデータが渡る。
+     */
     renderCell?: (
       day: number,
       date: Date,
       state: CalendarCellState,
       data?: unknown,
-    ) => string;
+    ) => string | Snippet;
     /** 各セルに付与するユーザー定義データを解決する関数。実セルのみに呼ばれる */
     cellData?: (date: Date) => unknown;
     /** 選択不可日付の判定。true を返した日付は is-disabled クラスになり、インタラクティブ時は選択・ホバーできなくなる */
@@ -114,6 +118,14 @@
     isDateDisabled,
   }: CalendarProps = $props();
 
+  // interactive 時のみ APG の grid セマンティクスを付与する。静的表示では
+  // ネイティブの table/cell セマンティクスをそのまま使う。
+  const gridCellRole = $derived(interactive ? "gridcell" : undefined);
+  // h2 に一意な id を振り、table は aria-labelledby で参照する。
+  // $props.id() を使うのは同じ月のカレンダーが複数同時に置かれた場合に
+  // id が衝突し aria-labelledby が別のカレンダーを見指すため。
+  const headingId = $props.id();
+
   const cellDate = (day: number): Date => createDate(year, month - 1, day);
   const cellState = (day: number): CalendarCellState =>
     getCalendarCellState(cellDate(day), { today, holidayLocale, highlight, range, isDateDisabled });
@@ -136,6 +148,12 @@
     today != null && isSameDay(cellDate(day), today);
   const isCursorDay = (day: number): boolean =>
     cursorDate != null && isSameDay(cellDate(day), cursorDate);
+  /**
+   * renderCell の戻り値が Snippet なら {@render}、文字列ならテキストとして扱う。
+   * Svelte 5 の Snippet は関数なので typeof で判別できる。
+   */
+  const isSnippet = (value: string | Snippet): value is Snippet =>
+    typeof value === "function";
   const weekOf = (row: (number | null)[]): number | null => {
     const firstIdx = row.findIndex((d) => d !== null);
     if (firstIdx === -1) return null;
@@ -161,28 +179,44 @@
   // style 属性は文字列のみ受け付けるためオブジェクトを直列化する（--cal-* 変数含む）
   const rootStyle = $derived(
     styleObjectToString({
-      ...resolveColorScheme(colorScheme),
+      ...mergeColorScheme(colorScheme),
       ...buildSizeStyle(size),
       ...style,
     }),
   );
 </script>
 
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<!-- onmouseleave はホバー状態クリア用の補助イベント、onkeydown は
+     InteractiveCalendar が table 上で扱う。root 自体は widget ではないため
+     ARIA role は持たない。 -->
 <div
   class="calendar {resolveTheme(theme).className}{isSizeName(size) ? ` calendar-size-${size}` : ""}{interactive ? " calendar-interactive" : ""}{responsive ? " calendar-responsive" : ""}"
   style={rootStyle}
-  role={interactive ? "group" : undefined}
   onmouseleave={interactive ? handleMouseLeave : undefined}
   onkeydown={onkeydown}
 >
   <div class="calendar-header">
-    <h2>{getMonthName(locale, month)} {year}</h2>
+    <!--
+      見出しをそのまま live region にする。別の要素に同じ文言を複製すると
+      アクセシビリティツリー上で月名が二重に存在するため。
+      interactive 時は月が変わったことをここで読み上げる（APG Date Picker Dialog）。
+    -->
+    <h2
+      id={headingId}
+      aria-live={interactive ? "polite" : undefined}
+      aria-atomic={interactive ? "true" : undefined}
+    >
+      {getMonthName(locale, month)} {year}
+    </h2>
   </div>
-  <table aria-label={`${getMonthName(locale, month)} ${year}`}>
+  <!-- interactive 時のみ APG の grid セマンティクスを付与する。静的表示では
+       ネイティブの table/cell セマンティクスをそのまま使う。 -->
+  <table role={interactive ? "grid" : undefined} aria-labelledby={headingId}>
     <thead>
       <tr>
         {#if showWeekNumbers}
-          <th class="calendar-week" scope="col" aria-label="Week number"></th>
+          <th class="calendar-week" scope="col" aria-label={uiString("weekNumber", locale)}></th>
         {/if}
         {#each getWeekdayHeaders(locale, weekStart) as day (day)}
           <th scope="col">{day}</th>
@@ -198,10 +232,12 @@
             {/if}
             {#each row as day, j (j)}
               {#if day === null}
-                <td></td>
+                <td role={gridCellRole} class={getBlankClasses()}></td>
               {:else}
                 <td
+                  role={gridCellRole}
                   class={cellClass(day)}
+                  aria-selected={isSelectedDay(day) || undefined}
                   aria-current={isTodayDay(day) ? "date" : undefined}
                   aria-disabled={isDisabledDay(day) || undefined}
                 >
@@ -218,13 +254,23 @@
                       disabled={isDisabledDay(day)}
                     >
                       {#if renderCell}
-                        {renderCell(day, cellDate(day), cellState(day), cellData?.(cellDate(day)))}
+                        {@const rendered = renderCell(day, cellDate(day), cellState(day), cellData?.(cellDate(day)))}
+                        {#if isSnippet(rendered)}
+                          {@render rendered()}
+                        {:else}
+                          {rendered}
+                        {/if}
                       {:else}
                         {day}
                       {/if}
                     </button>
                   {:else if renderCell}
-                    {renderCell(day, cellDate(day), cellState(day), cellData?.(cellDate(day)))}
+                    {@const rendered = renderCell(day, cellDate(day), cellState(day), cellData?.(cellDate(day)))}
+                    {#if isSnippet(rendered)}
+                      {@render rendered()}
+                    {:else}
+                      {rendered}
+                    {/if}
                   {:else}
                     {day}
                   {/if}

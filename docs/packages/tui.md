@@ -8,8 +8,6 @@ Framework-agnostic, headless calendar data & state for building TUI calendars. N
 pnpm add @typescript-calendar-lib/tui
 # or
 npm install @typescript-calendar-lib/tui
-# or
-bun add @typescript-calendar-lib/tui
 ```
 
 ## Concepts
