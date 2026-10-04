@@ -44,6 +44,7 @@ const SCHEME_KEYS = [
   "--cal-fg",
   "--cal-accent",
   "--cal-weekend-fg",
+  "--cal-holiday-fg",
   "--cal-border",
   "--cal-header-bg",
   "--cal-highlight-bg",
@@ -63,8 +64,9 @@ const SCHEME_VALUES: Record<ColorSchemeName, readonly string[]> = {
     "#ffffff",
     "#1e293b",
     "#dc2626",
-    "#94a3b8",
-    "#e2e8f0",
+    "#586a84",
+    "#dc2626",
+    "#a7b6d0",
     "#f8fafc",
     "#dc2626",
     "#ffffff",
@@ -74,14 +76,15 @@ const SCHEME_VALUES: Record<ColorSchemeName, readonly string[]> = {
     "#c2410c",
     "#dc2626",
     "#ffffff",
-    "#cbd5e1",
+    "#5b799d",
   ],
   ocean: [
     "#f0f9ff",
     "#0f172a",
     "#0e7490",
-    "#7dd3fc",
-    "#bae6fd",
+    "#046a9b",
+    "#b91c1c",
+    "#a3afcd",
     "#e0f2fe",
     "#0e7490",
     "#ffffff",
@@ -91,14 +94,15 @@ const SCHEME_VALUES: Record<ColorSchemeName, readonly string[]> = {
     "#155e75",
     "#0e7490",
     "#ffffff",
-    "#7dd3fc",
+    "#0479b1",
   ],
   forest: [
     "#f0fdf4",
     "#052e16",
     "#15803d",
-    "#86efac",
-    "#bbf7d0",
+    "#107534",
+    "#b91c1c",
+    "#85bd9d",
     "#dcfce7",
     "#15803d",
     "#ffffff",
@@ -108,31 +112,33 @@ const SCHEME_VALUES: Record<ColorSchemeName, readonly string[]> = {
     "#166534",
     "#15803d",
     "#ffffff",
-    "#86efac",
+    "#12853c",
   ],
   sunset: [
     "#fffaf5",
     "#431407",
-    "#ea580c",
-    "#fdba74",
-    "#fed7aa",
+    "#c94b0a",
+    "#9e5202",
+    "#b91c1c",
+    "#ccaba1",
     "#ffedd5",
-    "#ea580c",
+    "#c94b0a",
     "#ffffff",
     "#ffedd5",
     "#fff7ed",
     "#fff7ed",
     "#9a3412",
-    "#ea580c",
+    "#c94b0a",
     "#ffffff",
-    "#fdba74",
+    "#b35d03",
   ],
   mono: [
     "#ffffff",
     "#111827",
     "#374151",
-    "#d1d5db",
-    "#e5e7eb",
+    "#5f6979",
+    "#b91c1c",
+    "#a9b5d1",
     "#f3f4f6",
     "#111827",
     "#ffffff",
@@ -142,14 +148,15 @@ const SCHEME_VALUES: Record<ColorSchemeName, readonly string[]> = {
     "#111827",
     "#111827",
     "#ffffff",
-    "#d1d5db",
+    "#6c7789",
   ],
   midnight: [
     "#0f172a",
     "#e2e8f0",
     "#38bdf8",
-    "#475569",
-    "#1e293b",
+    "#8091a9",
+    "#e34949",
+    "#384c68",
     "#1e293b",
     "#38bdf8",
     "#0f172a",
@@ -159,24 +166,25 @@ const SCHEME_VALUES: Record<ColorSchemeName, readonly string[]> = {
     "#7dd3fc",
     "#38bdf8",
     "#0f172a",
-    "#475569",
+    "#6e829d",
   ],
   blossom: [
     "#fffaff",
     "#500724",
-    "#db2777",
-    "#f9a8d4",
-    "#fbcfe8",
+    "#db2475",
+    "#c50e71",
+    "#b91c1c",
+    "#d0a7b8",
     "#fdf2f8",
-    "#db2777",
+    "#db2475",
     "#ffffff",
     "#fce7f3",
     "#fdf2f8",
     "#fdf2f8",
     "#be185d",
-    "#db2777",
+    "#db2475",
     "#ffffff",
-    "#f9a8d4",
+    "#df0f80",
   ],
 };
 
@@ -187,6 +195,25 @@ export const COLOR_SCHEMES: Record<ColorSchemeName, WebColorScheme> =
       Object.fromEntries(SCHEME_KEYS.map((key, i) => [key, values[i]!])),
     ]),
   ) as Record<ColorSchemeName, WebColorScheme>;
+
+/** 組み込み配色に \"default\" だけを重ねたマージ済み配色（mergeColorScheme の戻り値） */
+export type MergedColorScheme = Record<(typeof SCHEME_KEYS)[number], string>;
+
+/**
+ * 組み込み配色にユーザー指定のトークンを重ねる。
+ *
+ * `resolveColorScheme` へ渡す前に使うと、部分的な上書き（例:
+ * `{ \"--cal-accent\": \"red\" }`）が未指定のトークンを既定値から継承する。
+ */
+export function mergeColorScheme(
+  scheme?: ColorSchemeName | WebColorScheme,
+): MergedColorScheme {
+  const base = COLOR_SCHEMES.default;
+  const overlay = resolveColorScheme(scheme);
+  return Object.fromEntries(
+    SCHEME_KEYS.map((key) => [key, overlay[key] ?? base[key]!]),
+  ) as MergedColorScheme;
+}
 
 export function resolveColorScheme(
   scheme?: ColorSchemeName | WebColorScheme,

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { getCellClasses } from "../src/cell-classes.js";
+import { getBlankClasses, getCellClasses } from "../src/index.js";
 import { buildRangePreview } from "../src/range-preview.js";
 import { buildSizeStyle, isSizeName } from "../src/size.js";
 import { styleObjectToString } from "../src/style.js";
@@ -11,6 +11,14 @@ import {
 } from "../src/themes.js";
 
 const TODAY = new Date(2026, 8, 15); // 2026-09-15 (火)
+
+// ─── getBlankClasses ─────────────────────────────────────
+
+describe("getBlankClasses", () => {
+  test("web から再export した空白セルクラスを返す", () => {
+    expect(getBlankClasses()).toBe("is-blank");
+  });
+});
 
 // ─── getCellClasses ──────────────────────────────────────
 

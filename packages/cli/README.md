@@ -83,11 +83,13 @@ typescript-calendar-lib --range 2026-01-01 2026-03-31  # months in a date range
 
 ```
 --theme <name>           Look: default | modern (default: default)
---color-scheme <name>    Colors: default | ocean | forest | sunset | mono
+--color-scheme <name>    Colors: default | ocean | forest | sunset | mono (default: default)
 --color                  Enable ANSI colors (auto-detected for TTY)
 --no-color               Disable ANSI colors
 --locale <lang>          Language: en | ja | es | de | fr | ko | zh (default: en)
+--holiday-locale <lang>  Holiday rules: currently only ja (default: ja)
 --week-start <day>       First weekday: sunday | monday (default: sunday)
+--week-numbers           Print the week number at the start of each row
 --highlight <YYYY-MM-DD> Highlight a date (e.g. 2026-09-08)
 --highlight-style <style> Highlight style: bracket | reverse (default: bracket)
 --today <YYYY-MM-DD>     Override today (marks the date, defaults year/month)

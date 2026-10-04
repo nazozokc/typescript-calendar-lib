@@ -1022,22 +1022,60 @@ describe("useCalendarState ナビゲーション API", () => {
 // ─── Calendar ARIA ──────────────────────────────────────
 
 describe("Calendar ARIA", () => {
-  test("table に role=grid と aria-label がつく（interactive 時）", () => {
+  test("table に role=grid がつき、h2 を aria-labelledby で参照する（interactive 時）", () => {
     render(
       createElement(Calendar, { year: 2026, month: 9, interactive: true }),
     );
     const grid = screen.getByRole("grid");
-    expect(grid).toHaveAttribute("aria-label", "September 2026");
+    const heading = screen.getByRole("heading", { level: 2 });
+    expect(heading).toHaveTextContent("September 2026");
+    expect(grid).toHaveAttribute("aria-labelledby", heading.id);
+    expect(heading.id).not.toBe("");
   });
 
-  test("非 interactive でも table に aria-label がつく", () => {
+  test("interactive 時は見出しが live region になる（月の読み上げ）", () => {
+    render(
+      createElement(Calendar, { year: 2026, month: 9, interactive: true }),
+    );
+    const heading = screen.getByRole("heading", { level: 2 });
+    expect(heading).toHaveAttribute("aria-live", "polite");
+    expect(heading).toHaveAttribute("aria-atomic", "true");
+  });
+
+  test("非 interactive では h2 を aria-labelledby で参照し live region ではない", () => {
     const { container } = render(
       createElement(Calendar, { year: 2026, month: 9 }),
     );
-    expect(container.querySelector("table")).toHaveAttribute(
-      "aria-label",
-      "September 2026",
+    const heading = container.querySelector("h2")!;
+    const table = container.querySelector("table")!;
+    expect(table).toHaveAttribute("aria-labelledby", heading.id);
+    expect(heading).not.toHaveAttribute("aria-live");
+  });
+
+  test("月が変わると見出しのテキストと live region が更新される", () => {
+    const { container, rerender } = render(
+      createElement(Calendar, { year: 2026, month: 9, interactive: true }),
     );
+    rerender(
+      createElement(Calendar, { year: 2026, month: 10, interactive: true }),
+    );
+    const heading = container.querySelector("h2")!;
+    expect(heading).toHaveTextContent("October 2026");
+    expect(heading).toHaveAttribute("aria-live", "polite");
+  });
+
+  test("同じ月のカレンダーが複数あっても見出し id が衝突しない", () => {
+    const { container } = render(
+      createElement("div", {}, [
+        createElement(Calendar, { key: "a", year: 2026, month: 9 }),
+        createElement(Calendar, { key: "b", year: 2026, month: 9 }),
+      ]),
+    );
+    const ids = [...container.querySelectorAll("h2")].map((h) => h.id);
+    expect(ids).toHaveLength(2);
+    expect(ids[0]).toBeTruthy();
+    expect(ids[1]).toBeTruthy();
+    expect(ids[0]).not.toBe(ids[1]);
   });
 
   test("非 interactive ではネイティブ table セマンティクスのまま", () => {

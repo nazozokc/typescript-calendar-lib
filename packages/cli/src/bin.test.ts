@@ -1,5 +1,11 @@
 import { describe, expect, test } from "vitest";
-import { getVersion, parseArgs, parseDate, resolveColor } from "./bin.ts";
+import {
+  getVersion,
+  parseArgs,
+  parseDate,
+  printUsage,
+  resolveColor,
+} from "./bin.ts";
 
 describe("parseDate", () => {
   test("有効な日付をパースする", () => {
@@ -78,6 +84,33 @@ describe("parseArgs", () => {
     const { args } = parseArgs(["--locale", "ja", "--week-start", "monday"]);
     expect(args.locale).toBe("ja");
     expect(args.weekStart).toBe("monday");
+  });
+
+  test("--holiday-locale", () => {
+    const { args } = parseArgs(["--holiday-locale", "ja"]);
+    expect(args.holidayLocale).toBe("ja");
+  });
+
+  test("不正な --holiday-locale はエラー", () => {
+    const result = parseArgs(["--holiday-locale", "xx"]);
+    expect(result.error).toContain("Invalid holiday-locale");
+  });
+
+  test("--holiday-locale の値忘れはエラー", () => {
+    const result = parseArgs(["--holiday-locale"]);
+    expect(result.error).toContain(
+      "Missing value for option: --holiday-locale",
+    );
+  });
+
+  test("--week-numbers", () => {
+    const { args } = parseArgs(["--week-numbers"]);
+    expect(args.weekNumbers).toBe(true);
+  });
+
+  test("--week-numbers を省略すると weekNumbers は undefined", () => {
+    const { args } = parseArgs(["2026", "9"]);
+    expect(args.weekNumbers).toBeUndefined();
   });
 
   test("--highlight と --highlight-style", () => {
@@ -341,5 +374,36 @@ describe("resolveColor", () => {
 describe("getVersion", () => {
   test("semver 形式の文字列を返す", () => {
     expect(getVersion()).toMatch(/^\d+\.\d+\.\d+$/);
+  });
+});
+
+describe("printUsage", () => {
+  const usage = printUsage();
+
+  test("受理するすべてのフラグを文書化している", () => {
+    for (const flag of [
+      "--theme",
+      "--color-scheme",
+      "--color",
+      "--no-color",
+      "--locale",
+      "--holiday-locale",
+      "--week-start",
+      "--week-numbers",
+      "--highlight",
+      "--highlight-style",
+      "--today",
+      "--year",
+      "--range",
+      "--version",
+      "--help",
+    ]) {
+      expect(usage).toContain(flag);
+    }
+  });
+
+  test("色判定の環境変数プリセデンスを説明している", () => {
+    expect(usage).toContain("NO_COLOR");
+    expect(usage).toContain("FORCE_COLOR");
   });
 });

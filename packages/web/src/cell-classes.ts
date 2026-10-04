@@ -6,6 +6,8 @@ import {
 } from "@typescript-calendar-lib/core";
 
 // ─── セル状態クラス ───────────────────────────────────────
+// react / svelte の両パッケージが同じ CSS クラス名を必要とするため、
+// ロジックは web に一元化し各 UI 層は再エクスポートのみ行う。
 
 export interface CellStateOptions {
   today?: Date;
@@ -27,7 +29,7 @@ export interface CellStateOptions {
 
 // 範囲の from > to は不正入力として RangeError（isDateInRange が検証する）
 
-/** 日付セルの状態（週末・今日・ハイライト・範囲・選択・カーソル）に応じたCSSクラスを組み立てる */
+/** 日付セルの状態（週末・今日・ハイライト・範囲・選択・カーソル）に応じた CSS クラスを組み立てる */
 export function getCellClasses(date: Date, options: CellStateOptions): string {
   const state = getCalendarCellState(date, options);
   const classes: string[] = [];
@@ -49,4 +51,9 @@ export function getCellClasses(date: Date, options: CellStateOptions): string {
   if (options.cursorDate != null && isSameDay(date, options.cursorDate))
     classes.push("is-cursor");
   return classes.join(" ");
+}
+
+/** 前後の空きマスに付けるクラス。テーマの `is-blank` ルールで使う */
+export function getBlankClasses(): string {
+  return "is-blank";
 }

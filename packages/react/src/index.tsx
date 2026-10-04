@@ -1,3 +1,5 @@
+export type { CellStateOptions } from "@typescript-calendar-lib/web";
+export { getBlankClasses, getCellClasses } from "@typescript-calendar-lib/web";
 export type { CalendarProps } from "./Calendar.tsx";
 export { Calendar, default } from "./Calendar.tsx";
 export type {

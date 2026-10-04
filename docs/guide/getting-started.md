@@ -8,9 +8,6 @@ pnpm add @typescript-calendar-lib/cli
 
 # npm
 npm install @typescript-calendar-lib/cli
-
-# bun
-bun add @typescript-calendar-lib/cli
 ```
 
 Replace `cli` with the package you need: `core`, `cli`, `react`, `svelte`, `tui`, or `web`.

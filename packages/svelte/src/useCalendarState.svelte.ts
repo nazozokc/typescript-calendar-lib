@@ -11,9 +11,12 @@ import {
   getCursorDate,
   getSelectedDate,
   getSelectedRange,
+  goToDate,
+  goToMonth,
   goToToday,
   moveCursor,
   navigateMonth,
+  navigateYear,
   sameStateOptions,
   selectDate,
   selectDateAt,
@@ -36,6 +39,8 @@ export interface UseCalendarStateOptions
   > {
   initialYear?: number;
   initialMonth?: number;
+  /** 表示中の年月が変わったときに呼ばれる */
+  onMonthChange?: (year: number, month: number) => void;
 }
 
 /**
@@ -57,6 +62,12 @@ export interface UseCalendarStateReturn {
   /** 前月/翌月へ移動 */
   goNext: () => void;
   goPrev: () => void;
+  /** 前年/翌年へ移動 */
+  navigateYear: (direction: MonthDirection) => void;
+  /** 指定した年月へジャンプ */
+  goToMonth: (year: number, month: number) => void;
+  /** 指定した日付の月へジャンプし、カーソルをその日付に置く */
+  goToDate: (date: Date) => void;
   /** 今日の月へジャンプ */
   goToday: () => void;
   /** カーソル位置の日付を選択 */
@@ -137,12 +148,13 @@ export function useCalendarState(
     state = updateStateOptions(state, next, previous);
   });
 
-  // 表示月が変わったら、古い月を指すホバーをクリアする
+  // 表示月が変わったら onMonthChange を通知し、古い月を指すホバーをクリアする
   let prevMonthKey: string | null = null;
   $effect(() => {
     const key = `${state.year}-${state.month}`;
     if (prevMonthKey !== null && key !== prevMonthKey) {
       hoveredDate = null;
+      getter().onMonthChange?.(state.year, state.month);
     }
     prevMonthKey = key;
   });
@@ -171,6 +183,15 @@ export function useCalendarState(
     },
     goPrev: () => {
       state = navigateMonth(state, "prev");
+    },
+    navigateYear: (direction: MonthDirection) => {
+      state = navigateYear(state, direction);
+    },
+    goToMonth: (year: number, month: number) => {
+      state = goToMonth(state, year, month);
+    },
+    goToDate: (date: Date) => {
+      state = goToDate(state, date);
     },
     goToday: () => {
       state = goToToday(state);

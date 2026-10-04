@@ -2,6 +2,7 @@
   import type { CalendarCellState, CalendarOptions } from "@typescript-calendar-lib/core";
   import type { SelectionMode } from "@typescript-calendar-lib/tui";
   import { keyToAction } from "@typescript-calendar-lib/tui";
+  import type { Snippet } from "svelte";
   import Calendar from "./Calendar.svelte";
   import { buildRangePreview } from "./range-preview.js";
   import type { CalendarSize } from "./size.js";
@@ -24,6 +25,8 @@
     locale?: CalendarOptions["locale"];
     holidayLocale?: CalendarOptions["holidayLocale"];
     weekStart?: CalendarOptions["weekStart"];
+    /** 各週の先頭に週番号（ISO/年始基準）を表示する */
+    showWeekNumbers?: boolean;
     /** ハイライト対象日 */
     highlight?: Date;
     /** 色付け範囲 */
@@ -34,6 +37,8 @@
     today?: Date;
     /** 選択不可日付の判定。true を返した日付は選択・カーソル移動・ホバーの対象外になる */
     isDateDisabled?: (date: Date) => boolean;
+    /** 表示中の年月が変わったときに呼ばれる */
+    onMonthChange?: (year: number, month: number) => void;
 
     // ── Calendar の見た目 ──
 
@@ -43,13 +48,13 @@
     /** 狭い画面（スマホ等）でセルサイズと余白を自動調整する */
     responsive?: boolean;
     style?: CSSProperties;
-    /** セル内容のカスタムレンダリング。第4引数に該当日のデータが渡る */
+    /** セル内容のカスタムレンダリング。文字列または Snippet。第4引数に該当日のデータが渡る */
     renderCell?: (
       day: number,
       date: Date,
       state: CalendarCellState,
       data?: unknown,
-    ) => string;
+    ) => string | Snippet;
     /** 各セルに付与するユーザー定義データを解決する関数。実セルのみに呼ばれる */
     cellData?: (date: Date) => unknown;
 
@@ -69,11 +74,13 @@
     locale,
     holidayLocale,
     weekStart,
+    showWeekNumbers,
     highlight,
     range,
     selectionMode,
     today,
     isDateDisabled,
+    onMonthChange,
     theme,
     colorScheme,
     size,
@@ -97,6 +104,7 @@
     range,
     isDateDisabled,
     selectionMode,
+    onMonthChange,
   }));
 
   // クリック（マウス・Enter/Space 共通）で日付を選択する。
@@ -157,6 +165,7 @@
     locale={cal.state.options.locale}
     holidayLocale={cal.state.options.holidayLocale}
     weekStart={cal.state.options.weekStart}
+    showWeekNumbers={showWeekNumbers}
     highlight={cal.state.options.highlight}
     range={cal.state.options.range}
     today={cal.state.options.today}

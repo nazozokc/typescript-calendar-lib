@@ -22,7 +22,9 @@ export interface CliArgs {
   color?: boolean;
   noColor?: boolean;
   locale?: Locale;
+  holidayLocale?: Locale;
   weekStart?: WeekStart;
+  weekNumbers?: boolean;
   highlight?: Date;
   highlightStyle?: HighlightStyle;
   today?: Date;
@@ -78,6 +80,7 @@ const VALUE_OPTIONS: Record<string, keyof CliArgs> = {
   "--theme": "theme",
   "--color-scheme": "colorScheme",
   "--locale": "locale",
+  "--holiday-locale": "holidayLocale",
   "--week-start": "weekStart",
   "--highlight-style": "highlightStyle",
 };
@@ -139,6 +142,10 @@ export function parseArgs(args: readonly string[]): ParseResult {
     }
     if (arg === "--year") {
       result.yearView = true;
+      continue;
+    }
+    if (arg === "--week-numbers") {
+      result.weekNumbers = true;
       continue;
     }
     if (arg === "--highlight") {
@@ -234,6 +241,7 @@ export function parseArgs(args: readonly string[]): ParseResult {
     [result.theme, THEMES, "theme"],
     [result.colorScheme, COLOR_SCHEMES, "color-scheme"],
     [result.locale, LOCALE_LIST, "locale"],
+    [result.holidayLocale, LOCALE_LIST, "holiday-locale"],
     [result.weekStart, WEEK_STARTS, "week-start"],
     [result.highlightStyle, HIGHLIGHT_STYLES, "highlight-style"],
   ];
@@ -275,11 +283,13 @@ export function printUsage(): string {
 
 Options:
   --theme <name>           Look: default | modern (default: default)
-  --color-scheme <name>    Colors: default | ocean | forest | sunset | mono
+  --color-scheme <name>    Colors: default | ocean | forest | sunset | mono (default: default)
   --color                  Enable ANSI colors (auto-detected for TTY)
   --no-color               Disable ANSI colors
   --locale <lang>          Language: ${LOCALE_LIST.join(" | ")} (default: en)
+  --holiday-locale <lang>  Holiday rules: currently only ja (default: ja)
   --week-start <day>       First weekday: sunday | monday (default: sunday)
+  --week-numbers           Print the week number at the start of each row
   --highlight <YYYY-MM-DD> Highlight a date (e.g. 2026-09-08)
   --highlight-style <style> Highlight style: bracket | reverse (default: bracket)
   --today <YYYY-MM-DD>     Override today (marks the date, defaults year/month)
@@ -287,6 +297,10 @@ Options:
   --range <FROM> <TO>      Render months from FROM to TO (YYYY-MM-DD)
   -v, --version            Show version
   -h, --help               Show this help
+
+Color:
+  --color / --no-color win over the environment. NO_COLOR and FORCE_COLOR are
+  honoured next, and a TTY is used as the final fallback.
 `;
 }
 
@@ -323,7 +337,9 @@ if (import.meta.main) {
     colorScheme: args.colorScheme,
     color,
     locale: args.locale,
+    holidayLocale: args.holidayLocale,
     weekStart: args.weekStart,
+    showWeekNumbers: args.weekNumbers,
     highlight: args.highlight,
     highlightStyle: args.highlightStyle,
     today: args.today,

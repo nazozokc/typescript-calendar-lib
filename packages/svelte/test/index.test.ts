@@ -526,14 +526,19 @@ describe("Calendar showWeekNumbers", () => {
 // ─── Calendar selected / cursorDate ──────────────────────
 
 describe("Calendar selected / cursorDate", () => {
-  test("table に aria-label がつく", () => {
+  test("table は h2 を aria-labelledby で参照する", () => {
     const { container } = render(Calendar, {
       props: { year: 2026, month: 9 },
     });
-    expect(container.querySelector("table")).toHaveAttribute(
-      "aria-label",
-      "September 2026",
-    );
+    const heading = container.querySelector("h2");
+    expect(heading).not.toBeNull();
+    const id = heading!.id;
+    expect(id).toBeTruthy();
+    expect(heading).toHaveTextContent("September 2026");
+    const table = container.querySelector("table");
+    expect(table).toHaveAttribute("aria-labelledby", id);
+    // 同じ文言を aria-label にも重ねると読み上げが二重になるため付けない
+    expect(table).not.toHaveAttribute("aria-label");
   });
 
   test("selected の日にちに is-selected クラスが付く", () => {
@@ -1038,5 +1043,95 @@ describe("InteractiveCalendar isDateDisabled", () => {
     });
     const cursorBtn = container.querySelector('[data-cursor="true"]');
     expect(cursorBtn?.textContent).toBe("1");
+  });
+});
+
+describe("Calendar アクセシビリティ parity", () => {
+  test("interactive 時は role=grid 真正面 table に gridcell 役割を持つ", () => {
+    const { container } = render(Calendar, {
+      props: { year: 2026, month: 9, interactive: true },
+    });
+    expect(container.querySelector("table")).toHaveAttribute("role", "grid");
+    expect(container.querySelector("td.is-blank")).toHaveAttribute(
+      "role",
+      "gridcell",
+    );
+    expect(container.querySelector("td:not(.is-blank)")).toHaveAttribute(
+      "role",
+      "gridcell",
+    );
+  });
+
+  test("非 interactive ではネイティブ table セマンティクスのまま", () => {
+    const { container } = render(Calendar, {
+      props: { year: 2026, month: 9 },
+    });
+    const table = container.querySelector("table")!;
+    expect(table).not.toHaveAttribute("role");
+    expect(container.querySelector("td")).not.toHaveAttribute("role");
+  });
+
+  test("interactive 時は見出しが live region になる（月の読み上げ）", () => {
+    const { container } = render(Calendar, {
+      props: { year: 2026, month: 9, interactive: true },
+    });
+    const heading = container.querySelector("h2")!;
+    expect(heading).toHaveAttribute("aria-live", "polite");
+    expect(heading).toHaveAttribute("aria-atomic", "true");
+  });
+
+  test("非 interactive では見出しが live region ではない", () => {
+    const { container } = render(Calendar, {
+      props: { year: 2026, month: 9 },
+    });
+    expect(container.querySelector("h2")).not.toHaveAttribute("aria-live");
+  });
+
+  test("interactive 時は選択中セルに aria-selected がつく", () => {
+    const { container } = render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        interactive: true,
+        selected: new Date(2026, 8, 15),
+      },
+    });
+    expect(container.querySelector("td.is-selected")).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+
+  test("InteractiveCalendar でも見出しが live region になる", () => {
+    const { container } = render(InteractiveCalendar, {
+      props: { initialYear: 2026, initialMonth: 9 },
+    });
+    const heading = container.querySelector("h2")!;
+    expect(heading).toHaveTextContent("September 2026");
+    expect(heading).toHaveAttribute("aria-live", "polite");
+  });
+
+  test("InteractiveCalendar の月名テキストはアクセシブルツリー内で1つだけ", () => {
+    const { container } = render(InteractiveCalendar, {
+      props: { initialYear: 2026, initialMonth: 9 },
+    });
+    // live region 用の別要素に複製しない（読み上げが二重になるため）
+    expect(container.querySelectorAll(".calendar-sr-only")).toHaveLength(0);
+    const matches = [...container.querySelectorAll("h2, [aria-live]")].filter(
+      (el) => el.textContent?.trim() === "September 2026",
+    );
+    expect(matches).toHaveLength(1);
+  });
+
+  test("同じ月のカレンダーが複数あっても見出し id が衝突しない", () => {
+    // Svelte は $props.id() がコンポーネント単位で採番するため、
+    // 同じ年月のカレンダーを2つ並べても id が衝突しない
+    const a = render(Calendar, { props: { year: 2026, month: 9 } });
+    const b = render(Calendar, { props: { year: 2026, month: 9 } });
+    const idA = a.container.querySelector("h2")!.id;
+    const idB = b.container.querySelector("h2")!.id;
+    expect(idA).toBeTruthy();
+    expect(idB).toBeTruthy();
+    expect(idA).not.toBe(idB);
   });
 });

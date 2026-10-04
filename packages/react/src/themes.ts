@@ -6,10 +6,12 @@ import type { WebColorScheme, WebTheme } from "@typescript-calendar-lib/web";
 
 export type {
   ColorSchemeName,
+  MergedColorScheme,
   ThemeName,
 } from "@typescript-calendar-lib/web";
 export {
   COLOR_SCHEMES,
+  mergeColorScheme,
   resolveColorScheme,
   resolveTheme,
   THEMES,

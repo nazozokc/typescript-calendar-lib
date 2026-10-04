@@ -13,14 +13,19 @@ import {
   getWeekOfYear,
   isSameDay,
 } from "@typescript-calendar-lib/core";
-import { formatCellLabel } from "@typescript-calendar-lib/web";
+import {
+  formatCellLabel,
+  getBlankClasses,
+  getCellClasses,
+  uiString,
+} from "@typescript-calendar-lib/web";
 import type {
   CSSProperties,
   KeyboardEvent as ReactKeyboardEvent,
   ReactNode,
   Ref,
 } from "react";
-import { getCellClasses } from "./cell-classes.ts";
+import { useId } from "react";
 import type { CalendarSize } from "./size.ts";
 import { buildSizeStyle, isSizeName } from "./size.ts";
 import type {
@@ -29,7 +34,7 @@ import type {
   ReactTheme,
   ThemeName,
 } from "./themes.ts";
-import { resolveColorScheme, resolveTheme } from "./themes.ts";
+import { mergeColorScheme, resolveTheme } from "./themes.ts";
 
 export type {
   CalendarCustomSize,
@@ -173,6 +178,11 @@ export function Calendar({
   // 静的表示ではネイティブの table/cell セマンティクスをそのまま使う。
   const gridRole = interactive ? "grid" : undefined;
   const cellRole = interactive ? "gridcell" : undefined;
+  // h2 には一意な id を振り、table は aria-labelledby でそれを参照する。
+  // useId() を使うのは同じ月のカレンダーが複数同時に置かれた場合に
+  // id が衝突し aria-labelledby が別のカレンダーを見指すため。
+  // aria-label と h2 の両方に同じ文字列を置くとスクリーンリーダーが二重に読む。
+  const headingId = useId();
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: onMouseLeave はホバー状態クリア用の補助イベント。キーボード操作（role=grid）は独立して対応済み
@@ -181,15 +191,21 @@ export function Calendar({
       className={`calendar ${resolveTheme(theme).className}${isSizeName(size) ? ` calendar-size-${size}` : ""}${interactive ? " calendar-interactive" : ""}${responsive ? " calendar-responsive" : ""}`}
       onMouseLeave={interactive ? handleMouseLeave : undefined}
       style={{
-        ...(resolveColorScheme(colorScheme) as CSSProperties),
+        ...(mergeColorScheme(colorScheme) as CSSProperties),
         ...buildSizeStyle(size),
         ...style,
       }}
     >
       <div className="calendar-header">
-        <h2>{title}</h2>
+        <h2
+          id={headingId}
+          aria-live={gridRole ? "polite" : undefined}
+          aria-atomic={gridRole ? "true" : undefined}
+        >
+          {title}
+        </h2>
       </div>
-      <table role={gridRole} aria-label={title} onKeyDown={onKeyDown}>
+      <table role={gridRole} aria-labelledby={headingId} onKeyDown={onKeyDown}>
         <thead>
           <tr>
             {showWeekNumbers && (
@@ -197,7 +213,7 @@ export function Calendar({
                 key="week"
                 className="calendar-week"
                 scope="col"
-                aria-label="Week number"
+                aria-label={uiString("weekNumber", locale)}
               />
             )}
             {getWeekdayHeaders(locale, weekStart).map((day) => (
@@ -220,9 +236,17 @@ export function Calendar({
                   </th>
                 )}
                 {row.map((day, j) => {
-                  if (day === null)
-                    // biome-ignore lint/suspicious/noArrayIndexKey: パディングセルは位置が唯一の識別子
-                    return <td key={j} role={cellRole} />;
+                  if (day === null) {
+                    // biome-ignore-start lint/suspicious/noArrayIndexKey: パディングセルは日付を持たず列位置 j が唯一の識別子。月グリッドは静的で並び順が入れ替わらないため
+                    return (
+                      <td
+                        key={`b-${j}`}
+                        role={cellRole}
+                        className={getBlankClasses()}
+                      />
+                    );
+                    // biome-ignore-end lint/suspicious/noArrayIndexKey: 上記と同じ理由
+                  }
                   const date = cellDate(day);
                   const state = getCalendarCellState(date, {
                     today,
@@ -241,7 +265,6 @@ export function Calendar({
                       // パディングセル（key=j）との衝突を避けるため日番号に "d-" を付与する。日番号は列位置 j と異なり配列の index ではない
                       key={`d-${day}`}
                       role={cellRole}
-                      tabIndex={interactive ? -1 : undefined}
                       className={className(day)}
                       aria-selected={selected || undefined}
                       aria-current={state.isToday ? "date" : undefined}
