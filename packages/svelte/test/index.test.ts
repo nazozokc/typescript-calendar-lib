@@ -506,6 +506,13 @@ describe("Calendar showWeekNumbers", () => {
     const week = container.querySelector("th.calendar-week[scope='row']");
     expect(week).not.toBeNull();
     expect(week!.textContent).toBe("36");
+    // 行ヘッダーの accessible name はラベル＋番号で行ごとに一意
+    const weekCells = container.querySelectorAll(
+      "th.calendar-week[scope='row']",
+    );
+    const labels = [...weekCells].map((td) => td.getAttribute("aria-label"));
+    expect(labels).toContain("Week number 36");
+    expect(new Set(labels).size).toBe(labels.length);
   });
 
   test("曜日ヘッダーに scope=col がつく", () => {

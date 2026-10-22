@@ -156,7 +156,8 @@ export function Calendar({
   };
 
   const title = `${getMonthName(locale, month)} ${year}`;
-  // 週番号の行ヘッダー（scope="row"）用ラベル
+  // 週番号の行ヘッダー（scope="row"）用ラベル。行ごとに一意の名前にするため
+  // 番号を含める（aria-label が内容の数字を上書きしないように）
   const weekLabel = uiString("weekNumber", locale);
   const weekOf = (row: (number | null)[]): number | null => {
     const firstIdx = row.findIndex((d) => d !== null);
@@ -228,7 +229,7 @@ export function Calendar({
                     key="week"
                     className="calendar-week"
                     scope="row"
-                    aria-label={weekLabel}
+                    aria-label={`${weekLabel} ${week}`}
                   >
                     {week}
                   </th>

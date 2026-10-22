@@ -208,6 +208,13 @@
   const weekdays = $derived(getWeekdayHeaders(locale, weekStart));
   // 週番号は表示時のみ計算する。グリッドと同じ月単位の依存
   const weekNumbers = $derived(showWeekNumbers ? grid.map(weekOf) : null);
+  // 行ヘッダーの accessible name は行ごとに一意でなければ識別できないため
+  // ラベル＋週番号を組み合わせる（aria-label が内容の数字を上書きしないように）。
+  // 関数にして locale・weekNumbers を追跡する
+  const weekAriaLabel = (i: number): string | undefined =>
+    weekNumbers !== null
+      ? `${uiString("weekNumber", locale)} ${weekNumbers[i]}`
+      : undefined;
 
   // style 属性は文字列のみ受け付けるためオブジェクトを直列化する（--cal-* 変数含む）
   const rootStyle = $derived(
@@ -264,7 +271,7 @@
               <th
                 class="calendar-week"
                 scope="row"
-                aria-label={uiString("weekNumber", locale)}
+                aria-label={weekAriaLabel(i)}
               >{#if weekNumbers !== null}{weekNumbers[i]}{/if}</th>
             {/if}
             {#each row as day, j (j)}
