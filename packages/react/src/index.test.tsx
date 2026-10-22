@@ -457,6 +457,12 @@ describe("Calendar showWeekNumbers", () => {
     expect(weekCells.length).toBeGreaterThan(0);
     // 先頭の実行（2026-09 月曜始まり）の週番号は 36
     expect([...weekCells].some((td) => td.textContent === "36")).toBe(true);
+    // 行ヘッダーの accessible name はラベル＋番号で行ごとに一意
+    const weekLabels = [...weekCells].map((td) =>
+      td.getAttribute("aria-label"),
+    );
+    expect(weekLabels).toContain("Week number 36");
+    expect(new Set(weekLabels).size).toBe(weekLabels.length);
     // 全行に空行なし・グリッド内容は維持される
     expect(weekCells.length).toBe(
       [...container.querySelectorAll("tbody tr")].length,

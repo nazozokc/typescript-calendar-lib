@@ -11,8 +11,14 @@
     getWeekdayHeaders,
     isSameDay,
   } from "@typescript-calendar-lib/core";
-  import { formatCellLabel, uiString } from "@typescript-calendar-lib/web";
-  import { getBlankClasses, getCellClasses } from "@typescript-calendar-lib/web";
+  import {
+    formatCellLabel,
+    getBlankClasses,
+    getCellStateClasses,
+    getSelectionCellClasses,
+    joinCellClassLists,
+    uiString,
+  } from "@typescript-calendar-lib/web";
   import type { CalendarSize } from "./size.js";
   import { buildSizeStyle, isSizeName } from "./size.js";
   import type { CSSProperties } from "./style.js";
@@ -127,27 +133,49 @@
   const headingId = $props.id();
 
   const cellDate = (day: number): Date => createDate(year, month - 1, day);
-  const cellState = (day: number): CalendarCellState =>
-    getCalendarCellState(cellDate(day), { today, holidayLocale, highlight, range, isDateDisabled });
-  const cellClass = (day: number): string | undefined =>
-    getCellClasses(cellDate(day), {
+
+  /**
+   * 1セルぶんの表示データ（Date・状態・クラス・aria 用の状態）を1回の計算でまとめる。
+   * テンプレートはこの結果だけを参照するので、セルあたりの状態計算は1回になる。
+   */
+  interface DayCell {
+    date: Date;
+    state: CalendarCellState;
+    className: string | undefined;
+    isSelected: boolean;
+    isCursor: boolean;
+    isDisabled: boolean;
+  }
+
+  const dayCell = (day: number): DayCell => {
+    const date = cellDate(day);
+    const state = getCalendarCellState(date, {
       today,
       holidayLocale,
       highlight,
       range,
-      rangePreview,
-      selected,
-      cursorDate,
-      hoveredDate,
       isDateDisabled,
-    }) || undefined;
-  const isDisabledDay = (day: number): boolean => cellState(day).isDisabled;
-  const isSelectedDay = (day: number): boolean =>
-    selected != null && isSameDay(cellDate(day), selected);
-  const isTodayDay = (day: number): boolean =>
-    today != null && isSameDay(cellDate(day), today);
-  const isCursorDay = (day: number): boolean =>
-    cursorDate != null && isSameDay(cellDate(day), cursorDate);
+    });
+    const className =
+      joinCellClassLists(
+        getCellStateClasses(state),
+        getSelectionCellClasses(date, {
+          rangePreview,
+          hoveredDate,
+          selected,
+          cursorDate,
+        }),
+      ) || undefined;
+    return {
+      date,
+      state,
+      className,
+      isSelected: selected != null && isSameDay(date, selected),
+      isCursor: cursorDate != null && isSameDay(date, cursorDate),
+      isDisabled: state.isDisabled,
+    };
+  };
+
   /**
    * renderCell の戻り値が Snippet なら {@render}、文字列ならテキストとして扱う。
    * Svelte 5 の Snippet は関数なので typeof で判別できる。
@@ -163,18 +191,30 @@
       ? getISOWeek(weekStartDate)
       : getWeekOfYear(weekStartDate);
   };
-  const handleCellClick = (day: number) => {
+  const handleCellClick = (cell: DayCell) => {
     if (interactive && onDateClick) {
-      const date = cellDate(day);
-      onDateClick(date, cellData?.(date));
+      onDateClick(cell.date, cellData?.(cell.date));
     }
   };
-  const handleCellHover = (day: number) => {
-    if (interactive && onDateHover) onDateHover(cellDate(day));
+  const handleCellHover = (cell: DayCell) => {
+    if (interactive && onDateHover) onDateHover(cell.date);
   };
   const handleMouseLeave = () => {
     if (interactive && onDateLeave) onDateLeave();
   };
+
+  // グリッド・曜日ヘッダーは月単位で不変。$derived なので年月が変わったときだけ再計算される
+  const grid = $derived(buildMonthGrid(year, month, weekStart));
+  const weekdays = $derived(getWeekdayHeaders(locale, weekStart));
+  // 週番号は表示時のみ計算する。グリッドと同じ月単位の依存
+  const weekNumbers = $derived(showWeekNumbers ? grid.map(weekOf) : null);
+  // 行ヘッダーの accessible name は行ごとに一意でなければ識別できないため
+  // ラベル＋週番号を組み合わせる（aria-label が内容の数字を上書きしないように）。
+  // 関数にして locale・weekNumbers を追跡する
+  const weekAriaLabel = (i: number): string | undefined =>
+    weekNumbers !== null
+      ? `${uiString("weekNumber", locale)} ${weekNumbers[i]}`
+      : undefined;
 
   // style 属性は文字列のみ受け付けるためオブジェクトを直列化する（--cal-* 変数含む）
   const rootStyle = $derived(
@@ -218,43 +258,48 @@
         {#if showWeekNumbers}
           <th class="calendar-week" scope="col" aria-label={uiString("weekNumber", locale)}></th>
         {/if}
-        {#each getWeekdayHeaders(locale, weekStart) as day (day)}
+        {#each weekdays as day (day)}
           <th scope="col">{day}</th>
         {/each}
       </tr>
     </thead>
     <tbody>
-      {#each buildMonthGrid(year, month, weekStart) as row, i (i)}
+      {#each grid as row, i (i)}
         {#if !row.every((d) => d === null)}
           <tr>
             {#if showWeekNumbers}
-              <th class="calendar-week" scope="row">{weekOf(row)}</th>
+              <th
+                class="calendar-week"
+                scope="row"
+                aria-label={weekAriaLabel(i)}
+              >{#if weekNumbers !== null}{weekNumbers[i]}{/if}</th>
             {/if}
             {#each row as day, j (j)}
               {#if day === null}
                 <td role={gridCellRole} class={getBlankClasses()}></td>
               {:else}
+                {@const cell = dayCell(day)}
                 <td
                   role={gridCellRole}
-                  class={cellClass(day)}
-                  aria-selected={isSelectedDay(day) || undefined}
-                  aria-current={isTodayDay(day) ? "date" : undefined}
-                  aria-disabled={isDisabledDay(day) || undefined}
+                  class={cell.className}
+                  aria-selected={cell.isSelected || undefined}
+                  aria-current={cell.state.isToday ? "date" : undefined}
+                  aria-disabled={cell.isDisabled || undefined}
                 >
                   {#if interactive}
                     <button
                       type="button"
                       class="calendar-day-btn"
-                      onclick={isDisabledDay(day) ? undefined : () => handleCellClick(day)}
-                      onmouseenter={isDisabledDay(day) ? undefined : () => handleCellHover(day)}
-                      tabindex={isCursorDay(day) ? 0 : -1}
-                      data-cursor={isCursorDay(day) ? "true" : undefined}
+                      onclick={cell.isDisabled ? undefined : () => handleCellClick(cell)}
+                      onmouseenter={cell.isDisabled ? undefined : () => handleCellHover(cell)}
+                      tabindex={cell.isCursor ? 0 : -1}
+                      data-cursor={cell.isCursor ? "true" : undefined}
                       aria-label={formatCellLabel(locale, year, month, day)}
-                      aria-pressed={isSelectedDay(day)}
-                      disabled={isDisabledDay(day)}
+                      aria-pressed={cell.isSelected}
+                      disabled={cell.isDisabled}
                     >
                       {#if renderCell}
-                        {@const rendered = renderCell(day, cellDate(day), cellState(day), cellData?.(cellDate(day)))}
+                        {@const rendered = renderCell(day, cell.date, cell.state, cellData?.(cell.date))}
                         {#if isSnippet(rendered)}
                           {@render rendered()}
                         {:else}
@@ -265,7 +310,7 @@
                       {/if}
                     </button>
                   {:else if renderCell}
-                    {@const rendered = renderCell(day, cellDate(day), cellState(day), cellData?.(cellDate(day)))}
+                    {@const rendered = renderCell(day, cell.date, cell.state, cellData?.(cell.date))}
                     {#if isSnippet(rendered)}
                       {@render rendered()}
                     {:else}

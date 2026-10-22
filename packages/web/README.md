@@ -128,6 +128,45 @@ buildSizeStyle("md"); // {}
 
 Type guard — `true` for known names (`"sm" | "md" | "lg"`), `false` otherwise.
 
+## Cell Classes
+
+Helpers that turn a day cell's state into the CSS classes the stylesheet targets.
+
+### `getCellClasses(date, options): string`
+
+Computes the cell state (like `@typescript-calendar-lib/core`'s `getCalendarCellState`) and appends the hover / selection / cursor / range-preview classes:
+
+```ts
+getCellClasses(new Date(2026, 8, 15), { today: new Date(2026, 8, 15) });
+// "is-today"
+```
+
+### `getCellStateClasses(state): string`
+
+Maps an already-computed `CalendarCellState` (from core) to the state classes — `is-weekend`, `is-holiday`, `is-today`, `is-highlight`, `is-in-range`, `is-disabled`. Useful to render a whole month without recomputing the state per class lookup.
+
+### `getSelectionCellClasses(date, options): string`
+
+Only the positional classes derived by comparing dates — `is-in-range-preview`, `is-hovered`, `is-selected`, `is-cursor`. Combine it with `getCellStateClasses` when you already hold the cell state:
+
+```ts
+import { getCellStateClasses, getSelectionCellClasses, joinCellClassLists } from "@typescript-calendar-lib/web";
+
+const state = getCalendarCellState(date, options);
+const className = joinCellClassLists(
+  getCellStateClasses(state),
+  getSelectionCellClasses(date, { hoveredDate, selected, cursorDate }),
+);
+```
+
+### `joinCellClassLists(...parts): string`
+
+Joins class strings, skipping empty parts (returns `""` when nothing applies).
+
+### `getBlankClasses(): string`
+
+Classes for the padding cells around a month (`"is-blank"`).
+
 ## Cell Labels
 
 ### `formatCellLabel(locale, year, month, day): string`
@@ -159,8 +198,10 @@ import type {
   CalendarCustomSize,
   CalendarSize,
   CalendarSizeName,
+  CellStateOptions,
   ColorSchemeName,
   CssVarMap,
+  SelectionCellOptions,
   ThemeName,
   WebColorScheme,
   WebTheme,
@@ -171,7 +212,12 @@ import {
   buildSizeStyle,
   COLOR_SCHEMES,
   formatCellLabel,
+  getBlankClasses,
+  getCellClasses,
+  getCellStateClasses,
+  getSelectionCellClasses,
   isSizeName,
+  joinCellClassLists,
   resolveColorScheme,
   resolveTheme,
   THEMES,

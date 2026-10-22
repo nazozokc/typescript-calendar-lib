@@ -440,11 +440,16 @@ Each day cell gets semantic classes you can target with CSS. The table is labell
 import Calendar, {
   Calendar,
   COLOR_SCHEMES,
+  getBlankClasses,
+  getCellClasses,
+  getCellStateClasses,
+  getSelectionCellClasses,
+  InteractiveCalendar,
+  joinCellClassLists,
   resolveColorScheme,
   resolveTheme,
   THEMES,
   useCalendarState,
-  InteractiveCalendar,
 } from "@typescript-calendar-lib/react";
 
 import type {
@@ -452,10 +457,12 @@ import type {
   CalendarProps,
   CalendarSize,
   CalendarSizeName,
+  CellStateOptions,
   ColorSchemeName,
   InteractiveCalendarProps,
   ReactColorScheme,
   ReactTheme,
+  SelectionCellOptions,
   ThemeName,
   UseCalendarStateOptions,
   UseCalendarStateReturn,
