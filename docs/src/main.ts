@@ -7,6 +7,7 @@ import { html as core } from "../packages/core.md";
 import { html as react } from "../packages/react.md";
 import { html as svelte } from "../packages/svelte.md";
 import { html as tui } from "../packages/tui.md";
+import { html as web } from "../packages/web.md";
 import App from "./components/App.svelte";
 import { normalizePath, TITLES } from "./nav";
 
@@ -19,6 +20,7 @@ const PAGES: Record<string, string> = {
   "/packages/react": react,
   "/packages/svelte": svelte,
   "/packages/tui": tui,
+  "/packages/web": web,
 };
 
 const path = normalizePath(window.location.pathname);

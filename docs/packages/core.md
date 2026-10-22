@@ -98,6 +98,7 @@ Flags computed by `getCalendarCellState` for a single day cell:
 ```ts
 interface CalendarCellState {
   isWeekend: boolean;   // Saturday or Sunday
+  isHoliday: boolean;   // holiday per `holidayLocale` (default "ja")
   isToday: boolean;     // matches `today`
   isHighlight: boolean; // matches `highlight`
   isInRange: boolean;   // within `range` (inclusive)
@@ -129,6 +130,16 @@ const LOCALES: Record<Locale, LocaleData>;
 
 Contains month names, weekday headers, and short weekday headers for each locale.
 
+### `MIN_YEAR` / `MAX_YEAR`
+
+The supported year range (`1` / `9999`). Values outside this range are rejected by validation.
+
+### `HOLIDAY_MIN_YEAR` / `HOLIDAY_MAX_YEAR`
+
+The year range for which holiday rules are implemented (`1949` / `2100`). Outside that
+range the holiday functions report "no holiday" rather than throwing — see
+[Holidays](#holidays).
+
 ## Functions
 
 ### `getMonthName(locale, month): string`
@@ -147,6 +158,24 @@ Returns the weekday header array respecting `weekStart`:
 ```ts
 getWeekdayHeaders("en", "sunday"); // ["Sun", "Mon", ..., "Sat"]
 getWeekdayHeaders("en", "monday"); // ["Mon", "Tue", ..., "Sun"]
+```
+
+### `getLocaleData(locale): LocaleData`
+
+Returns the raw locale data (`months`, `weekdays`, `weekdaysShort`, plus the Monday-start rotations `weekdaysMonday` and `weekdaysMondayShort`). Throws `RangeError` for an unknown locale.
+
+```ts
+getLocaleData("en").weekdays;            // ["Sun", "Mon", ..., "Sat"]
+getLocaleData("ja").weekdaysMonday;      // ["月", "火", ..., "日"]
+```
+
+### `getLocaleData(locale): LocaleData`
+
+Returns the raw locale data (`months`, `weekdays`, `weekdaysShort`, plus the Monday-start rotations `weekdaysMonday` and `weekdaysMondayShort`). Throws `RangeError` for an unknown locale.
+
+```ts
+getLocaleData("en").weekdays;            // ["Sun", "Mon", ..., "Sat"]
+getLocaleData("ja").weekdaysMonday;      // ["月", "火", ..., "日"]
 ```
 
 ### `buildMonthGrid(year, month, weekStart): (number | null)[][]`
@@ -201,9 +230,17 @@ getMonthRange(new Date(2026, 5, 1), new Date(2026, 8, 30));
 
 Throws `RangeError` when `from` is after `to`, or when either date is invalid.
 
+### `createDate(year, monthIndex, day): Date`
+
+Creates a local `Date` at `00:00:00` without the `new Date(year, ...)` 1900-interpretation for years `0`–`99`. `monthIndex` is 0-based like `Date`.
+
+### `assertValidDate(date): void`
+
+Throws `RangeError` when `date` is not a `Date` instance or is an `Invalid Date`.
+
 ### `getCalendarCellState(date, options?): CalendarCellState`
 
-Computes the display state of a single day cell (weekend, today, highlight, in-range, disabled):
+Computes the display state of a single day cell (weekend, holiday, today, highlight, in-range, disabled) — the shared predicate every package uses to style and gate cells:
 
 ```ts
 const state = getCalendarCellState(new Date(2026, 8, 6), {
@@ -211,10 +248,10 @@ const state = getCalendarCellState(new Date(2026, 8, 6), {
   highlight: new Date(2026, 8, 6),
   range: { from: new Date(2026, 8, 1), to: new Date(2026, 8, 10) },
 });
-// { isWeekend: true, isToday: true, isHighlight: true, isInRange: true, isDisabled: false }
+// { isWeekend: true, isHoliday: false, isToday: true, isHighlight: true, isInRange: true, isDisabled: false }
 ```
 
-Pass `isDateDisabled` to mark specific dates as non-selectable. It is called once per cell with the cell's `Date`; returning `true` sets `isDisabled` (this is what the `tui`, `cli`, `react`, and `svelte` packages use to block selection/cursor movement):
+Options (all optional) mirror the per-locale calendar options: `today`, `highlight`, `range`, `isDateDisabled`, and `holidayLocale`. Pass `isDateDisabled` to mark specific dates as non-selectable — it is called once per cell with the cell's `Date`; returning `true` sets `isDisabled` (this is what the `tui`, `cli`, `react`, and `svelte` packages use to block selection/cursor movement):
 
 ```ts
 const state = getCalendarCellState(new Date(2026, 8, 15), {
@@ -223,7 +260,7 @@ const state = getCalendarCellState(new Date(2026, 8, 15), {
 // state.isDisabled === true
 ```
 
-With no options every flag is `false` (except `isWeekend`, which is derived from the date itself). Throws `RangeError` when `date` is invalid.
+With no options every flag is `false` except `isWeekend` (derived from the date) and `isHoliday` (derived from `holidayLocale`). Throws `RangeError` when `date` is invalid.
 
 ### `isLeapYear(year): boolean`
 
@@ -248,6 +285,159 @@ daysInMonth(2026, 4); // 30
 ```
 
 Throws `RangeError` for invalid `year`/`month`.
+
+#### Arithmetic
+
+### `addDays(date, amount): Date`
+
+Adds whole days (negative subtracts). Calendar-day based (`setDate`), so DST transitions don't shift the time — the same local time is preserved. Returns a new `Date`; the input is unchanged.
+
+```ts
+addDays(new Date(2026, 8, 25), 7);   // Oct 02 2026, same time
+addDays(new Date(2026, 8, 25), -25); // Aug 31 2026
+```
+
+### `addWeeks(date, amount): Date`
+
+Adds whole weeks — equivalent to `addDays(date, amount * 7)`. `amount` must be an integer.
+
+### `addMonths(date, amount): Date`
+
+Adds whole months. When the target day doesn't exist in the destination month, the result clamps to the month's last day.
+
+```ts
+addMonths(new Date(2026, 0, 31), 1); // Feb 28 2026 (Jan 31 + 1 month)
+addMonths(new Date(2028, 0, 31), 1); // Feb 29 2028 (leap year)
+```
+
+### `addYears(date, amount): Date`
+
+Adds whole years. Feb 29 clamps to Feb 28 of the target year.
+
+```ts
+addYears(new Date(2028, 1, 29), 1); // Feb 28 2029
+```
+
+#### Period boundaries
+
+`startOf*` normalize to `00:00:00.000`, `endOf*` to `23:59:59.999`.
+
+### `startOfDay(date): Date`
+
+Returns the date at `00:00:00.000`.
+
+### `endOfDay(date): Date`
+
+Returns the date at `23:59:59.999`.
+
+### `startOfWeek(date, weekStart?): Date`
+
+Returns the first day of the containing week at `00:00:00.000`. `weekStart` defaults to `"sunday"`.
+
+### `endOfWeek(date, weekStart?): Date`
+
+Returns the last day of the containing week at `23:59:59.999`. `weekStart` defaults to `"sunday"`.
+
+### `startOfMonth(date): Date`
+
+Returns the 1st of the month at `00:00:00.000`.
+
+### `endOfMonth(date): Date`
+
+Returns the last day of the month at `23:59:59.999`.
+
+### `startOfYear(date): Date`
+
+Returns Jan 1 at `00:00:00.000`.
+
+### `endOfYear(date): Date`
+
+Returns Dec 31 at `23:59:59.999`.
+
+#### Differences
+
+Calendar differences ignore the time component, may be negative, and are DST-safe.
+
+### `diffInCalendarDays(from, to): number`
+
+Returns `to - from` in calendar days.
+
+### `diffInCalendarMonths(from, to): number`
+
+Returns `to - from` in whole calendar months.
+
+### `diffInCalendarYears(from, to): number`
+
+Returns `to - from` in whole calendar years.
+
+#### Comparison
+
+### `isBefore(date, other): boolean`
+
+`true` when `date` is strictly before `other` (ms comparison).
+
+### `isAfter(date, other): boolean`
+
+`true` when `date` is strictly after `other` (ms comparison).
+
+### `isSameMonth(a, b): boolean`
+
+`true` when both dates share the year and month (day ignored).
+
+### `isSameYear(a, b): boolean`
+
+`true` when both dates share the year.
+
+### `isWeekend(date): boolean`
+
+`true` for Saturday or Sunday.
+
+#### Week & year position
+
+### `getISOWeek(date): number`
+
+Returns the ISO 8601 week number (`1`–`53`; week 1 contains the first Thursday).
+
+### `getWeekOfYear(date, weekStart?): number`
+
+Returns the week number using the US convention — the week containing Jan 1 is week 1 (like `cal -w`). `weekStart` defaults to `"sunday"`.
+
+### `getDayOfYear(date): number`
+
+Returns the 1-based day of year (Jan 1 = `1`, Dec 31 = `365`/`366`).
+
+#### Clamping
+
+### `clampDate(date, min, max): Date`
+
+Returns `date` clamped into `[min, max]`: `min` when earlier, `max` when later, otherwise the original `date`. All three dates are validated.
+
+```ts
+clampDate(new Date(2026, 8, 25), new Date(2026, 8, 1), new Date(2026, 8, 15)); // Sep 15 2026
+```
+
+#### Formatting
+
+### `formatDate(date, pattern, locale?): string`
+
+Formats a date with the given pattern. Tokens are replaced with localized values; everything else is output verbatim.
+
+| Token | Meaning |
+| :--- | :--- |
+| `yyyy` | 4-digit year (`2026`) |
+| `yy` | last 2 digits of the year (`26`) |
+| `MMMM` | full month name (`September`, `9月`) |
+| `MM` / `M` | zero-padded / plain month (`09` / `9`) |
+| `dd` / `d` | zero-padded / plain day (`05` / `5`) |
+| `EEE` | short weekday, localized (`Fri`, `金`) |
+
+```ts
+formatDate(date, "yyyy-MM-dd");          // "2026-09-25"
+formatDate(date, "MMMM d, yyyy (EEE)");  // "September 25, 2026 (Fri)"
+formatDate(date, "yyyy年M月d日", "ja");   // "2026年9月25日"
+```
+
+> **Note:** all of the above validate their inputs and throw `RangeError` on invalid values: dates are checked with `assertValidDate`, `add*` amounts must be integers, and `weekStart` must be `"sunday" | "monday"`.
 
 
 ## Holidays
@@ -294,8 +484,7 @@ All three take an optional trailing `holidayLocale`.
 
 ## Input validation
 
-All functions validate their inputs and throw `RangeError` on invalid values instead of silently
-producing wrong results:
+All functions validate their inputs and throw `RangeError` on invalid values instead of silently producing wrong results:
 
 | Input | Accepted range | Example of invalid input |
 | :--- | :--- | :--- |
@@ -305,9 +494,7 @@ producing wrong results:
 | `locale` | `"en"` \| `"ja"` \| `"es"` \| `"de"` \| `"fr"` \| `"ko"` \| `"zh"` | `"xx"` |
 | `range` | `from <= to`, valid `Date`s | reversed or invalid dates |
 
-> **Note:** `new Date(year, ...)` interprets years `0`–`99` as `1900 + year`. The library avoids
-> this by using `setFullYear` internally (`createDate`), so `firstDayOfMonth(50, 9)` correctly
-> returns the year `50` — but you still cannot pass year `0` or `10000`.
+> **Note:** `new Date(year, ...)` interprets years `0`–`99` as `1900 + year`. The library avoids this by using `setFullYear` internally (`createDate`), so `firstDayOfMonth(50, 9)` correctly returns the year `50` — but you still cannot pass year `0` or `10000`.
 
 ## Exports
 
@@ -381,27 +568,6 @@ import {
 } from "@typescript-calendar-lib/core";
 ```
 
-### `createDate(year, monthIndex, day): Date`
+## License
 
-Creates a local `Date` at `00:00:00` without the `new Date(year, ...)` 1900-interpretation for
-years `0`–`99`. `monthIndex` is 0-based like `Date`.
-
-`year` must be an integer `1`–`9999`, `monthIndex` an integer `0`–`12`, and `day` an integer
-`0`–`31`. `monthIndex 12` rolls to January of the following year, and `day 0` means the last day
-of the previous month (the internal idiom used by `lastDayOfMonth`); a `day` beyond the end of
-the month rolls over to the next month — all exactly like `new Date`. Anything else throws
-`RangeError`.
-
-### `assertValidDate(date): void`
-
-Throws `RangeError` when `date` is not a `Date` instance or is an `Invalid Date`.
-
-### `MIN_YEAR` / `MAX_YEAR`
-
-The supported year range (`1` / `9999`). Values outside this range are rejected by validation.
-
-### `HOLIDAY_MIN_YEAR` / `HOLIDAY_MAX_YEAR`
-
-The year range for which holiday rules are implemented (`1949` / `2100`). Outside that
-range the holiday functions report "no holiday" rather than throwing — see
-[Holidays](#holidays).
+MIT

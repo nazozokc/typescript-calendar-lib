@@ -16,6 +16,8 @@ A `<Calendar />` Svelte 5 component with CSS-based themes and color schemes, plu
 pnpm add @typescript-calendar-lib/svelte
 # or
 npm install @typescript-calendar-lib/svelte
+# or
+bun add @typescript-calendar-lib/svelte
 ```
 
 ## Quick Start
@@ -69,12 +71,13 @@ Run the component through a Svelte compiler such as Vite or SvelteKit; the packa
 | `year` | `number` | — (required) | Calendar year |
 | `month` | `number` | — (required) | Month, 1-indexed (`1`–`12`) |
 | `locale` | `"en" \| "ja" \| "es" \| "de" \| "fr" \| "ko" \| "zh"` | `"en"` | Language |
+| `holidayLocale` | `"en" \| "ja" \| "es" \| "de" \| "fr" \| "ko" \| "zh"` | `"ja"` | Holiday rules; currently only `"ja"` is provided |
 | `weekStart` | `"sunday" \| "monday"` | `"sunday"` | First day of the week |
 | `highlight` | `Date` | — | Date to highlight |
 | `range` | `{ from: Date; to: Date }` | — | Dates to emphasize |
 | `rangePreview` | `{ from: Date; to: Date }` | — | Candidate range preview (hover preview), rendered with the `is-in-range-preview` class |
+| `isDateDisabled` | `(date: Date) => boolean` | — | Mark dates as non-selectable in interactive mode (`is-disabled` class) |
 | `today` | `Date` | — | Reference date for "today" styling |
-| `isDateDisabled` | `(date: Date) => boolean` | — | Mark dates as non-selectable (rendered with the `is-disabled` class; blocks clicks, hover, and cursor movement) |
 | `selected` | `Date \| null` | — | Selected date (`.is-selected` class, `aria-pressed="true"` in interactive mode; other buttons are `"false"`) |
 | `cursorDate` | `Date \| null` | — | Cursor position (`.is-cursor` class) |
 | `hoveredDate` | `Date \| null` | — | Hovered date (`.is-hovered` class) |
@@ -88,6 +91,7 @@ Run the component through a Svelte compiler such as Vite or SvelteKit; the packa
 | `onDateClick` | `(date: Date, data?: unknown) => void` | — | Called when a day cell is clicked (or Enter/Space pressed); `data` is that cell's `cellData` value (`undefined` when none) |
 | `onDateHover` | `(date: Date) => void` | — | Called when a day cell is hovered |
 | `onDateLeave` | `() => void` | — | Called when the mouse leaves the calendar |
+| `onkeydown` | `(event: KeyboardEvent) => void` | — | Keyboard handler fired on the root element (arrow keys etc.) |
 | `cellData` | `(date: Date) => unknown` | — | Resolve per-cell data; passed to `renderCell` and `onDateClick` |
 | `renderCell` | `(day, date, state, data?) => string` | — | Custom cell content; the returned string is inserted as plain text (XSS-safe) |
 
@@ -122,6 +126,18 @@ A turnkey component that wires `useCalendarState` and `Calendar` together with b
 - **Arrow keys** — moves the cursor with focus tracking
 - **PageUp/PageDown** — navigates to the previous/next month
 
+### Disabled Dates
+
+Pass `isDateDisabled` to mark dates as non-selectable. Disabled cells get the `is-disabled` class, cannot receive keyboard focus or be clicked, and `Arrow*` navigation skips over them:
+
+```svelte
+<InteractiveCalendar
+  initialYear={2026}
+  initialMonth={9}
+  isDateDisabled={(date) => date.getDay() === 0} // disable Sundays
+/>
+```
+
 ### Props
 
 Combines `useCalendarState` options, `Calendar` visual props, and event callbacks:
@@ -134,11 +150,12 @@ Combines `useCalendarState` options, `Calendar` visual props, and event callback
 | `holidayLocale` | `Locale` | Locale used for holiday detection (defaults to `ja`) |
 | `weekStart` | `WeekStart` | First day of the week |
 | `showWeekNumbers` | `boolean` | Render the leading week-number column |
+| `selectionMode` | `SelectionMode` | Selection mode: `"single"` \| `"range"` (default `"single"`; range commits on the 2nd pick) |
 | `highlight` | `Date` | Date to highlight |
-| `selectionMode` | `"single" \| "range"` | Selection strategy; `range` alternates anchor → confirm → reset |
 | `range` | `{ from: Date; to: Date }` | Dates to emphasize |
 | `today` | `Date` | Reference date for "today" styling |
 | `isDateDisabled` | `(date: Date) => boolean` | Mark dates as non-selectable |
+| `onkeydown` | `(event: KeyboardEvent) => void` | Keyboard handler fired on the root element (arrow keys etc.) |
 | `onMonthChange` | `(year: number, month: number) => void` | Called when the displayed month changes |
 | `theme` | `ThemeName \| SvelteTheme` | CSS class-based theme |
 | `colorScheme` | `ColorSchemeName \| SvelteColorScheme` | CSS variable-based colors |
@@ -242,12 +259,45 @@ For full interactivity (cursor movement, month navigation, selection), use the `
 | `moveCursor` | `(direction: Direction) => void` | Move cursor: `"up"` / `"down"` / `"left"` / `"right"` |
 | `selectDate` | `() => void` | Select the date under the cursor |
 | `selectDateAt` | `(date: Date) => void` | Move cursor to a date and select it (useful for mouse click) |
+| `selectRange` | `(from: Date, to: Date) => void` | Set a committed range directly (range mode) |
 | `setCursorToDate` | `(date: Date) => void` | Move the cursor to a specific date (no-op if outside current month) |
 | `clearSelection` | `() => void` | Clear the selection |
 | `cursorDate` | `Date \| null` | Date under the cursor |
 | `selectedDate` | `Date \| null` | Currently selected date |
+| `selectedRange` | `DateRange \| null` | Committed selection range (range mode) |
 | `hoveredDate` | `Date \| null` | Currently hovered date |
 | `setHoveredDate` | `(date: Date \| null) => void` | Set or clear the hovered date |
+
+## Range selection
+
+Pass `selectionMode="range"` to select a date range instead of a single date. Clicking alternates between **anchor → range → reset**: the 1st click sets an anchor, the 2nd commits the range, and the 3rd starts a new anchor. The committed range stays visible as the preview until the next pick begins.
+
+```svelte
+<InteractiveCalendar
+  initialYear={2026}
+  initialMonth={9}
+  selectionMode="range"
+/>
+```
+
+With the raw hook, set the range explicitly via `selectRange(from, to)` and read it back from the `selectedRange` return value:
+
+```svelte
+<script lang="ts">
+  import { useCalendarState } from "@typescript-calendar-lib/svelte";
+
+  const cal = useCalendarState({
+    initialYear: 2026,
+    initialMonth: 9,
+    selectionMode: "range",
+  });
+
+  function pick() {
+    cal.selectRange(new Date(2026, 8, 1), new Date(2026, 8, 15));
+    console.log(cal.selectedRange); // { from, to } | null
+  }
+</script>
+```
 
 ## Themes
 
@@ -309,6 +359,7 @@ Available variables:
 | `--cal-fg` | Foreground |
 | `--cal-accent` | Accent (highlight) |
 | `--cal-weekend-fg` | Weekend foreground |
+| `--cal-holiday-fg` | Holiday foreground |
 | `--cal-border` | Borders |
 | `--cal-header-bg` | Header background |
 | `--cal-highlight-bg` | Highlight background |
@@ -317,9 +368,11 @@ Available variables:
 | `--cal-range-preview-bg` | Range preview background (falls back to `--cal-range-bg`) |
 | `--cal-today-bg` | Today background |
 | `--cal-today-fg` | Today foreground |
-| `--cal-disabled-fg` | Disabled date foreground |
-| `--cal-selected-bg` | Selected background |
-| `--cal-selected-fg` | Selected foreground |
+| `--cal-selected-bg` | Selected cell background (interactive mode) |
+| `--cal-selected-fg` | Selected cell foreground (interactive mode) |
+| `--cal-disabled-fg` | Disabled cell foreground (interactive mode) |
+
+`calendar.css` also uses a CSS-only `--cal-hover-bg` (falls back to `--cal-range-bg`) for the interactive hover state; set it with `style` or your own CSS.
 
 Pass a custom scheme directly:
 
@@ -369,6 +422,16 @@ The stylesheet must be imported once in your application:
 </script>
 ```
 
+## Responsive
+
+The 7-column grid has fixed cell sizes, so on narrow phone screens it can overflow. Pass `responsive` to make the calendar shrink its cells, fonts, and padding below `480px` (and a step tighter below `360px`) and fill the viewport width:
+
+```svelte
+<Calendar year={2026} month={9} responsive />
+```
+
+It's **off by default** to keep existing layouts unchanged. The calendar root gets a `calendar-responsive` class that drives CSS media queries — you can also add that class yourself, or use the `style` prop / your own CSS to tune the breakpoints further.
+
 ## Cell Classes
 
 Each day cell gets semantic classes you can target with CSS. The table is labelled by the visible `<h2>` heading via `aria-labelledby`, weekday headers use `scope="col"`, week-number cells use `th[scope="row"]`, today's cell uses `aria-current="date"`, and interactive day buttons expose `aria-pressed="true"` or `"false"`:
@@ -376,12 +439,13 @@ Each day cell gets semantic classes you can target with CSS. The table is labell
 | Class | When |
 | :--- | :--- |
 | `is-weekend` | Saturday or Sunday |
+| `is-holiday` | Holiday per `holidayLocale` (default `"ja"`) |
 | `is-today` | Matches `today` |
 | `is-highlight` | Matches `highlight` |
 | `is-in-range` | Inside `range` |
 | `is-in-range-preview` | Inside `rangePreview` |
 | `is-hovered` | Matches `hoveredDate` (interactive mode) |
-| `is-disabled` | Matches `isDateDisabled` |
+| `is-disabled` | Date returned `true` from `isDateDisabled` (interactive mode) |
 | `is-selected` | Matches `selected` |
 | `is-cursor` | Matches `cursorDate` |
 
@@ -393,6 +457,7 @@ import Calendar, {
   buildRangePreview,
   buildSizeStyle,
   COLOR_SCHEMES,
+  getBlankClasses,
   getCellClasses,
   getCellStateClasses,
   getSelectionCellClasses,

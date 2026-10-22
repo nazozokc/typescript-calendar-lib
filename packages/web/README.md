@@ -74,6 +74,7 @@ Available variables:
 | `--cal-fg` | Foreground |
 | `--cal-accent` | Accent (highlight) |
 | `--cal-weekend-fg` | Weekend foreground |
+| `--cal-holiday-fg` | Holiday foreground |
 | `--cal-border` | Borders |
 | `--cal-header-bg` | Header background |
 | `--cal-highlight-bg` | Highlight background |
@@ -82,9 +83,11 @@ Available variables:
 | `--cal-range-preview-bg` | Range preview background (falls back to `--cal-range-bg`) |
 | `--cal-today-bg` | Today background |
 | `--cal-today-fg` | Today foreground |
-| `--cal-selected-bg` | Selected background |
-| `--cal-selected-fg` | Selected foreground |
+| `--cal-selected-bg` | Selected cell background |
+| `--cal-selected-fg` | Selected cell foreground |
 | `--cal-disabled-fg` | Disabled date foreground |
+
+`calendar.css` also uses a CSS-only `--cal-hover-bg` (falls back to `--cal-range-bg`) for the interactive hover state; set it in your own CSS or on the root element.
 
 Pass a custom scheme directly:
 
