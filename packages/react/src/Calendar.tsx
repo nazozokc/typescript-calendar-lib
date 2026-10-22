@@ -16,7 +16,9 @@ import {
 import {
   formatCellLabel,
   getBlankClasses,
-  getCellClasses,
+  getCellStateClasses,
+  getSelectionCellClasses,
+  joinCellClassLists,
   uiString,
 } from "@typescript-calendar-lib/web";
 import type {
@@ -25,7 +27,7 @@ import type {
   ReactNode,
   Ref,
 } from "react";
-import { useId } from "react";
+import { useId, useMemo } from "react";
 import type { CalendarSize } from "./size.ts";
 import { buildSizeStyle, isSizeName } from "./size.ts";
 import type {
@@ -135,7 +137,27 @@ export function Calendar({
   rangePreview,
   ref,
 }: CalendarProps) {
-  const cellDate = (day: number): Date => createDate(year, month - 1, day);
+  // グリッドは月単位で不変。ホバー・選択の再描画でも再計算しない
+  const grid = useMemo(
+    () => buildMonthGrid(year, month, weekStart),
+    [year, month, weekStart],
+  );
+
+  const handleCellClick = (date: Date, data?: unknown) => {
+    if (interactive && onDateClick) onDateClick(date, data);
+  };
+
+  const handleCellHover = (date: Date) => {
+    if (interactive && onDateHover) onDateHover(date);
+  };
+
+  const handleMouseLeave = () => {
+    if (interactive && onDateLeave) onDateLeave();
+  };
+
+  const title = `${getMonthName(locale, month)} ${year}`;
+  // 週番号の行ヘッダー（scope="row"）用ラベル
+  const weekLabel = uiString("weekNumber", locale);
   const weekOf = (row: (number | null)[]): number | null => {
     const firstIdx = row.findIndex((d) => d !== null);
     if (firstIdx === -1) return null;
@@ -145,35 +167,6 @@ export function Calendar({
       ? getISOWeek(weekStartDate)
       : getWeekOfYear(weekStartDate);
   };
-  const className = (day: number): string | undefined =>
-    getCellClasses(cellDate(day), {
-      today,
-      holidayLocale,
-      highlight,
-      range,
-      rangePreview,
-      hoveredDate,
-      selected: selectedDate,
-      cursorDate,
-      isDateDisabled,
-    }) || undefined;
-
-  const handleCellClick = (day: number) => {
-    if (interactive && onDateClick) {
-      const date = cellDate(day);
-      onDateClick(date, cellData?.(date));
-    }
-  };
-
-  const handleCellHover = (day: number) => {
-    if (interactive && onDateHover) onDateHover(cellDate(day));
-  };
-
-  const handleMouseLeave = () => {
-    if (interactive && onDateLeave) onDateLeave();
-  };
-
-  const title = `${getMonthName(locale, month)} ${year}`;
   // インタラクティブ時のみ APG の grid セマンティクスを付与する。
   // 静的表示ではネイティブの table/cell セマンティクスをそのまま使う。
   const gridRole = interactive ? "grid" : undefined;
@@ -224,14 +217,19 @@ export function Calendar({
           </tr>
         </thead>
         <tbody>
-          {buildMonthGrid(year, month, weekStart).map((row, i) => {
+          {grid.map((row, i) => {
             if (row.every((d) => d === null)) return null;
             const week = weekOf(row);
             return (
               // biome-ignore lint/suspicious/noArrayIndexKey: 月グリッドは静的で並び順が変わらない
               <tr key={i}>
                 {showWeekNumbers && week !== null && (
-                  <th key="week" className="calendar-week" scope="row">
+                  <th
+                    key="week"
+                    className="calendar-week"
+                    scope="row"
+                    aria-label={weekLabel}
+                  >
                     {week}
                   </th>
                 )}
@@ -247,25 +245,45 @@ export function Calendar({
                     );
                     // biome-ignore-end lint/suspicious/noArrayIndexKey: 上記と同じ理由
                   }
-                  const date = cellDate(day);
+                  // 1セルにつき Date・状態・クラスを1回だけ計算する。
+                  // Date は year/month 固定で day のみ変わるため createDate で正確に作る
+                  const date = createDate(year, month - 1, day);
                   const state = getCalendarCellState(date, {
                     today,
+                    holidayLocale,
                     highlight,
                     range,
                     isDateDisabled,
                   });
-                  const data = cellData?.(date);
+                  const className =
+                    joinCellClassLists(
+                      getCellStateClasses(state),
+                      getSelectionCellClasses(date, {
+                        rangePreview,
+                        hoveredDate,
+                        selected: selectedDate,
+                        cursorDate,
+                      }),
+                    ) || undefined;
                   const selected =
                     selectedDate !== null && isSameDay(date, selectedDate);
                   const cursor =
                     cursorDate !== null && isSameDay(date, cursorDate);
+                  const onClick =
+                    interactive && !state.isDisabled
+                      ? () => handleCellClick(date, cellData?.(date))
+                      : undefined;
+                  const onEnter =
+                    interactive && !state.isDisabled
+                      ? () => handleCellHover(date)
+                      : undefined;
                   return (
                     // biome-ignore lint/a11y/useAriaPropsSupportedByRole: interactive 時は td に role=gridcell が付き aria-selected は有効（role が動的なため静的解析できない）
                     <td
                       // パディングセル（key=j）との衝突を避けるため日番号に "d-" を付与する。日番号は列位置 j と異なり配列の index ではない
                       key={`d-${day}`}
                       role={cellRole}
-                      className={className(day)}
+                      className={className}
                       aria-selected={selected || undefined}
                       aria-current={state.isToday ? "date" : undefined}
                       aria-disabled={state.isDisabled || undefined}
@@ -274,16 +292,8 @@ export function Calendar({
                         <button
                           type="button"
                           className="calendar-day-btn"
-                          onClick={
-                            state.isDisabled
-                              ? undefined
-                              : () => handleCellClick(day)
-                          }
-                          onMouseEnter={
-                            state.isDisabled
-                              ? undefined
-                              : () => handleCellHover(day)
-                          }
+                          onClick={onClick}
+                          onMouseEnter={onEnter}
                           tabIndex={cursor ? 0 : -1}
                           data-cursor={cursor ? "true" : undefined}
                           aria-label={formatCellLabel(locale, year, month, day)}
@@ -291,11 +301,11 @@ export function Calendar({
                           disabled={state.isDisabled}
                         >
                           {renderCell
-                            ? renderCell(day, date, state, data)
+                            ? renderCell(day, date, state, cellData?.(date))
                             : day}
                         </button>
                       ) : renderCell ? (
-                        renderCell(day, date, state, data)
+                        renderCell(day, date, state, cellData?.(date))
                       ) : (
                         day
                       )}

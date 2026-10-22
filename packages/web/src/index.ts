@@ -1,8 +1,17 @@
 // 共有スタイル（react / svelte の両パッケージが dist へ同梱する）
 import "./calendar.css";
 
-export type { CellStateOptions } from "./cell-classes.ts";
-export { getBlankClasses, getCellClasses } from "./cell-classes.ts";
+export type {
+  CellStateOptions,
+  SelectionCellOptions,
+} from "./cell-classes.ts";
+export {
+  getBlankClasses,
+  getCellClasses,
+  getCellStateClasses,
+  getSelectionCellClasses,
+  joinCellClassLists,
+} from "./cell-classes.ts";
 export { formatCellLabel, UI_STRINGS, uiString } from "./label.ts";
 export type {
   CalendarCustomSize,

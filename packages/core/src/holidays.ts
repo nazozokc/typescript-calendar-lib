@@ -16,21 +16,26 @@ export const HOLIDAY_MIN_YEAR = 1949;
 /** 祝日が計算できる年範囲（秋分の日の近似式が有効な上限。実用上十分） */
 export const HOLIDAY_MAX_YEAR = 2100;
 
-/** 1回限りの祝日（皇室行事・改元に伴う法律で定められたもの）: "YYYY-MM-DD" → 名称 */
-const ONE_OFF_HOLIDAYS: Readonly<Record<string, string>> = {
-  "1959-04-10": "皇太子明仁親王の結婚の儀",
-  "1989-02-24": "昭和天皇の大喪の礼",
-  "1990-11-12": "即位の礼正殿の儀",
-  "1993-06-09": "皇太子徳仁親王の結婚の儀",
-  "2019-05-01": "天皇即位の日",
-  "2019-10-22": "即位礼正殿の儀",
-};
+/** 1回限りの祝日（皇室行事・改元に伴う法律で定められたもの） */
+const ONE_OFF_HOLIDAYS: readonly YearHolidayWithYear[] = [
+  { year: 1959, month: 4, day: 10, name: "皇太子明仁親王の結婚の儀" },
+  { year: 1989, month: 2, day: 24, name: "昭和天皇の大喪の礼" },
+  { year: 1990, month: 11, day: 12, name: "即位の礼正殿の儀" },
+  { year: 1993, month: 6, day: 9, name: "皇太子徳仁親王の結婚の儀" },
+  { year: 2019, month: 5, day: 1, name: "天皇即位の日" },
+  { year: 2019, month: 10, day: 22, name: "即位礼正殿の儀" },
+];
 
 /** 年の祝日一覧の1件（month は 1-12） */
 interface YearHoliday {
   month: number;
   day: number;
   name: string;
+}
+
+/** 祝日一覧の1件に発生日（year）を添えたもの。一覧データの定義に使う */
+interface YearHolidayWithYear extends YearHoliday {
+  year: number;
 }
 
 /** 年月日の曜日（0=日曜） */
@@ -136,9 +141,8 @@ function holidaysOfYear(year: number): YearHoliday[] {
   if (year >= 1949) add(11, 23, "勤労感謝の日");
 
   // ── ② 特例の祝日 ──
-  for (const [key, name] of Object.entries(ONE_OFF_HOLIDAYS)) {
-    const [y, m, d] = key.split("-").map(Number);
-    if (y === year) add(m! as number, d! as number, name);
+  for (const { year: y, month: m, day: d, name } of ONE_OFF_HOLIDAYS) {
+    if (y === year) add(m, d, name);
   }
 
   const inList = (month: number, day: number): boolean =>
@@ -184,28 +188,52 @@ function holidaysOfYear(year: number): YearHoliday[] {
   return list;
 }
 
-/** 年の計算結果キャッシュ（同じ年を何度も参照する描画用途のため） */
-const holidayCache = new Map<number, YearHoliday[]>();
+/** 年の祝日一覧と検索用インデックス。キャッシュして描画ごとの参照を高速化する */
+interface HolidayIndex {
+  /** 祝日一覧（算出順） */
+  list: YearHoliday[];
+  /** 月ごとの day → 名称インデックス。祝日判定は参照1回で済む */
+  byMonth: Map<number, Map<number, string>>;
+}
 
-/** 祝日一覧を取得する。対象外ロケール・範囲外の年は null */
-function holidaysOf(date: Date, locale: Locale): YearHoliday[] | null {
+/**
+ * 祝日一覧に月・日のインデックスを張る。
+ */
+function toIndex(list: YearHoliday[]): HolidayIndex {
+  const byMonth = new Map<number, Map<number, string>>();
+  for (const h of list) {
+    let days = byMonth.get(h.month);
+    if (days === undefined) {
+      days = new Map<number, string>();
+      byMonth.set(h.month, days);
+    }
+    days.set(h.day, h.name);
+  }
+  return { list, byMonth };
+}
+
+/** 年の計算結果キャッシュ（同じ年を何度も参照する描画用途のため） */
+const holidayCache = new Map<number, HolidayIndex>();
+
+/** 祝日インデックスを取得する。対象外ロケール・範囲外の年は null */
+function holidayIndexOf(date: Date, locale: Locale): HolidayIndex | null {
   if (locale !== "ja") return null;
   const year = date.getFullYear();
   if (year < HOLIDAY_MIN_YEAR || year > HOLIDAY_MAX_YEAR) return null;
   const cached = holidayCache.get(year);
   if (cached !== undefined) return cached;
-  const list = holidaysOfYear(year);
-  holidayCache.set(year, list);
-  return list;
+  const index = toIndex(holidaysOfYear(year));
+  holidayCache.set(year, index);
+  return index;
 }
 
 /** 日付が祝日（日本の国民の祝日・振替休日・国民の休日）か判定する。対象外ロケール/年は false */
 export function isHoliday(date: Date, locale: Locale = "ja"): boolean {
   assertValidDate(date);
-  const list = holidaysOf(date, locale);
-  if (list === null) return false;
-  return list.some(
-    (h) => h.month === date.getMonth() + 1 && h.day === date.getDate(),
+  const index = holidayIndexOf(date, locale);
+  if (index === null) return false;
+  return (
+    index.byMonth.get(date.getMonth() + 1)?.get(date.getDate()) !== undefined
   );
 }
 
@@ -215,11 +243,9 @@ export function getHolidayName(
   locale: Locale = "ja",
 ): string | undefined {
   assertValidDate(date);
-  const list = holidaysOf(date, locale);
-  if (list === null) return undefined;
-  return list.find(
-    (h) => h.month === date.getMonth() + 1 && h.day === date.getDate(),
-  )?.name;
+  const index = holidayIndexOf(date, locale);
+  if (index === null) return undefined;
+  return index.byMonth.get(date.getMonth() + 1)?.get(date.getDate());
 }
 
 // ─── 営業日 ───────────────────────────────────────────────
