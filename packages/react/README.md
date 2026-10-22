@@ -86,10 +86,12 @@ export function CalendarPanel() {
 | `year` | `number` | — (required) | Calendar year |
 | `month` | `number` | — (required) | Month, 1-indexed (`1`–`12`) |
 | `locale` | `"en" \| "ja" \| "es" \| "de" \| "fr" \| "ko" \| "zh"` | `"en"` | Language |
+| `holidayLocale` | `"en" \| "ja" \| "es" \| "de" \| "fr" \| "ko" \| "zh"` | `"ja"` | Holiday rules; currently only `"ja"` is provided |
 | `weekStart` | `"sunday" \| "monday"` | `"sunday"` | First day of the week |
 | `highlight` | `Date` | — | Date to highlight |
 | `range` | `{ from: Date; to: Date }` | — | Dates to emphasize |
 | `rangePreview` | `{ from: Date; to: Date }` | — | Candidate range preview (hover preview), rendered with the `is-in-range-preview` class |
+| `isDateDisabled` | `(date: Date) => boolean` | — | Mark dates as non-selectable in interactive mode (`is-disabled` class) |
 | `today` | `Date` | — | Reference date for "today" styling |
 | `theme` | `ThemeName \| ReactTheme` | `"default"` | CSS class-based theme |
 | `colorScheme` | `ColorSchemeName \| ReactColorScheme` | `"default"` | CSS variable-based colors |
@@ -175,7 +177,7 @@ function App() {
 }
 ```
 
-`options` also accepts `selectionMode: "single" | "range"` (default `"single"`) and `onMonthChange: (year, month) => void`, called whenever the displayed month changes.
+`options` also accepts `holidayLocale`, `isDateDisabled`, `selectionMode: "single" | "range"` (default `"single"`) and `onMonthChange: (year, month) => void`, called whenever the displayed month changes.
 
 ## InteractiveCalendar
 
@@ -211,7 +213,19 @@ function App() {
 }
 ```
 
-It accepts the `useCalendarState` options (`initialYear`, `initialMonth`, `locale`, `weekStart`, `selectionMode`, `highlight`, `range`, `today`, `onMonthChange`) plus the `Calendar` visual props (`theme`, `colorScheme`, `size`, `responsive`, `style`, `cellData`, `renderCell`) and event callbacks (`onDateClick`, `onDateHover`, `onDateLeave`).
+It accepts the `useCalendarState` options (`initialYear`, `initialMonth`, `locale`, `holidayLocale`, `weekStart`, `selectionMode`, `highlight`, `range`, `today`, `isDateDisabled`, `onMonthChange`) plus the `Calendar` visual props (`theme`, `colorScheme`, `size`, `responsive`, `style`, `cellData`, `renderCell`) and event callbacks (`onDateClick`, `onDateHover`, `onDateLeave`).
+
+### Disabled Dates
+
+Pass `isDateDisabled` to mark dates as non-selectable. Disabled cells get the `is-disabled` class, cannot receive keyboard focus or be clicked, and `Arrow*` navigation skips over them:
+
+```tsx
+<InteractiveCalendar
+  initialYear={2026}
+  initialMonth={9}
+  isDateDisabled={(date) => date.getDay() === 0} // disable Sundays
+/>
+```
 
 ## Range selection
 
@@ -335,6 +349,7 @@ Available variables:
 | `--cal-fg` | Foreground |
 | `--cal-accent` | Accent (highlight) |
 | `--cal-weekend-fg` | Weekend foreground |
+| `--cal-holiday-fg` | Holiday foreground |
 | `--cal-border` | Borders |
 | `--cal-header-bg` | Header background |
 | `--cal-highlight-bg` | Highlight background |
@@ -343,6 +358,11 @@ Available variables:
 | `--cal-range-preview-bg` | Range preview background (falls back to `--cal-range-bg`) |
 | `--cal-today-bg` | Today background |
 | `--cal-today-fg` | Today foreground |
+| `--cal-selected-bg` | Selected cell background (interactive mode) |
+| `--cal-selected-fg` | Selected cell foreground (interactive mode) |
+| `--cal-disabled-fg` | Disabled cell foreground |
+
+`calendar.css` also uses a CSS-only `--cal-hover-bg` (falls back to `--cal-range-bg`) for the interactive hover state; set it with `style` or your own CSS.
 
 Pass a custom scheme directly:
 
@@ -428,11 +448,13 @@ Each day cell gets semantic classes you can target with CSS. The table is labell
 | Class | When |
 | :--- | :--- |
 | `is-weekend` | Saturday or Sunday |
+| `is-holiday` | Holiday per `holidayLocale` (default `"ja"`) |
 | `is-today` | Matches `today` |
 | `is-highlight` | Matches `highlight` |
 | `is-in-range` | Inside `range` |
 | `is-in-range-preview` | Inside `rangePreview` |
 | `is-hovered` | Matches `hoveredDate` (interactive mode) |
+| `is-disabled` | Date returned `true` from `isDateDisabled` (interactive mode) |
 
 ## Exports
 

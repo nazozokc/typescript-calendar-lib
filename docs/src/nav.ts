@@ -45,6 +45,7 @@ export const SIDEBAR: NavGroup[] = [
       { text: "react", link: "/packages/react" },
       { text: "svelte", link: "/packages/svelte" },
       { text: "tui", link: "/packages/tui" },
+      { text: "web", link: "/packages/web" },
     ],
   },
 ];
@@ -55,6 +56,7 @@ export const PACKAGES: NavItem[] = [
   { text: "react", link: "/packages/react" },
   { text: "svelte", link: "/packages/svelte" },
   { text: "tui", link: "/packages/tui" },
+  { text: "web", link: "/packages/web" },
 ];
 
 /** Page title by URL path (used for <title>). */
@@ -69,6 +71,7 @@ export const TITLES: Record<string, string> = {
   "/packages/svelte":
     "@typescript-calendar-lib/svelte | typescript-calendar-lib",
   "/packages/tui": "@typescript-calendar-lib/tui | typescript-calendar-lib",
+  "/packages/web": "@typescript-calendar-lib/web | typescript-calendar-lib",
 };
 
 /** Normalize an incoming pathname (strip `.html` suffix and the base path). */

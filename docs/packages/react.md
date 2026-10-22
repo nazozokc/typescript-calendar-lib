@@ -14,6 +14,8 @@ A `<Calendar />` React component with CSS-based themes and color schemes, plus a
 pnpm add @typescript-calendar-lib/react
 # or
 npm install @typescript-calendar-lib/react
+# or
+bun add @typescript-calendar-lib/react
 ```
 
 ## Quick Start
@@ -84,12 +86,13 @@ export function CalendarPanel() {
 | `year` | `number` | — (required) | Calendar year |
 | `month` | `number` | — (required) | Month, 1-indexed (`1`–`12`) |
 | `locale` | `"en" \| "ja" \| "es" \| "de" \| "fr" \| "ko" \| "zh"` | `"en"` | Language |
+| `holidayLocale` | `"en" \| "ja" \| "es" \| "de" \| "fr" \| "ko" \| "zh"` | `"ja"` | Holiday rules; currently only `"ja"` is provided |
 | `weekStart` | `"sunday" \| "monday"` | `"sunday"` | First day of the week |
 | `highlight` | `Date` | — | Date to highlight |
 | `range` | `{ from: Date; to: Date }` | — | Dates to emphasize |
 | `rangePreview` | `{ from: Date; to: Date }` | — | Candidate range preview (hover preview), rendered with the `is-in-range-preview` class |
+| `isDateDisabled` | `(date: Date) => boolean` | — | Mark dates as non-selectable in interactive mode (`is-disabled` class) |
 | `today` | `Date` | — | Reference date for "today" styling |
-| `isDateDisabled` | `(date: Date) => boolean` | — | Mark dates as non-selectable (rendered with the `is-disabled` class; blocks clicks, hover, and cursor movement) |
 | `theme` | `ThemeName \| ReactTheme` | `"default"` | CSS class-based theme |
 | `colorScheme` | `ColorSchemeName \| ReactColorScheme` | `"default"` | CSS variable-based colors |
 | `size` | `CalendarSize` | `"md"` | Cell size |
@@ -146,9 +149,11 @@ function App() {
     selectDate,   // () => void — select date under cursor
     setCursorToDate, // (date) => void — move cursor to a date (same month only)
     selectDateAt, // (date) => void — move cursor to a date and select it
+    selectRange,  // (from, to) => void — set a committed range (range mode)
     clearSelection,
     cursorDate,   // Date | null
     selectedDate, // Date | null
+    selectedRange, // DateRange | null — committed range (range mode)
     hoveredDate,  // Date | null
     setHoveredDate, // (date | null) => void
   } = useCalendarState({
@@ -172,7 +177,7 @@ function App() {
 }
 ```
 
-`options` also accepts `onMonthChange: (year, month) => void`, called whenever the displayed month changes.
+`options` also accepts `holidayLocale`, `isDateDisabled`, `selectionMode: "single" | "range"` (default `"single"`) and `onMonthChange: (year, month) => void`, called whenever the displayed month changes.
 
 ## InteractiveCalendar
 
@@ -184,6 +189,7 @@ function App() {
 | Hover a cell | Tracks the hovered date (adds `is-hovered` class); fires `onDateHover` |
 | Mouse leaves | Clears the hover state; fires `onDateLeave` |
 | Selection + hover | Shows a range preview between the selected date and the hovered date (`is-in-range-preview` class) |
+| Picking (range mode) | Alternates anchor → committed range → new anchor (`selectionMode="range"`) |
 | Arrow keys | Move the cursor (focus follows the cursor cell) |
 | `PageUp` / `PageDown` | Previous / next month |
 | Enter / Space | Same as clicking the focused cell (selects it) |
@@ -207,19 +213,40 @@ function App() {
 }
 ```
 
-It accepts the `useCalendarState` options (`initialYear`, `initialMonth`, `locale`, `weekStart`, `highlight`, `range`, `today`, `isDateDisabled`, `onMonthChange`) plus the `Calendar` visual props (`theme`, `colorScheme`, `size`, `responsive`, `style`, `cellData`, `renderCell`) and event callbacks (`onDateClick`, `onDateHover`, `onDateLeave`).
+It accepts the `useCalendarState` options (`initialYear`, `initialMonth`, `locale`, `holidayLocale`, `weekStart`, `selectionMode`, `highlight`, `range`, `today`, `isDateDisabled`, `onMonthChange`) plus the `Calendar` visual props (`theme`, `colorScheme`, `size`, `responsive`, `style`, `cellData`, `renderCell`) and event callbacks (`onDateClick`, `onDateHover`, `onDateLeave`).
 
-## Disabled Dates
+### Disabled Dates
 
-Pass `isDateDisabled` to mark dates as non-selectable. Disabled cells render with the `is-disabled` class (see `--cal-disabled-fg` below) and are excluded from all interaction: the button is `disabled`, clicks and hover callbacks are suppressed, and arrow-key movement skips them:
+Pass `isDateDisabled` to mark dates as non-selectable. Disabled cells get the `is-disabled` class, cannot receive keyboard focus or be clicked, and `Arrow*` navigation skips over them:
 
 ```tsx
-<Calendar
-  year={2026}
-  month={9}
-  interactive
+<InteractiveCalendar
+  initialYear={2026}
+  initialMonth={9}
   isDateDisabled={(date) => date.getDay() === 0} // disable Sundays
 />
+```
+
+## Range selection
+
+Pass `selectionMode="range"` to select a date range by clicking. Selection alternates between **anchor → range → reset**: the 1st click sets an anchor, the 2nd commits the range, and the 3rd starts a new anchor. The committed range is kept as the preview until the next pick begins.
+
+```tsx
+<InteractiveCalendar
+  initialYear={2026}
+  initialMonth={9}
+  selectionMode="range"
+/>
+```
+
+With the raw hook, use `selectRange(from, to)` to set the range explicitly and read it back from the `selectedRange` return value:
+
+```tsx
+const { state, selectRange, selectedRange } = useCalendarState({
+  initialYear: 2026,
+  initialMonth: 9,
+  selectionMode: "range",
+});
 ```
 
 ## Custom Cell Rendering
@@ -322,6 +349,7 @@ Available variables:
 | `--cal-fg` | Foreground |
 | `--cal-accent` | Accent (highlight) |
 | `--cal-weekend-fg` | Weekend foreground |
+| `--cal-holiday-fg` | Holiday foreground |
 | `--cal-border` | Borders |
 | `--cal-header-bg` | Header background |
 | `--cal-highlight-bg` | Highlight background |
@@ -330,7 +358,11 @@ Available variables:
 | `--cal-range-preview-bg` | Range preview background (falls back to `--cal-range-bg`) |
 | `--cal-today-bg` | Today background |
 | `--cal-today-fg` | Today foreground |
-| `--cal-disabled-fg` | Disabled date foreground |
+| `--cal-selected-bg` | Selected cell background (interactive mode) |
+| `--cal-selected-fg` | Selected cell foreground (interactive mode) |
+| `--cal-disabled-fg` | Disabled cell foreground |
+
+`calendar.css` also uses a CSS-only `--cal-hover-bg` (falls back to `--cal-range-bg`) for the interactive hover state; set it with `style` or your own CSS.
 
 Pass a custom scheme directly:
 
@@ -378,6 +410,16 @@ Or custom pixel sizes:
 
 Numbers are treated as pixels; strings pass through as CSS lengths (`"3rem"`, `"2.5em"`, etc.).
 
+## Responsive
+
+The 7-column grid has fixed cell sizes, so on narrow phone screens it can overflow. Pass `responsive` to make the calendar shrink its cells, fonts, and padding below `480px` (and a step tighter below `360px`) and fill the viewport width:
+
+```tsx
+<Calendar year={2026} month={9} responsive />
+```
+
+It's **off by default** to keep existing layouts unchanged. The calendar root gets a `calendar-responsive` class that drives CSS media queries — you can also add that class yourself, or use the `style` prop / your own CSS to tune the breakpoints further.
+
 ## Styling with `style`
 
 The `style` prop can override any CSS variable or add custom styles:
@@ -406,12 +448,13 @@ Each day cell gets semantic classes you can target with CSS. The table is labell
 | Class | When |
 | :--- | :--- |
 | `is-weekend` | Saturday or Sunday |
+| `is-holiday` | Holiday per `holidayLocale` (default `"ja"`) |
 | `is-today` | Matches `today` |
 | `is-highlight` | Matches `highlight` |
 | `is-in-range` | Inside `range` |
 | `is-in-range-preview` | Inside `rangePreview` |
 | `is-hovered` | Matches `hoveredDate` (interactive mode) |
-| `is-disabled` | Matches `isDateDisabled` |
+| `is-disabled` | Date returned `true` from `isDateDisabled` (interactive mode) |
 
 ## Exports
 

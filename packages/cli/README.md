@@ -62,6 +62,7 @@ All options from `@typescript-calendar-lib/core` are supported, plus these CLI-s
 | `theme` | `ThemeName \| CliTheme` | `"default"` | Visual theme (`"default"` \| `"modern"`) or custom theme object |
 | `colorScheme` | `ColorSchemeName \| CliPalette` | `"default"` | Color scheme, active when `color: true` |
 | `today` | `Date` | `new Date()` | Reference date for "today" coloring |
+| `isDateDisabled` | `(date: Date) => boolean` | — | Mark dates as non-selectable; rendered with the `dim` color |
 | `cellData` | `(date: Date) => unknown` | — | Resolve per-cell data; passed to `renderCell` |
 | `renderCell` | `(day, date, state, data?) => string` | — | Custom cell text; replaces the day cell verbatim |
 | `showWeekNumbers` | `boolean` | `false` | Print a 2-char week-number column at the start of each row. `weekStart: "monday"` → ISO 8601 week; `"sunday"` → week-containing-Jan-1 week (US `cal -w` convention) |
@@ -274,7 +275,7 @@ calendar({
 
 `renderCell` receives `(day, date, state, data)`:
 
-- `state` — `getCalendarCellState(date)` result (`isWeekend`, `isToday`, `isHighlight`, `isInRange`, `dayOfWeek`)
+- `state` — `getCalendarCellState(date)` result (`isWeekend`, `isHoliday`, `isToday`, `isHighlight`, `isInRange`, `isDisabled`)
 - `data` — the resolved `cellData` value for that date (`undefined` when none)
 
 The returned string replaces the cell **verbatim** — no padding, colorization, or highlight/range styling is applied, so you control cell width and any ANSI codes yourself. A bare `String(day)` in a wide `renderCell` can shift the column alignment of that row.
@@ -303,6 +304,21 @@ calendar({
 ```
 
 With `weekStart: "sunday"` it uses the convention where the week containing Jan 1 is week 1. Week numbers also render in framed themes (`modern`), where separator and frame lines get a week segment.
+
+### Disabled dates
+
+`isDateDisabled` marks dates as non-selectable. Disabled cells are rendered with the `dim` color (falling back to `90` even on the `"default"` scheme, which otherwise colors only range/highlight):
+
+```ts
+calendar({
+  year: 2026,
+  month: 9,
+  color: true,
+  isDateDisabled: (date) => date.getDay() === 0, // disable Sundays
+});
+```
+
+Color precedence for a cell: highlight > range > today > **disabled** > weekend > holiday > day.
 
 ### Plain text output
 
