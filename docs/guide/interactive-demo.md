@@ -18,6 +18,7 @@
 
 ```tsx
 import { Calendar, useCalendarState } from "@typescript-calendar-lib/react";
+import "@typescript-calendar-lib/react/calendar.css"; // required — component styles
 
 export function CalendarDemo() {
   const {
@@ -124,6 +125,46 @@ function App() {
 - **クリック** — 日付を選択し、カーソルもそこへ移動（キーボードの Enter/Space も同じ）
 - **ホバー** — ホバー中のセルに `is-hovered` クラス。マウスがカレンダーから離れると解除
 - **選択 + ホバー** — 選択済み日付とホバー日付の間が `is-in-range-preview` クラスでプレビュー表示（逆順ホバーでも正しい範囲が出る）
+
+### 範囲選択（React / Svelte）
+
+`selectionMode="range"` で、クリックによる範囲選択が有効になります。選択は **アンカー → 確定 → リセット** の順で交互に動作します（1 回目のクリックでアンカー、2 回目で範囲確定、3 回目で新しいアンカー）。確定した範囲は次の選択が始まるまでプレビューとして表示され続けます。
+
+React:
+
+```tsx
+import { InteractiveCalendar } from "@typescript-calendar-lib/react";
+import "@typescript-calendar-lib/react/calendar.css";
+
+function RangePicker() {
+  return (
+    <InteractiveCalendar
+      initialYear={2026}
+      initialMonth={9}
+      selectionMode="range"
+      onDateClick={(date) => console.log("Picked", date)}
+    />
+  );
+}
+```
+
+Svelte は同じ props です:
+
+```svelte
+<script lang="ts">
+  import InteractiveCalendar from "@typescript-calendar-lib/svelte";
+  import "@typescript-calendar-lib/svelte/calendar.css";
+</script>
+
+<InteractiveCalendar
+  initialYear={2026}
+  initialMonth={9}
+  selectionMode="range"
+  onDateClick={(date) => console.log("Picked", date)}
+/>
+```
+
+確定した範囲は hook 経由で `selectedRange`（`{ from, to }`）として読み取れます。`selectRange(from, to)` でプログラムから直接設定することもできます。
 
 ### キーボード操作
 

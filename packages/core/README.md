@@ -91,6 +91,35 @@ interface CalendarRangeOptions {
 
 Same as `CalendarOptions` minus `year`/`month`. Used by the low-level `renderMonth` helper.
 
+### `CalendarCellState`
+
+Flags computed by `getCalendarCellState` for a single day cell:
+
+```ts
+interface CalendarCellState {
+  isWeekend: boolean;   // Saturday or Sunday
+  isHoliday: boolean;   // holiday per `holidayLocale` (default "ja")
+  isToday: boolean;     // matches `today`
+  isHighlight: boolean; // matches `highlight`
+  isInRange: boolean;   // within `range` (inclusive)
+  isDisabled: boolean;  // matches `isDateDisabled`
+}
+```
+
+### `LocaleData`
+
+The shape of the per-locale data held in `LOCALES`:
+
+```ts
+interface LocaleData {
+  months: readonly string[];
+  weekdays: readonly string[];
+  weekdaysShort: readonly string[];
+  weekdaysMonday: readonly string[];
+  weekdaysMondayShort: readonly string[];
+}
+```
+
 ## Constants
 
 ### `LOCALES`
@@ -129,6 +158,15 @@ Returns the weekday header array respecting `weekStart`:
 ```ts
 getWeekdayHeaders("en", "sunday"); // ["Sun", "Mon", ..., "Sat"]
 getWeekdayHeaders("en", "monday"); // ["Mon", "Tue", ..., "Sun"]
+```
+
+### `getLocaleData(locale): LocaleData`
+
+Returns the raw locale data (`months`, `weekdays`, `weekdaysShort`, plus the Monday-start rotations `weekdaysMonday` and `weekdaysMondayShort`). Throws `RangeError` for an unknown locale.
+
+```ts
+getLocaleData("en").weekdays;            // ["Sun", "Mon", ..., "Sat"]
+getLocaleData("ja").weekdaysMonday;      // ["月", "火", ..., "日"]
 ```
 
 ### `getLocaleData(locale): LocaleData`
@@ -199,6 +237,54 @@ Creates a local `Date` at `00:00:00` without the `new Date(year, ...)` 1900-inte
 ### `assertValidDate(date): void`
 
 Throws `RangeError` when `date` is not a `Date` instance or is an `Invalid Date`.
+
+### `getCalendarCellState(date, options?): CalendarCellState`
+
+Computes the display state of a single day cell (weekend, holiday, today, highlight, in-range, disabled) — the shared predicate every package uses to style and gate cells:
+
+```ts
+const state = getCalendarCellState(new Date(2026, 8, 6), {
+  today: new Date(2026, 8, 6),
+  highlight: new Date(2026, 8, 6),
+  range: { from: new Date(2026, 8, 1), to: new Date(2026, 8, 10) },
+});
+// { isWeekend: true, isHoliday: false, isToday: true, isHighlight: true, isInRange: true, isDisabled: false }
+```
+
+Options (all optional) mirror the per-locale calendar options: `today`, `highlight`, `range`, `isDateDisabled`, and `holidayLocale`. Pass `isDateDisabled` to mark specific dates as non-selectable — it is called once per cell with the cell's `Date`; returning `true` sets `isDisabled` (this is what the `tui`, `cli`, `react`, and `svelte` packages use to block selection/cursor movement):
+
+```ts
+const state = getCalendarCellState(new Date(2026, 8, 15), {
+  isDateDisabled: (date) => date.getDay() === 0, // disable Sundays
+});
+// state.isDisabled === true
+```
+
+With no options every flag is `false` except `isWeekend` (derived from the date) and `isHoliday` (derived from `holidayLocale`). Throws `RangeError` when `date` is invalid.
+
+### `isLeapYear(year): boolean`
+
+Returns `true` for Gregorian leap years (divisible by 4, except by 100 unless also by 400):
+
+```ts
+isLeapYear(2024); // true
+isLeapYear(1900); // false
+isLeapYear(2000); // true
+```
+
+Works for years `1`–`99` too (no 1900-interpretation). Throws `RangeError` for out-of-range or non-integer years.
+
+### `daysInMonth(year, month): number`
+
+Returns the number of days in the month (`28`–`31`):
+
+```ts
+daysInMonth(2026, 2); // 28
+daysInMonth(2024, 2); // 29 (leap year)
+daysInMonth(2026, 4); // 30
+```
+
+Throws `RangeError` for invalid `year`/`month`.
 
 #### Arithmetic
 

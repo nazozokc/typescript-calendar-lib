@@ -54,6 +54,7 @@ calendar({ year: 2026, month: 9, locale: "es", weekStart: "monday" });
 
 ```tsx
 import { Calendar } from "@typescript-calendar-lib/react";
+import "@typescript-calendar-lib/react/calendar.css"; // required — component styles
 
 function App() {
   return <Calendar year={2026} month={9} colorScheme="ocean" />;

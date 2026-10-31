@@ -71,10 +71,12 @@ Run the component through a Svelte compiler such as Vite or SvelteKit; the packa
 | `year` | `number` | — (required) | Calendar year |
 | `month` | `number` | — (required) | Month, 1-indexed (`1`–`12`) |
 | `locale` | `"en" \| "ja" \| "es" \| "de" \| "fr" \| "ko" \| "zh"` | `"en"` | Language |
+| `holidayLocale` | `"en" \| "ja" \| "es" \| "de" \| "fr" \| "ko" \| "zh"` | `"ja"` | Holiday rules; currently only `"ja"` is provided |
 | `weekStart` | `"sunday" \| "monday"` | `"sunday"` | First day of the week |
 | `highlight` | `Date` | — | Date to highlight |
 | `range` | `{ from: Date; to: Date }` | — | Dates to emphasize |
 | `rangePreview` | `{ from: Date; to: Date }` | — | Candidate range preview (hover preview), rendered with the `is-in-range-preview` class |
+| `isDateDisabled` | `(date: Date) => boolean` | — | Mark dates as non-selectable in interactive mode (`is-disabled` class) |
 | `today` | `Date` | — | Reference date for "today" styling |
 | `selected` | `Date \| null` | — | Selected date (`.is-selected` class, `aria-pressed="true"` in interactive mode; other buttons are `"false"`) |
 | `cursorDate` | `Date \| null` | — | Cursor position (`.is-cursor` class) |
@@ -89,6 +91,7 @@ Run the component through a Svelte compiler such as Vite or SvelteKit; the packa
 | `onDateClick` | `(date: Date, data?: unknown) => void` | — | Called when a day cell is clicked (or Enter/Space pressed); `data` is that cell's `cellData` value (`undefined` when none) |
 | `onDateHover` | `(date: Date) => void` | — | Called when a day cell is hovered |
 | `onDateLeave` | `() => void` | — | Called when the mouse leaves the calendar |
+| `onkeydown` | `(event: KeyboardEvent) => void` | — | Keyboard handler fired on the root element (arrow keys etc.) |
 | `cellData` | `(date: Date) => unknown` | — | Resolve per-cell data; passed to `renderCell` and `onDateClick` |
 | `renderCell` | `(day, date, state, data?) => string` | — | Custom cell content; the returned string is inserted as plain text (XSS-safe) |
 
@@ -123,6 +126,18 @@ A turnkey component that wires `useCalendarState` and `Calendar` together with b
 - **Arrow keys** — moves the cursor with focus tracking
 - **PageUp/PageDown** — navigates to the previous/next month
 
+### Disabled Dates
+
+Pass `isDateDisabled` to mark dates as non-selectable. Disabled cells get the `is-disabled` class, cannot receive keyboard focus or be clicked, and `Arrow*` navigation skips over them:
+
+```svelte
+<InteractiveCalendar
+  initialYear={2026}
+  initialMonth={9}
+  isDateDisabled={(date) => date.getDay() === 0} // disable Sundays
+/>
+```
+
 ### Props
 
 Combines `useCalendarState` options, `Calendar` visual props, and event callbacks:
@@ -140,6 +155,7 @@ Combines `useCalendarState` options, `Calendar` visual props, and event callback
 | `range` | `{ from: Date; to: Date }` | Dates to emphasize |
 | `today` | `Date` | Reference date for "today" styling |
 | `isDateDisabled` | `(date: Date) => boolean` | Mark dates as non-selectable |
+| `onkeydown` | `(event: KeyboardEvent) => void` | Keyboard handler fired on the root element (arrow keys etc.) |
 | `onMonthChange` | `(year: number, month: number) => void` | Called when the displayed month changes |
 | `theme` | `ThemeName \| SvelteTheme` | CSS class-based theme |
 | `colorScheme` | `ColorSchemeName \| SvelteColorScheme` | CSS variable-based colors |
@@ -343,6 +359,7 @@ Available variables:
 | `--cal-fg` | Foreground |
 | `--cal-accent` | Accent (highlight) |
 | `--cal-weekend-fg` | Weekend foreground |
+| `--cal-holiday-fg` | Holiday foreground |
 | `--cal-border` | Borders |
 | `--cal-header-bg` | Header background |
 | `--cal-highlight-bg` | Highlight background |
@@ -351,8 +368,11 @@ Available variables:
 | `--cal-range-preview-bg` | Range preview background (falls back to `--cal-range-bg`) |
 | `--cal-today-bg` | Today background |
 | `--cal-today-fg` | Today foreground |
-| `--cal-selected-bg` | Selected background |
-| `--cal-selected-fg` | Selected foreground |
+| `--cal-selected-bg` | Selected cell background (interactive mode) |
+| `--cal-selected-fg` | Selected cell foreground (interactive mode) |
+| `--cal-disabled-fg` | Disabled cell foreground (interactive mode) |
+
+`calendar.css` also uses a CSS-only `--cal-hover-bg` (falls back to `--cal-range-bg`) for the interactive hover state; set it with `style` or your own CSS.
 
 Pass a custom scheme directly:
 
@@ -419,11 +439,13 @@ Each day cell gets semantic classes you can target with CSS. The table is labell
 | Class | When |
 | :--- | :--- |
 | `is-weekend` | Saturday or Sunday |
+| `is-holiday` | Holiday per `holidayLocale` (default `"ja"`) |
 | `is-today` | Matches `today` |
 | `is-highlight` | Matches `highlight` |
 | `is-in-range` | Inside `range` |
 | `is-in-range-preview` | Inside `rangePreview` |
 | `is-hovered` | Matches `hoveredDate` (interactive mode) |
+| `is-disabled` | Date returned `true` from `isDateDisabled` (interactive mode) |
 | `is-selected` | Matches `selected` |
 | `is-cursor` | Matches `cursorDate` |
 

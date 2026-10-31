@@ -26,9 +26,9 @@ core (zero runtime dependencies)
 
 `core` はフレームワーク非依存のロジックだけを提供します。
 
-- **日付計算**: `firstDayOfMonth`, `lastDayOfMonth`, `isSameDay`, `isDateInRange`, `sortRange`, `getMonthRange`
+- **日付計算**: `firstDayOfMonth`, `lastDayOfMonth`, `isSameDay`, `isDateInRange`, `sortRange`, `getMonthRange`, さらに date-math（`addDays`, `diffs`, `startOf`, `endOf`, `clampDate`, `formatDate`）
 - **グリッド生成**: `buildMonthGrid` — 6×7 のグリッドを組み立てる
-- **セル状態**: `getCalendarCellState` — 週末/今日/ハイライト/範囲の boolean 判定
+- **セル状態**: `getCalendarCellState` — 週末/**祝日**/今日/ハイライト/範囲/**選択可否**の boolean 判定
 - **ロケール**: `LOCALES`, `getMonthName`, `getWeekdayHeaders` — 英日 + 追加ロケール
 - **検証**: `createDate`（year 0-99 の JS Date 陷阱を回避）, `assertValid*` — 不正入力は `RangeError`
 
@@ -84,6 +84,7 @@ console.log(calendar({ year: 2026, month: 9, theme: "modern", color: true }));
 `react` と `svelte` は同じ見た目（テーマ・カラースキーム・セルサイズ・CSS）を共有します。この共通部分を `web` に集約し、各 UI パッケージは型の別名と薄いアダプタだけを持ちます。
 
 - **テーマ**: `THEMES`（default/modern/minimal/rounded/retro）と 7 つのカラースキーム（CSS 変数マップ）
+- **セルクラスヘルパー**: `getCellClasses` / `getCellStateClasses` / `getSelectionCellClasses` / `joinCellClassLists` — セル状態から `is-weekend` / `is-holiday` / `is-today` 等のクラスを生成（react / svelte が再利用）
 - **セルサイズ**: `isSizeName` / `buildSizeStyle` — CSS 変数（`--cal-cell-w/h`）への変換
 - **ラベル**: `formatCellLabel` — セルの aria-label 用テキスト
 - **共有 CSS**: `calendar.css` — react / svelte のビルド時に `dist/calendar.css` として同梱

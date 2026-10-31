@@ -1,6 +1,6 @@
 # @typescript-calendar-lib/tui
 
-Framework-agnostic, headless calendar data & state for building TUI calendars. No rendering — you get structured data (`MonthData`) and a state machine (`CalendarState`) that your TUI framework (Ink, React-Blessed, raw ANSI, etc.) consumes to draw pixels.
+Framework-agnostic, headless calendar data & state for any TUI framework (Ink, blessed, terminal-kit, …). No rendering — you get structured data (`MonthData`) and a state machine (`CalendarState`) that your TUI framework consumes to draw pixels.
 
 ## Installation
 
@@ -8,6 +8,8 @@ Framework-agnostic, headless calendar data & state for building TUI calendars. N
 pnpm add @typescript-calendar-lib/tui
 # or
 npm install @typescript-calendar-lib/tui
+# or
+bun add @typescript-calendar-lib/tui
 ```
 
 ## Concepts
@@ -51,10 +53,11 @@ interface CalendarCell<T = unknown> {
   dayOfWeek: number;        // 0 = first day per weekStart
   isCurrentMonth: boolean;  // false for padded cells
   isWeekend: boolean;       // true for Saturday/Sunday
+  isHoliday: boolean;       // holiday per `holidayLocale` (default "ja")
   isToday: boolean;
   isHighlight: boolean;
   isInRange: boolean;
-  isDisabled: boolean;      // matches `isDateDisabled`
+  isDisabled: boolean;      // true for isDateDisabled dates
   data?: T;                 // cellData's resolved value; omitted when undefined
 }
 ```
@@ -64,6 +67,7 @@ interface CalendarCell<T = unknown> {
 ```ts
 interface MonthDataOptions<T = unknown> {
   locale?: Locale;              // "en" | "ja" | "es" | "de" | "fr" | "ko" | "zh", default "en"
+  holidayLocale?: Locale;       // holiday rules; currently only "ja" (default "ja")
   weekStart?: WeekStart;        // "sunday" | "monday", default "sunday"
   today?: Date;                 // reference for isToday, default new Date()
   highlight?: Date;             // sets isHighlight
@@ -89,6 +93,8 @@ data.cells[0]![2]!.data; // { title: "Meeting" } | undefined
 ```
 
 `MonthData<T>`, `CalendarCell<T>`, and `CalendarState<T>` are generic — `T` defaults to `unknown`, so existing code keeps working without annotations. The same `cellData` is accepted by `createCalendarState()` so the state machine carries it too.
+
+> `sameStateOptions` compares `cellData` by reference, so keep it stable (module-level or memoized) if you rely on option-change detection to avoid rebuild loops.
 
 Retrieve the data for an arbitrary date with `getDateData(state, date)` — returns `T | undefined` (`undefined` when the date isn't in the current month or the cell has no data):
 
@@ -125,11 +131,13 @@ interface CalendarStateOptions<T = unknown> {
   initialCursor?: { row: number; col: number } | null; // null = unfocused
   today?: Date;                 // resolved once at creation, fixed in state
   locale?: Locale;
+  holidayLocale?: Locale;       // holiday rules; currently only "ja" (default "ja")
   weekStart?: WeekStart;
   highlight?: Date;
   range?: { from: Date; to: Date };
   isDateDisabled?: (date: Date) => boolean; // blocks selection & cursor movement
   cellData?: (date: Date) => T | undefined; // per-cell data; undefined = no data
+  selectionMode?: SelectionMode;    // "single" | "range", default "single"
 }
 ```
 
@@ -162,6 +170,7 @@ interface CalendarState<T = unknown> {
   month: number; // 1–12
   cursor: { row: number; col: number } | null; // null = unfocused
   selectedDate: Date | null;
+  selectedRange: DateRange | null; // committed range in range mode; always null in single mode
   options: ResolvedOptions<T>;  // options fixed at creation
   monthData: MonthData<T>;      // cached data for current month
 }
@@ -206,7 +215,36 @@ Returns the selected date, or `null` if none.
 
 ### `clearSelection(state): CalendarState`
 
-Clears the selected date.
+Clears the selected date (and the selected range, in range mode).
+
+## Range selection
+
+Set `selectionMode: "range"` to select a date range instead of a single date. Picking alternates between **anchor → range → reset**:
+
+1. 1st pick — sets the anchor (`selectedRange` is `null`).
+2. 2nd pick — commits the range: `selectedRange` is set to the sorted `{ from, to }`, and `selectedDate` becomes the sorted end.
+3. 3rd pick — starts a new anchor, resetting `selectedRange` to `null`.
+
+The committed `selectedRange` survives month navigation.
+
+```ts
+import { selectRange, getSelectedRange } from "@typescript-calendar-lib/tui";
+
+let state = createCalendarState({ weekStart: "monday", selectionMode: "range" });
+
+state = selectDate(state);                 // picks the cursor date (anchor)
+state = selectDate(state);                 // commits the range
+getSelectedRange(state);                   // { from: Date; to: Date } | null
+clearSelection(state);                     // clears selectedDate and selectedRange
+```
+
+### `selectRange(state, from, to): CalendarState`
+
+Directly sets a range. `from`/`to` are sorted automatically and `selectedDate` becomes the sorted end. Works regardless of `selectionMode`.
+
+### `getSelectedRange(state): DateRange | null`
+
+Returns the committed range, or `null` when unset (anchor-only or nothing selected).
 
 ## Navigation
 
@@ -382,9 +420,11 @@ import {
   getCursorDate,
   getDateData,
   getSelectedDate,
+  getSelectedRange,
   goToDate,
   goToMonth,
   goToToday,
+  keyToAction,
   moveCursor,
   navigateMonth,
   navigateYear,
@@ -394,6 +434,8 @@ import {
   resolveTheme,
   sameStateOptions,
   selectDate,
+  selectDateAt,
+  selectRange,
   setCursorToDate,
   THEMES,
   updateStateOptions,
@@ -401,6 +443,7 @@ import {
 
 import type {
   CalendarCell,
+  CalendarKeyAction,
   CalendarState,
   CalendarStateOptions,
   CellStyle,
@@ -412,6 +455,7 @@ import type {
   MonthDataOptions,
   MonthDirection,
   ResolvedOptions,
+  SelectionMode,
   Theme,
   ThemeName,
 } from "@typescript-calendar-lib/tui";
