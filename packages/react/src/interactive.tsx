@@ -22,6 +22,10 @@ export interface InteractiveCalendarProps {
   initialYear?: number;
   /** 表示開始月 (1-12)。範囲外は正規化される */
   initialMonth?: number;
+  /** 制御モードの表示年。指定すると initialYear より優先され、月移動は onMonthChange に委譲される */
+  year?: number;
+  /** 制御モードの表示月 (1-12) */
+  month?: number;
   locale?: CalendarOptions["locale"];
   holidayLocale?: CalendarOptions["holidayLocale"];
   weekStart?: CalendarOptions["weekStart"];
@@ -85,6 +89,8 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     range,
     today,
     isDateDisabled,
+    year,
+    month,
     onMonthChange,
     theme,
     colorScheme,
@@ -101,6 +107,8 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
   const hook = useCalendarState({
     initialYear,
     initialMonth,
+    year,
+    month,
     locale,
     holidayLocale,
     weekStart,

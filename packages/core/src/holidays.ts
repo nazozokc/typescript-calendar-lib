@@ -7,8 +7,8 @@ import {
 import type { HolidayLocale } from "./types.ts";
 import { assertValidDate, createDate } from "./validation.ts";
 
-export type { HolidayLocale } from "./types.ts";
 export type { HolidayRule, YearHoliday } from "./holiday-rules.ts";
+export type { HolidayLocale } from "./types.ts";
 
 // ─── 日本の祝日 ───────────────────────────────────────────
 

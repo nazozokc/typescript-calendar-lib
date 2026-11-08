@@ -39,6 +39,13 @@ export interface UseCalendarStateOptions
   > {
   initialYear?: number;
   initialMonth?: number;
+  /**
+   * 制御モードの表示年。指定すると `initialYear` より優先され、値が変わるたびに
+   * その年月へ再構築される。月移動は内部状態を変えず `onMonthChange` に通知する。
+   */
+  year?: number;
+  /** 制御モードの表示月 (1–12)。`year` と併用する */
+  month?: number;
   /** 表示中の年月が変わったときに呼ばれる */
   onMonthChange?: (year: number, month: number) => void;
 }
@@ -148,16 +155,38 @@ export function useCalendarState(
     state = updateStateOptions(state, next, previous);
   });
 
-  // 表示月が変わったら onMonthChange を通知し、古い月を指すホバーをクリアする
+  // 表示月が変わったら onMonthChange を通知し、古い月を指すホバーをクリアする。
+  // 制御モードでは props 側が月を決めているので再通知しない（二重通知の抑止）。
   let prevMonthKey: string | null = null;
   $effect(() => {
     const key = `${state.year}-${state.month}`;
     if (prevMonthKey !== null && key !== prevMonthKey) {
       hoveredDate = null;
-      getter().onMonthChange?.(state.year, state.month);
+      const current = getter();
+      if (current.year === undefined && current.month === undefined) {
+        current.onMonthChange?.(state.year, state.month);
+      }
     }
     prevMonthKey = key;
   });
+
+  /** 制御モードか（year/month のどちらかが指定されている） */
+  const isControlled = (): boolean => {
+    const current = getter();
+    return current.year !== undefined || current.month !== undefined;
+  };
+
+  /** 制御モードなら onMonthChange に委譲し、そうでなければ状態を更新する */
+  const applyNavigation = (next: CalendarState): void => {
+    if (isControlled()) {
+      const current = getter();
+      if (next.year !== state.year || next.month !== state.month) {
+        current.onMonthChange?.(next.year, next.month);
+      }
+      return;
+    }
+    state = next;
+  };
 
   return {
     get state() {
@@ -179,22 +208,22 @@ export function useCalendarState(
       state = moveCursor(state, direction);
     },
     goNext: () => {
-      state = navigateMonth(state, "next");
+      applyNavigation(navigateMonth(state, "next"));
     },
     goPrev: () => {
-      state = navigateMonth(state, "prev");
+      applyNavigation(navigateMonth(state, "prev"));
     },
     navigateYear: (direction: MonthDirection) => {
-      state = navigateYear(state, direction);
+      applyNavigation(navigateYear(state, direction));
     },
     goToMonth: (year: number, month: number) => {
-      state = goToMonth(state, year, month);
+      applyNavigation(goToMonth(state, year, month));
     },
     goToDate: (date: Date) => {
-      state = goToDate(state, date);
+      applyNavigation(goToDate(state, date));
     },
     goToday: () => {
-      state = goToToday(state);
+      applyNavigation(goToToday(state));
     },
     selectDate: () => {
       state = selectDate(state);
