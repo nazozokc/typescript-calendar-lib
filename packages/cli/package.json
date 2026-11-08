@@ -1,6 +1,6 @@
 {
   "name": "@typescript-calendar-lib/cli",
-  "version": "1.0.0",
+  "version": "0.6.0",
   "description": "Terminal calendar renderer with themes and ANSI color schemes",
   "type": "module",
   "bin": {

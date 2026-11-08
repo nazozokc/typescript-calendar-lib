@@ -1,6 +1,6 @@
 {
   "name": "@typescript-calendar-lib/core",
-  "version": "1.0.0",
+  "version": "0.6.0",
   "description": "Core date utilities and calendar data primitives for typescript-calendar-lib",
   "type": "module",
   "repository": {

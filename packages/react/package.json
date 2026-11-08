@@ -1,6 +1,6 @@
 {
   "name": "@typescript-calendar-lib/react",
-  "version": "1.0.0",
+  "version": "0.6.0",
   "description": "React 19 calendar components with CSS themes and color schemes",
   "type": "module",
   "repository": {

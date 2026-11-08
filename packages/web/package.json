@@ -1,6 +1,6 @@
 {
   "name": "@typescript-calendar-lib/web",
-  "version": "1.0.0",
+  "version": "0.6.0",
   "description": "Shared presentation data (themes, color schemes, sizes, CSS) for web framework calendar components",
   "type": "module",
   "repository": {
