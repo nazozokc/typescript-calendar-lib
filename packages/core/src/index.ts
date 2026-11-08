@@ -46,6 +46,7 @@ export type {
   CalendarRangeOptions,
   CalendarYearOptions,
   HighlightStyle,
+  HolidayLocale,
   Locale,
   RenderMonthOptions,
   WeekStart,

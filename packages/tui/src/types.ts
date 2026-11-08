@@ -1,5 +1,6 @@
 import type {
   DateRange,
+  HolidayLocale,
   Locale,
   WeekStart,
 } from "@typescript-calendar-lib/core";
@@ -58,7 +59,7 @@ export type SelectionMode = "single" | "range";
 export interface MonthDataOptions<T = unknown> {
   locale?: Locale;
   /** 祝日の判定に使うロケール。省略時は "ja" */
-  holidayLocale?: Locale;
+  holidayLocale?: HolidayLocale;
   weekStart?: WeekStart;
   /** 今日の基準日。省略時は new Date() */
   today?: Date;
@@ -86,7 +87,7 @@ export interface CalendarStateOptions<T = unknown> {
   today?: Date;
   locale?: Locale;
   /** 祝日の判定に使うロケール。省略時は "ja" */
-  holidayLocale?: Locale;
+  holidayLocale?: HolidayLocale;
   weekStart?: WeekStart;
   /** ハイライト対象日 */
   highlight?: Date;
@@ -104,7 +105,7 @@ export interface CalendarStateOptions<T = unknown> {
 export interface ResolvedOptions<T = unknown> {
   locale: Locale;
   /** 祝日の判定に使うロケール。既定は "ja" */
-  holidayLocale: Locale;
+  holidayLocale: HolidayLocale;
   weekStart: WeekStart;
   today: Date;
   highlight?: Date;

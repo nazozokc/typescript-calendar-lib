@@ -1,5 +1,5 @@
 import { isHoliday } from "./holidays.ts";
-import type { Locale, WeekStart } from "./types.ts";
+import type { HolidayLocale, Locale, WeekStart } from "./types.ts";
 import {
   assertValidDate,
   assertValidWeekStart,
@@ -123,7 +123,7 @@ export function getCalendarCellState(
     range?: { from: Date; to: Date };
     isDateDisabled?: (date: Date) => boolean;
     /** 祝日判定に使うロケール。省略時は "ja"（isHoliday のデフォルト） */
-    holidayLocale?: Locale;
+    holidayLocale?: HolidayLocale;
   } = {},
 ): CalendarCellState {
   assertValidDate(date);

@@ -2,9 +2,16 @@ import type { Locale, WeekStart } from "./types.ts";
 import { assertValidMonth, assertValidWeekStart } from "./validation.ts";
 
 export interface LocaleData {
+  /** 完全な月名（例: "September", "9月"） */
   months: readonly string[];
+  /** 短縮月名（例: "Sep", "9月"） */
+  monthsShort: readonly string[];
+  /** 短縮曜日名（例: "Sun", "日"） */
   weekdays: readonly string[];
+  /** 極短曜日名（例: "Su", "日"） */
   weekdaysShort: readonly string[];
+  /** 完全曜日名（例: "Sunday", "日曜日"） */
+  weekdaysLong: readonly string[];
   weekdaysMonday: readonly string[];
   weekdaysMondayShort: readonly string[];
 }
@@ -14,12 +21,16 @@ function makeLocale(
   months: readonly string[],
   weekdays: readonly string[],
   weekdaysShort: readonly string[] = weekdays,
+  monthsShort: readonly string[] = months,
+  weekdaysLong: readonly string[] = weekdays,
 ): LocaleData {
   const rotate = (arr: readonly string[]) => [...arr.slice(1), arr[0]!];
   return {
     months,
+    monthsShort,
     weekdays,
     weekdaysShort,
+    weekdaysLong,
     weekdaysMonday: rotate(weekdays),
     weekdaysMondayShort: rotate(weekdaysShort),
   };
@@ -43,6 +54,29 @@ export const LOCALES: Record<Locale, LocaleData> = {
     ],
     ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
     ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"],
+    [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ],
+    [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ],
   ),
   ja: makeLocale(
     [
@@ -60,6 +94,22 @@ export const LOCALES: Record<Locale, LocaleData> = {
       "12月",
     ],
     ["日", "月", "火", "水", "木", "金", "土"],
+    ["日", "月", "火", "水", "木", "金", "土"],
+    [
+      "1月",
+      "2月",
+      "3月",
+      "4月",
+      "5月",
+      "6月",
+      "7月",
+      "8月",
+      "9月",
+      "10月",
+      "11月",
+      "12月",
+    ],
+    ["日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"],
   ),
   es: makeLocale(
     [
@@ -78,6 +128,21 @@ export const LOCALES: Record<Locale, LocaleData> = {
     ],
     ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"],
     ["do", "lu", "ma", "mi", "ju", "vi", "sá"],
+    [
+      "ene",
+      "feb",
+      "mar",
+      "abr",
+      "may",
+      "jun",
+      "jul",
+      "ago",
+      "sept",
+      "oct",
+      "nov",
+      "dic",
+    ],
+    ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"],
   ),
   de: makeLocale(
     [
@@ -95,6 +160,30 @@ export const LOCALES: Record<Locale, LocaleData> = {
       "Dezember",
     ],
     ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
+    ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
+    [
+      "Jan.",
+      "Feb.",
+      "März",
+      "Apr.",
+      "Mai",
+      "Juni",
+      "Juli",
+      "Aug.",
+      "Sept.",
+      "Okt.",
+      "Nov.",
+      "Dez.",
+    ],
+    [
+      "Sonntag",
+      "Montag",
+      "Dienstag",
+      "Mittwoch",
+      "Donnerstag",
+      "Freitag",
+      "Samstag",
+    ],
   ),
   fr: makeLocale(
     [
@@ -113,6 +202,21 @@ export const LOCALES: Record<Locale, LocaleData> = {
     ],
     ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."],
     ["di", "lu", "ma", "me", "je", "ve", "sa"],
+    [
+      "janv.",
+      "févr.",
+      "mars",
+      "avr.",
+      "mai",
+      "juin",
+      "juil.",
+      "août",
+      "sept.",
+      "oct.",
+      "nov.",
+      "déc.",
+    ],
+    ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"],
   ),
   ko: makeLocale(
     [
@@ -130,6 +234,22 @@ export const LOCALES: Record<Locale, LocaleData> = {
       "12월",
     ],
     ["일", "월", "화", "수", "목", "금", "토"],
+    ["일", "월", "화", "수", "목", "금", "토"],
+    [
+      "1월",
+      "2월",
+      "3월",
+      "4월",
+      "5월",
+      "6월",
+      "7월",
+      "8월",
+      "9월",
+      "10월",
+      "11월",
+      "12월",
+    ],
+    ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"],
   ),
   zh: makeLocale(
     [
@@ -147,6 +267,22 @@ export const LOCALES: Record<Locale, LocaleData> = {
       "十二月",
     ],
     ["日", "一", "二", "三", "四", "五", "六"],
+    ["日", "一", "二", "三", "四", "五", "六"],
+    [
+      "1月",
+      "2月",
+      "3月",
+      "4月",
+      "5月",
+      "6月",
+      "7月",
+      "8月",
+      "9月",
+      "10月",
+      "11月",
+      "12月",
+    ],
+    ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
   ),
 };
 

@@ -1,19 +1,21 @@
 import { addDays } from "./date-math.ts";
-import type { Locale } from "./types.ts";
+import {
+  FIXED_HOLIDAY_RULES,
+  type HolidayRule,
+  type YearHoliday,
+} from "./holiday-rules.ts";
+import type { HolidayLocale } from "./types.ts";
 import { assertValidDate, createDate } from "./validation.ts";
+
+export type { HolidayLocale } from "./types.ts";
+export type { HolidayRule, YearHoliday } from "./holiday-rules.ts";
 
 // ─── 日本の祝日 ───────────────────────────────────────────
 
-/**
- * 祝日データを持つロケール。現在は日本語（日本の国民の祝日）のみ。
- * その他のロケールは「祝日なし」として扱われる（isHoliday は常に false）。
- */
-export type HolidayLocale = "ja";
-
-/** 祝日が計算できる年範囲（1949 年以降の現行祝日法制に基づく） */
+/** 日本の祝日が計算できる年範囲（1949 年以降の現行祝日法制に基づく） */
 export const HOLIDAY_MIN_YEAR = 1949;
 
-/** 祝日が計算できる年範囲（秋分の日の近似式が有効な上限。実用上十分） */
+/** 日本の祝日が計算できる年範囲（秋分の日の近似式が有効な上限。実用上十分） */
 export const HOLIDAY_MAX_YEAR = 2100;
 
 /** 1回限りの祝日（皇室行事・改元に伴う法律で定められたもの） */
@@ -25,13 +27,6 @@ const ONE_OFF_HOLIDAYS: readonly YearHolidayWithYear[] = [
   { year: 2019, month: 5, day: 1, name: "天皇即位の日" },
   { year: 2019, month: 10, day: 22, name: "即位礼正殿の儀" },
 ];
-
-/** 年の祝日一覧の1件（month は 1-12） */
-interface YearHoliday {
-  month: number;
-  day: number;
-  name: string;
-}
 
 /** 祝日一覧の1件に発生日（year）を添えたもの。一覧データの定義に使う */
 interface YearHolidayWithYear extends YearHoliday {
@@ -55,6 +50,8 @@ function dayOfWeek(year: number, month: number, day: number): number {
  */
 function holidaysOfYear(year: number): YearHoliday[] {
   const list: YearHoliday[] = [];
+  // 対象年外は祝日なし（春分/秋分の近似式が有効な範囲に限定する）
+  if (year < HOLIDAY_MIN_YEAR || year > HOLIDAY_MAX_YEAR) return list;
   const add = (month: number, day: number, name: string): void => {
     list.push({ month, day, name });
   };
@@ -213,22 +210,32 @@ function toIndex(list: YearHoliday[]): HolidayIndex {
 }
 
 /** 年の計算結果キャッシュ（同じ年を何度も参照する描画用途のため） */
-const holidayCache = new Map<number, HolidayIndex>();
+const holidayCache = new Map<string, HolidayIndex>();
+
+/** ロケールごとの祝日規則。ja は振替休日などを含む専用実装、他は固定日 */
+const HOLIDAY_RULES: Record<HolidayLocale, HolidayRule> = {
+  ja: (year) => holidaysOfYear(year),
+  ...FIXED_HOLIDAY_RULES,
+};
 
 /** 祝日インデックスを取得する。対象外ロケール・範囲外の年は null */
-function holidayIndexOf(date: Date, locale: Locale): HolidayIndex | null {
-  if (locale !== "ja") return null;
+function holidayIndexOf(
+  date: Date,
+  locale: HolidayLocale,
+): HolidayIndex | null {
+  const rule = HOLIDAY_RULES[locale];
+  if (rule === undefined) return null;
   const year = date.getFullYear();
-  if (year < HOLIDAY_MIN_YEAR || year > HOLIDAY_MAX_YEAR) return null;
-  const cached = holidayCache.get(year);
+  const key = `${locale}:${year}`;
+  const cached = holidayCache.get(key);
   if (cached !== undefined) return cached;
-  const index = toIndex(holidaysOfYear(year));
-  holidayCache.set(year, index);
+  const index = toIndex(rule(year));
+  holidayCache.set(key, index);
   return index;
 }
 
-/** 日付が祝日（日本の国民の祝日・振替休日・国民の休日）か判定する。対象外ロケール/年は false */
-export function isHoliday(date: Date, locale: Locale = "ja"): boolean {
+/** 日付が祝日か判定する。対象外ロケール/年は false */
+export function isHoliday(date: Date, locale: HolidayLocale = "ja"): boolean {
   assertValidDate(date);
   const index = holidayIndexOf(date, locale);
   if (index === null) return false;
@@ -240,7 +247,7 @@ export function isHoliday(date: Date, locale: Locale = "ja"): boolean {
 /** 日付の祝日名を返す。祝日でない・対象外ロケール/年は undefined */
 export function getHolidayName(
   date: Date,
-  locale: Locale = "ja",
+  locale: HolidayLocale = "ja",
 ): string | undefined {
   assertValidDate(date);
   const index = holidayIndexOf(date, locale);
@@ -251,7 +258,10 @@ export function getHolidayName(
 // ─── 営業日 ───────────────────────────────────────────────
 
 /** 日付が営業日（平日かつ祝日でない）か判定する */
-export function isBusinessDay(date: Date, locale: Locale = "ja"): boolean {
+export function isBusinessDay(
+  date: Date,
+  locale: HolidayLocale = "ja",
+): boolean {
   assertValidDate(date);
   if (date.getDay() === 0 || date.getDay() === 6) return false;
   return !isHoliday(date, locale);
@@ -272,7 +282,7 @@ function assertBusinessAmount(amount: number): void {
 export function addBusinessDays(
   date: Date,
   amount: number,
-  locale: Locale = "ja",
+  locale: HolidayLocale = "ja",
 ): Date {
   assertValidDate(date);
   assertBusinessAmount(amount);
@@ -294,7 +304,7 @@ export function addBusinessDays(
 export function diffInBusinessDays(
   from: Date,
   to: Date,
-  locale: Locale = "ja",
+  locale: HolidayLocale = "ja",
 ): number {
   assertValidDate(from);
   assertValidDate(to);

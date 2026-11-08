@@ -242,7 +242,7 @@ export function clampDate(date: Date, min: Date, max: Date): Date {
   return date;
 }
 
-const TOKEN_RE = /yyyy|MMMM|EEE|yy|MM|dd|M|d/g;
+const TOKEN_RE = /yyyy|MMMM|EEEE|MMM|EEE|yy|MM|dd|M|d/g;
 
 /**
  * パターン文字列に従って日付をフォーマットする。
@@ -251,10 +251,12 @@ const TOKEN_RE = /yyyy|MMMM|EEE|yy|MM|dd|M|d/g;
  * - `yyyy` — 4桁の年（例: 2026）
  * - `yy` — 西暦下2桁（例: 26）
  * - `MMMM` — フル月名（ロケール依存。例: September / 9月）
+ * - `MMM` — 短縮月名（ロケール依存。例: Sep / 9月）
  * - `MM` — 0埋め2桁の月（01-12）
  * - `M` — 月（1-12）
  * - `dd` — 0埋め2桁の日（01-31）
  * - `d` — 日（1-31）
+ * - `EEEE` — 曜日の完全名（ロケール依存。例: Friday / 金曜日）
  * - `EEE` — 曜日の短縮名（ロケール依存。例: Fri / 金）
  *
  * トークン以外の文字はそのまま出力される。
@@ -280,6 +282,8 @@ export function formatDate(
         return String(date.getFullYear() % 100).padStart(2, "0");
       case "MMMM":
         return getMonthName(locale, date.getMonth() + 1);
+      case "MMM":
+        return data.monthsShort[date.getMonth()]!;
       case "MM":
         return String(date.getMonth() + 1).padStart(2, "0");
       case "M":
@@ -288,6 +292,8 @@ export function formatDate(
         return String(date.getDate()).padStart(2, "0");
       case "d":
         return String(date.getDate());
+      case "EEEE":
+        return data.weekdaysLong[date.getDay()]!;
       case "EEE":
         return data.weekdays[date.getDay()]!;
       default:

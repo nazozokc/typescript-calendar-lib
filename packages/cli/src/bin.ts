@@ -2,6 +2,7 @@
 import { createRequire } from "node:module";
 import type {
   HighlightStyle,
+  HolidayLocale,
   Locale,
   WeekStart,
 } from "@typescript-calendar-lib/core";
@@ -22,7 +23,7 @@ export interface CliArgs {
   color?: boolean;
   noColor?: boolean;
   locale?: Locale;
-  holidayLocale?: Locale;
+  holidayLocale?: HolidayLocale;
   weekStart?: WeekStart;
   weekNumbers?: boolean;
   highlight?: Date;
