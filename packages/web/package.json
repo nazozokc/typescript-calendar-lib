@@ -36,7 +36,7 @@
     "@typescript-calendar-lib/core": "workspace:^"
   },
   "devDependencies": {
-    "@tsdown/css": "^0.23.0"
+    "@tsdown/css": "^0.23.5"
   },
   "author": "nazozokc",
   "homepage": "https://github.com/nazozokc/typescript-calendar-lib#readme",
