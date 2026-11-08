@@ -16,6 +16,9 @@ overrides:
   # GHSA-68fv-2mgg-jv7q: source-map-js のイベントループ DoS（修正版 >=1.2.2）。
   # postcss の推移的依存のため直接指定できない。
   source-map-js: ">=1.2.2"
+  # GHSA-xjj6-f33q-929c / GHSA-4w7w-5xrc-9h26 / GHSA-2m5v-pch6-74hx / GHSA-qrxm-fqhp-jwvm:
+  # undici 8.12.2 未満の DoS 系脆弱性。jsdom の推移的依存（^8.10.2）のため直接指定できない。
+  undici: ">=8.12.2 <9"
 # @sveltejs/package は svelte2tsx 経由で typescript を import するが、自らの
 # 依存として宣言していない。リポジトリの typescript が tsgo (7.x) のため
 # 解決が .pnpm ルートの 7.x にフォールバックし、ts.sys が無くてクラッシュする。

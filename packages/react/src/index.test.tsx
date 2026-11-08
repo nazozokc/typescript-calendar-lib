@@ -1556,20 +1556,13 @@ function ControlledHarness({
   month: number;
   onMonthChange?: (year: number, month: number) => void;
 }) {
-  const {
-    state,
-    goNext,
-    goPrev,
-    navigateYear,
-    goToMonth,
-    goToDate,
-    goToday,
-  } = useCalendarState({
-    year,
-    month,
-    today: TODAY,
-    onMonthChange,
-  });
+  const { state, goNext, goPrev, navigateYear, goToMonth, goToDate, goToday } =
+    useCalendarState({
+      year,
+      month,
+      today: TODAY,
+      onMonthChange,
+    });
 
   return createElement(
     "div",

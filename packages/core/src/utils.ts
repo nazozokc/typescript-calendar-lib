@@ -1,5 +1,5 @@
 import { isHoliday } from "./holidays.ts";
-import type { HolidayLocale, Locale, WeekStart } from "./types.ts";
+import type { HolidayLocale, WeekStart } from "./types.ts";
 import {
   assertValidDate,
   assertValidWeekStart,

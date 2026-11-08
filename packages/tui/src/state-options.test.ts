@@ -332,9 +332,9 @@ describe("制御モード（year / month）", () => {
     expect(sameStateOptions({ year: 2026, month: 9 }, { year: 2026 })).toBe(
       false,
     );
-    expect(sameStateOptions({ year: 2026, month: 9 }, { year: 2026, month: 9 })).toBe(
-      true,
-    );
+    expect(
+      sameStateOptions({ year: 2026, month: 9 }, { year: 2026, month: 9 }),
+    ).toBe(true);
   });
 
   test("updateStateOptions は制御モードの年月に常に従う", () => {
