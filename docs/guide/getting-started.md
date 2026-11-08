@@ -17,7 +17,11 @@ Replace `cli` with the package you need: `core`, `cli`, `react`, `svelte`, `tui`
 ### Plain Text (CLI package)
 
 ```ts
-import { calendar, calendarYear, calendarRange } from "@typescript-calendar-lib/cli";
+import {
+  calendar,
+  calendarYear,
+  calendarRange,
+} from "@typescript-calendar-lib/cli";
 
 // Single month
 console.log(calendar({ year: 2026, month: 9 }));
@@ -26,10 +30,12 @@ console.log(calendar({ year: 2026, month: 9 }));
 console.log(calendarYear({ year: 2026 }));
 
 // Arbitrary date range
-console.log(calendarRange({
-  from: new Date(2026, 5, 1),
-  to: new Date(2026, 8, 30),
-}));
+console.log(
+  calendarRange({
+    from: new Date(2026, 5, 1),
+    to: new Date(2026, 8, 30),
+  }),
+);
 ```
 
 Output:
@@ -66,7 +72,11 @@ For interactivity (click, hover, cursor, month navigation), see the [Interactive
 ### TUI (Headless)
 
 ```ts
-import { createCalendarState, moveCursor, navigateMonth } from "@typescript-calendar-lib/tui";
+import {
+  createCalendarState,
+  moveCursor,
+  navigateMonth,
+} from "@typescript-calendar-lib/tui";
 
 const state = createCalendarState({ initialYear: 2026, initialMonth: 9 });
 const moved = moveCursor(state, "right");
@@ -86,14 +96,14 @@ const nextMonth = navigateMonth(state, "next");
 
 ## Package Overview
 
-| Package | Description |
-| :--- | :--- |
-| [`core`](/packages/core) | Shared utilities: date math, locale data, grid building |
-| [`cli`](/packages/cli) | Plain-text rendering with themes and ANSI colors |
-| [`react`](/packages/react) | `<Calendar />` React 19 component with CSS themes |
-| [`svelte`](/packages/svelte) | `<Calendar />` Svelte 5 component with CSS themes |
-| [`tui`](/packages/tui) | Headless state & data for building TUI calendars |
-| [`web`](/packages/web) | Shared presentation data (themes, color schemes, sizes, CSS) |
+| Package                      | Description                                                  |
+| :--------------------------- | :----------------------------------------------------------- |
+| [`core`](/packages/core)     | Shared utilities: date math, locale data, grid building      |
+| [`cli`](/packages/cli)       | Plain-text rendering with themes and ANSI colors             |
+| [`react`](/packages/react)   | `<Calendar />` React 19 component with CSS themes            |
+| [`svelte`](/packages/svelte) | `<Calendar />` Svelte 5 component with CSS themes            |
+| [`tui`](/packages/tui)       | Headless state & data for building TUI calendars             |
+| [`web`](/packages/web)       | Shared presentation data (themes, color schemes, sizes, CSS) |
 
 ## Dependency Graph
 

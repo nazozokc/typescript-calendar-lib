@@ -42,13 +42,13 @@ type HighlightStyle = "bracket" | "reverse";
 interface CalendarOptions {
   year: number;
   month: number; // 1-indexed (1–12)
-  locale?: Locale;          // default: "en"
-  holidayLocale?: Locale;   // default: "ja" (see Holidays)
-  weekStart?: WeekStart;    // default: "sunday"
-  highlight?: Date;         // date to highlight (e.g. today)
+  locale?: Locale; // default: "en"
+  holidayLocale?: Locale; // default: "ja" (see Holidays)
+  weekStart?: WeekStart; // default: "sunday"
+  highlight?: Date; // date to highlight (e.g. today)
   highlightStyle?: HighlightStyle; // default: "bracket"
   range?: { from: Date; to: Date };
-  color?: boolean;          // default: false
+  color?: boolean; // default: false
 }
 ```
 
@@ -97,12 +97,12 @@ Flags computed by `getCalendarCellState` for a single day cell:
 
 ```ts
 interface CalendarCellState {
-  isWeekend: boolean;   // Saturday or Sunday
-  isHoliday: boolean;   // holiday per `holidayLocale` (default "ja")
-  isToday: boolean;     // matches `today`
+  isWeekend: boolean; // Saturday or Sunday
+  isHoliday: boolean; // holiday per `holidayLocale` (default "ja")
+  isToday: boolean; // matches `today`
   isHighlight: boolean; // matches `highlight`
-  isInRange: boolean;   // within `range` (inclusive)
-  isDisabled: boolean;  // matches `isDateDisabled`
+  isInRange: boolean; // within `range` (inclusive)
+  isDisabled: boolean; // matches `isDateDisabled`
 }
 ```
 
@@ -165,8 +165,8 @@ getWeekdayHeaders("en", "monday"); // ["Mon", "Tue", ..., "Sun"]
 Returns the raw locale data (`months`, `weekdays`, `weekdaysShort`, plus the Monday-start rotations `weekdaysMonday` and `weekdaysMondayShort`). Throws `RangeError` for an unknown locale.
 
 ```ts
-getLocaleData("en").weekdays;            // ["Sun", "Mon", ..., "Sat"]
-getLocaleData("ja").weekdaysMonday;      // ["月", "火", ..., "日"]
+getLocaleData("en").weekdays; // ["Sun", "Mon", ..., "Sat"]
+getLocaleData("ja").weekdaysMonday; // ["月", "火", ..., "日"]
 ```
 
 ### `getLocaleData(locale): LocaleData`
@@ -174,8 +174,8 @@ getLocaleData("ja").weekdaysMonday;      // ["月", "火", ..., "日"]
 Returns the raw locale data (`months`, `weekdays`, `weekdaysShort`, plus the Monday-start rotations `weekdaysMonday` and `weekdaysMondayShort`). Throws `RangeError` for an unknown locale.
 
 ```ts
-getLocaleData("en").weekdays;            // ["Sun", "Mon", ..., "Sat"]
-getLocaleData("ja").weekdaysMonday;      // ["月", "火", ..., "日"]
+getLocaleData("en").weekdays; // ["Sun", "Mon", ..., "Sat"]
+getLocaleData("ja").weekdaysMonday; // ["月", "火", ..., "日"]
 ```
 
 ### `buildMonthGrid(year, month, weekStart): (number | null)[][]`
@@ -293,7 +293,7 @@ Throws `RangeError` for invalid `year`/`month`.
 Adds whole days (negative subtracts). Calendar-day based (`setDate`), so DST transitions don't shift the time — the same local time is preserved. Returns a new `Date`; the input is unchanged.
 
 ```ts
-addDays(new Date(2026, 8, 25), 7);   // Oct 02 2026, same time
+addDays(new Date(2026, 8, 25), 7); // Oct 02 2026, same time
 addDays(new Date(2026, 8, 25), -25); // Aug 31 2026
 ```
 
@@ -422,19 +422,19 @@ clampDate(new Date(2026, 8, 25), new Date(2026, 8, 1), new Date(2026, 8, 15)); /
 
 Formats a date with the given pattern. Tokens are replaced with localized values; everything else is output verbatim.
 
-| Token | Meaning |
-| :--- | :--- |
-| `yyyy` | 4-digit year (`2026`) |
-| `yy` | last 2 digits of the year (`26`) |
-| `MMMM` | full month name (`September`, `9月`) |
+| Token      | Meaning                                |
+| :--------- | :------------------------------------- |
+| `yyyy`     | 4-digit year (`2026`)                  |
+| `yy`       | last 2 digits of the year (`26`)       |
+| `MMMM`     | full month name (`September`, `9月`)   |
 | `MM` / `M` | zero-padded / plain month (`09` / `9`) |
-| `dd` / `d` | zero-padded / plain day (`05` / `5`) |
-| `EEE` | short weekday, localized (`Fri`, `金`) |
+| `dd` / `d` | zero-padded / plain day (`05` / `5`)   |
+| `EEE`      | short weekday, localized (`Fri`, `金`) |
 
 ```ts
-formatDate(date, "yyyy-MM-dd");          // "2026-09-25"
-formatDate(date, "MMMM d, yyyy (EEE)");  // "September 25, 2026 (Fri)"
-formatDate(date, "yyyy年M月d日", "ja");   // "2026年9月25日"
+formatDate(date, "yyyy-MM-dd"); // "2026-09-25"
+formatDate(date, "MMMM d, yyyy (EEE)"); // "September 25, 2026 (Fri)"
+formatDate(date, "yyyy年M月d日", "ja"); // "2026年9月25日"
 ```
 
 > **Note:** all of the above validate their inputs and throw `RangeError` on invalid values: dates are checked with `assertValidDate`, `add*` amounts must be integers, and `weekStart` must be `"sunday" | "monday"`.
@@ -449,17 +449,17 @@ rules, and the equinox-based `春分の日` / `秋分の日` approximations — 
 ```ts
 import { getHolidayName, isHoliday } from "@typescript-calendar-lib/core";
 
-isHoliday(new Date(2026, 4, 4));        // true
-getHolidayName(new Date(2026, 4, 4));   // "みどりの日"
-isHoliday(new Date(2026, 4, 6));        // true
-getHolidayName(new Date(2026, 4, 6));   // "振替休日"  (happy-Monday rule)
-isHoliday(new Date(2026, 8, 22));        // true
-getHolidayName(new Date(2026, 8, 22));   // "国民の休日"
-isHoliday(new Date(2026, 8, 24));        // false
-getHolidayName(new Date(2026, 8, 24));   // undefined
+isHoliday(new Date(2026, 4, 4)); // true
+getHolidayName(new Date(2026, 4, 4)); // "みどりの日"
+isHoliday(new Date(2026, 4, 6)); // true
+getHolidayName(new Date(2026, 4, 6)); // "振替休日"  (happy-Monday rule)
+isHoliday(new Date(2026, 8, 22)); // true
+getHolidayName(new Date(2026, 8, 22)); // "国民の休日"
+isHoliday(new Date(2026, 8, 24)); // false
+getHolidayName(new Date(2026, 8, 24)); // undefined
 ```
 
-> **Note:** `holidayLocale` defaults to `"ja"` — *independently of `locale`*. Calling
+> **Note:** `holidayLocale` defaults to `"ja"` — _independently of `locale`_. Calling
 > `isHoliday(date)` with no arguments answers the **Japanese** calendar question, so an
 > `locale: "en"` calendar still flags Japanese holidays. Pass `holidayLocale` explicitly
 > if that is not what you want.
@@ -472,11 +472,15 @@ which lets a caller opt out explicitly instead of relying on the default.
 ### Business days
 
 ```ts
-import { addBusinessDays, diffInBusinessDays, isBusinessDay } from "@typescript-calendar-lib/core";
+import {
+  addBusinessDays,
+  diffInBusinessDays,
+  isBusinessDay,
+} from "@typescript-calendar-lib/core";
 
-isBusinessDay(new Date(2026, 8, 5));                                  // false — Saturday
-addBusinessDays(new Date(2026, 8, 4), 1);                            // Mon Sep 7 2026
-diffInBusinessDays(new Date(2026, 8, 4), new Date(2026, 8, 7));     // 1
+isBusinessDay(new Date(2026, 8, 5)); // false — Saturday
+addBusinessDays(new Date(2026, 8, 4), 1); // Mon Sep 7 2026
+diffInBusinessDays(new Date(2026, 8, 4), new Date(2026, 8, 7)); // 1
 ```
 
 A business day is a day that is neither a weekend nor a holiday under `holidayLocale`.
@@ -486,13 +490,13 @@ All three take an optional trailing `holidayLocale`.
 
 All functions validate their inputs and throw `RangeError` on invalid values instead of silently producing wrong results:
 
-| Input | Accepted range | Example of invalid input |
-| :--- | :--- | :--- |
-| `year` | integer `1`–`9999` | `0`, `-1`, `10000`, `2026.5`, `NaN` |
-| `month` | integer `1`–`12` | `0`, `13`, `2.5`, `NaN` |
-| `weekStart` | `"sunday"` \| `"monday"` | `"tuesday"` |
-| `locale` | `"en"` \| `"ja"` \| `"es"` \| `"de"` \| `"fr"` \| `"ko"` \| `"zh"` | `"xx"` |
-| `range` | `from <= to`, valid `Date`s | reversed or invalid dates |
+| Input       | Accepted range                                                     | Example of invalid input            |
+| :---------- | :----------------------------------------------------------------- | :---------------------------------- |
+| `year`      | integer `1`–`9999`                                                 | `0`, `-1`, `10000`, `2026.5`, `NaN` |
+| `month`     | integer `1`–`12`                                                   | `0`, `13`, `2.5`, `NaN`             |
+| `weekStart` | `"sunday"` \| `"monday"`                                           | `"tuesday"`                         |
+| `locale`    | `"en"` \| `"ja"` \| `"es"` \| `"de"` \| `"fr"` \| `"ko"` \| `"zh"` | `"xx"`                              |
+| `range`     | `from <= to`, valid `Date`s                                        | reversed or invalid dates           |
 
 > **Note:** `new Date(year, ...)` interprets years `0`–`99` as `1900 + year`. The library avoids this by using `setFullYear` internally (`createDate`), so `firstDayOfMonth(50, 9)` correctly returns the year `50` — but you still cannot pass year `0` or `10000`.
 

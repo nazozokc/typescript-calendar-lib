@@ -13,14 +13,14 @@ core (zero runtime dependencies)
  └── react / svelte / cli は core にも直接依存する
 ```
 
-| Package | Layer | Role |
-| :--- | :--- | :--- |
-| [`core`](/packages/core) | ドメイン | 日付計算・ロケールデータ・グリッド生成・検証 |
-| [`tui`](/packages/tui) | 状態 | ヘッドレスなカーソル/選択/ナビゲーション状態マシン |
-| [`cli`](/packages/cli) | 出力 | プレーンテキスト + ANSI 色での描画、CLI バイナリ |
-| [`web`](/packages/web) | 見た目 | テーマ・カラースキーム・セルサイズ・共有 CSS（フレームワーク非依存） |
-| [`react`](/packages/react) | 出力 | `<Calendar />` コンポーネント + `useCalendarState` hook |
-| [`svelte`](/packages/svelte) | 出力 | `Calendar` / `InteractiveCalendar` コンポーネント + `useCalendarState` |
+| Package                      | Layer    | Role                                                                   |
+| :--------------------------- | :------- | :--------------------------------------------------------------------- |
+| [`core`](/packages/core)     | ドメイン | 日付計算・ロケールデータ・グリッド生成・検証                           |
+| [`tui`](/packages/tui)       | 状態     | ヘッドレスなカーソル/選択/ナビゲーション状態マシン                     |
+| [`cli`](/packages/cli)       | 出力     | プレーンテキスト + ANSI 色での描画、CLI バイナリ                       |
+| [`web`](/packages/web)       | 見た目   | テーマ・カラースキーム・セルサイズ・共有 CSS（フレームワーク非依存）   |
+| [`react`](/packages/react)   | 出力     | `<Calendar />` コンポーネント + `useCalendarState` hook                |
+| [`svelte`](/packages/svelte) | 出力     | `Calendar` / `InteractiveCalendar` コンポーネント + `useCalendarState` |
 
 ## Layer 1: core — ドメインロジック
 
@@ -53,12 +53,16 @@ const grid = buildMonthGrid(2026, 9, "sunday");
 すべての操作は**イミュータブル**です。`moveCursor(state, "right")` は元の `state` を変えず、新しい state を返します。これは React/TUI のレンダーループと相性が良い設計です。
 
 ```ts
-import { createCalendarState, moveCursor, navigateMonth } from "@typescript-calendar-lib/tui";
+import {
+  createCalendarState,
+  moveCursor,
+  navigateMonth,
+} from "@typescript-calendar-lib/tui";
 
 let state = createCalendarState({ weekStart: "monday" });
-state = moveCursor(state, "right");       // → 新しい状態
-state = navigateMonth(state, "next");     // → また新しい状態
-state = selectDateAt(state, someDate);    // 指定日付へカーソル移動 + 選択
+state = moveCursor(state, "right"); // → 新しい状態
+state = navigateMonth(state, "next"); // → また新しい状態
+state = selectDateAt(state, someDate); // 指定日付へカーソル移動 + 選択
 ```
 
 ## Layer 3: cli — テキスト出力
@@ -128,15 +132,15 @@ function App() {
 
 ## パッケージの選び方
 
-| やりたいこと | 使うパッケージ |
-| :--- | :--- |
-| ターミナルにテキストで表示 | `cli` |
-| CLI ツールとして使う | `cli`（`typescript-calendar-lib` バイナリ） |
-| React アプリの部品にする | `react` |
-| Svelte アプリの部品にする | `svelte` |
-| Ink / blessed 等の TUI を自作する | `tui` |
-| 独自レンダラーを作る | `core` |
-| テーマを自作して react/svelte に流用する | `web` |
+| やりたいこと                             | 使うパッケージ                              |
+| :--------------------------------------- | :------------------------------------------ |
+| ターミナルにテキストで表示               | `cli`                                       |
+| CLI ツールとして使う                     | `cli`（`typescript-calendar-lib` バイナリ） |
+| React アプリの部品にする                 | `react`                                     |
+| Svelte アプリの部品にする                | `svelte`                                    |
+| Ink / blessed 等の TUI を自作する        | `tui`                                       |
+| 独自レンダラーを作る                     | `core`                                      |
+| テーマを自作して react/svelte に流用する | `web`                                       |
 
 ## 状態管理の思想
 

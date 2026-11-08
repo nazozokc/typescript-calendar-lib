@@ -26,17 +26,17 @@ pnpm hooks:install   # enable git hooks (commit message + typecheck/test)
 
 ## Available scripts
 
-| Script | Description |
-| :--- | :--- |
-| `pnpm build` | Build all packages with tsdown (`pnpm -r run build`) |
-| `pnpm lint` | Biome check across the repo |
-| `pnpm lint:fix` | Biome check with autofix |
-| `pnpm typecheck` | TypeScript typecheck from the root tsconfig + svelte-check for the svelte package |
-| `pnpm test` | Run the vitest suite |
-| `pnpm test:coverage` | Run vitest with v8 coverage report |
-| `pnpm docs:dev` | Start the docs SPA dev server (Vite) |
-| `pnpm docs:build` | Build the docs site to `docs/dist` (Vite) |
-| `pnpm docs:preview` | Preview the built docs site |
+| Script               | Description                                                                       |
+| :------------------- | :-------------------------------------------------------------------------------- |
+| `pnpm build`         | Build all packages with tsdown (`pnpm -r run build`)                              |
+| `pnpm lint`          | Biome check across the repo                                                       |
+| `pnpm lint:fix`      | Biome check with autofix                                                          |
+| `pnpm typecheck`     | TypeScript typecheck from the root tsconfig + svelte-check for the svelte package |
+| `pnpm test`          | Run the vitest suite                                                              |
+| `pnpm test:coverage` | Run vitest with v8 coverage report                                                |
+| `pnpm docs:dev`      | Start the docs SPA dev server (Vite)                                              |
+| `pnpm docs:build`    | Build the docs site to `docs/dist` (Vite)                                         |
+| `pnpm docs:preview`  | Preview the built docs site                                                       |
 
 ## Repository structure
 

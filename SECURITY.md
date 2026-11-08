@@ -2,15 +2,15 @@
 
 ## Supported Versions
 
-| Package | Version | Supported |
-| :--- | :--- | :---: |
-| `@typescript-calendar-lib/core` | 0.1.x | :white_check_mark: |
-| `@typescript-calendar-lib/cli` | 0.1.x | :white_check_mark: |
-| `@typescript-calendar-lib/tui` | 0.2.x | :white_check_mark: |
-| `@typescript-calendar-lib/react` | 0.1.x | :white_check_mark: |
-| `@typescript-calendar-lib/web` | 0.1.x | :white_check_mark: |
-| `@typescript-calendar-lib/svelte` | 0.2.x | :white_check_mark: |
-| Any other version | — | :x: |
+| Package                           | Version |     Supported      |
+| :-------------------------------- | :------ | :----------------: |
+| `@typescript-calendar-lib/core`   | 0.1.x   | :white_check_mark: |
+| `@typescript-calendar-lib/cli`    | 0.1.x   | :white_check_mark: |
+| `@typescript-calendar-lib/tui`    | 0.2.x   | :white_check_mark: |
+| `@typescript-calendar-lib/react`  | 0.1.x   | :white_check_mark: |
+| `@typescript-calendar-lib/web`    | 0.1.x   | :white_check_mark: |
+| `@typescript-calendar-lib/svelte` | 0.2.x   | :white_check_mark: |
+| Any other version                 | —       |        :x:         |
 
 This project is in early development (0.x). Only the latest minor release of each package receives security patches.
 
