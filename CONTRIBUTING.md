@@ -26,17 +26,17 @@ pnpm hooks:install   # enable git hooks (commit message + typecheck/test)
 
 ## Available scripts
 
-| Script | Description |
-| :--- | :--- |
-| `pnpm build` | Build all packages with tsdown (`pnpm -r run build`) |
-| `pnpm lint` | Biome check across the repo |
-| `pnpm lint:fix` | Biome check with autofix |
-| `pnpm typecheck` | TypeScript typecheck from the root tsconfig + svelte-check for the svelte package |
-| `pnpm test` | Run the vitest suite |
-| `pnpm test:coverage` | Run vitest with v8 coverage report |
-| `pnpm docs:dev` | Start the docs SPA dev server (Vite) |
-| `pnpm docs:build` | Build the docs site to `docs/dist` (Vite) |
-| `pnpm docs:preview` | Preview the built docs site |
+| Script               | Description                                                                       |
+| :------------------- | :-------------------------------------------------------------------------------- |
+| `pnpm build`         | Build all packages with tsdown (`pnpm -r run build`)                              |
+| `pnpm lint`          | Biome check across the repo                                                       |
+| `pnpm lint:fix`      | Biome check with autofix                                                          |
+| `pnpm typecheck`     | TypeScript typecheck from the root tsconfig + svelte-check for the svelte package |
+| `pnpm test`          | Run the vitest suite                                                              |
+| `pnpm test:coverage` | Run vitest with v8 coverage report                                                |
+| `pnpm docs:dev`      | Start the docs SPA dev server (Vite)                                              |
+| `pnpm docs:build`    | Build the docs site to `docs/dist` (Vite)                                         |
+| `pnpm docs:preview`  | Preview the built docs site                                                       |
 
 ## Repository structure
 
@@ -129,13 +129,11 @@ Dependabot keeps npm dependencies and GitHub Actions updated weekly.
 
 ## Releases
 
-Releases are triggered by GitHub Releases (`.github/workflows/publish-*.yml`):
+Releases are triggered by GitHub Releases (`.github/workflows/publish.yml`):
 
 1. Create a tag `vX.Y.Z` and a GitHub Release with release notes.
 2. The version from the tag is synced to all packages, then `pnpm -r run build` runs before publishing to npm.
-3. If the release notes contain a `publish:` line, only the listed packages are published (e.g. `publish: cli, react`). Without that line, all packages are published.
-
-> **Risk: `@typescript-calendar-lib/web@1.0.0` already exists on npm.** It was published ahead of the other packages with a stale `@typescript-calendar-lib/core@^0.5.1` dependency. Publishing a tag `v1.0.0` again fails for `web` with `409` (version already exists). **Start the next release from a tag higher than `v1.0.0` (e.g. `v1.0.1`)** so `web` republishes with the corrected `core@^1.0.0` range. Until then, consumers of `react`/`svelte` that resolve `web@1.0.0` install it with `core@0.5.x` (duplicate `core` in the tree).
+3. A single run publishes every package in topological order (`core`, `tui`, `web`, `cli`, `react`, `svelte`). Packages whose version already exists on npm are skipped, so a partially failed run can be retried by re-publishing the release.
 
 ## Docs
 

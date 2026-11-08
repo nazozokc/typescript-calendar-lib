@@ -1,4 +1,4 @@
-name: publish-react
+name: publish
 
 on:
   release:
@@ -8,30 +8,7 @@ permissions:
   contents: read
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
-    outputs:
-      enabled: ${{ steps.check.outputs.enabled }}
-    steps:
-      - name: Check release notes for publish target
-        id: check
-        env:
-          RELEASE_BODY: ${{ github.event.release.body }}
-        run: |
-          pkg="react"
-          lines="$(printf '%s\n' "$RELEASE_BODY" | grep -iE '^[[:space:]]*publish[[:space:]]*:' | sed 's/^[[:space:]]*[Pp]ublish[[:space:]]*:[[:space:]]*//' | tr ',' ' ' | tr '\n' ' ')"
-          if [ -z "$lines" ]; then
-            enabled=true
-          elif printf '%s' "$lines" | grep -qiE "(^|[[:space:],])${pkg}([[:space:],]|$)"; then
-            enabled=true
-          else
-            enabled=false
-          fi
-          echo "enabled=${enabled}" >> "$GITHUB_OUTPUT"
-
-  publish-react:
-    needs: check
-    if: needs.check.outputs.enabled == 'true'
+  publish:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -69,12 +46,22 @@ jobs:
       - name: Build packages
         run: pnpm -r run build
 
-      - name: Publish
+      - name: Publish all packages
         run: |
-          pnpm --filter "@typescript-calendar-lib/react" publish \
-            --no-git-checks \
-            --access public \
-            --provenance \
-            --registry https://registry.npmjs.org/
+          set -euo pipefail
+          version="${{ steps.version.outputs.version }}"
+          # Topological order: consumers are published after their dependencies.
+          for pkg in core tui web cli react svelte; do
+            name="@typescript-calendar-lib/${pkg}"
+            if npm view "${name}@${version}" version >/dev/null 2>&1; then
+              echo "${name}@${version} is already published, skipping"
+              continue
+            fi
+            pnpm --filter "${name}" publish \
+              --no-git-checks \
+              --access public \
+              --provenance \
+              --registry https://registry.npmjs.org/
+          done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
