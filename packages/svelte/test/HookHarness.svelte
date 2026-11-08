@@ -5,6 +5,9 @@
   let {
     initialYear,
     initialMonth,
+    year,
+    month,
+    onMonthChange,
     today,
     highlight,
     range,
@@ -14,6 +17,9 @@
   }: {
     initialYear?: number;
     initialMonth?: number;
+    year?: number;
+    month?: number;
+    onMonthChange?: (year: number, month: number) => void;
     today?: Date;
     highlight?: Date;
     range?: { from: Date; to: Date };
@@ -22,9 +28,17 @@
     selectionMode?: CalendarStateOptions["selectionMode"];
   } = $props();
 
+  let monthChange = $state("none");
+
   const cal = useCalendarState(() => ({
     initialYear,
     initialMonth,
+    year,
+    month,
+    onMonthChange: (y: number, m: number) => {
+      monthChange = `${y}-${m}`;
+      onMonthChange?.(y, m);
+    },
     today,
     highlight,
     range,
@@ -52,7 +66,12 @@
 <span data-testid="highlight">{cal.state.options.highlight?.toISOString() ?? "none"}</span>
 <span data-testid="range-count">{rangeCount()}</span>
 <span data-testid="today-cell">{String(todayCell())}</span>
+<span data-testid="month-change">{monthChange}</span>
 <button type="button" data-testid="next" onclick={cal.goNext}>Next</button>
+<button type="button" data-testid="next-year" onclick={() => cal.navigateYear("next")}>NextYear</button>
+<button type="button" data-testid="prev-year" onclick={() => cal.navigateYear("prev")}>PrevYear</button>
+<button type="button" data-testid="goto" onclick={() => cal.goToMonth(2027, 3)}>GoTo</button>
+<button type="button" data-testid="goto-date" onclick={() => cal.goToDate(new Date(2025, 0, 20))}>GoToDate</button>
 <button type="button" data-testid="prev" onclick={cal.goPrev}>Prev</button>
 <button type="button" data-testid="today" onclick={cal.goToday}>Today</button>
 <button type="button" data-testid="right" onclick={() => cal.moveCursor("right")}>Right</button>

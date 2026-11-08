@@ -1142,3 +1142,81 @@ describe("Calendar アクセシビリティ parity", () => {
     expect(idA).not.toBe(idB);
   });
 });
+
+// ─── 制御モード（year / month）───────────────────────────
+
+describe("useCalendarState 制御モード", () => {
+  test("goNext は内部状態を変えず onMonthChange に翌月を通知する", async () => {
+    const onMonthChange = vi.fn();
+    render(HookHarness, {
+      props: { year: 2026, month: 9, today: TODAY, onMonthChange },
+    });
+    expect(screen.getByTestId("title").textContent).toBe("September 2026");
+
+    await fireEvent.click(screen.getByTestId("next"));
+
+    expect(screen.getByTestId("title").textContent).toBe("September 2026");
+    expect(screen.getByTestId("month-change").textContent).toBe("2026-10");
+    expect(onMonthChange).toHaveBeenCalledTimes(1);
+    expect(onMonthChange).toHaveBeenCalledWith(2026, 10);
+  });
+
+  test("goPrev は年をまたぐ場合も正しい年月を通知する", async () => {
+    const onMonthChange = vi.fn();
+    render(HookHarness, {
+      props: { year: 2026, month: 1, today: TODAY, onMonthChange },
+    });
+    await fireEvent.click(screen.getByTestId("prev"));
+    expect(onMonthChange).toHaveBeenCalledWith(2025, 12);
+  });
+
+  test("year/month を変更すると表示月が追従する", async () => {
+    const result = render(HookHarness, {
+      props: { year: 2026, month: 9, today: TODAY },
+    });
+    expect(screen.getByTestId("title").textContent).toBe("September 2026");
+
+    await result.rerender({ year: 2026, month: 10 });
+    expect(screen.getByTestId("title").textContent).toBe("October 2026");
+  });
+
+  test("制御モードでは props 変更時に onMonthChange を再通知しない", async () => {
+    const onMonthChange = vi.fn();
+    const result = render(HookHarness, {
+      props: { year: 2026, month: 9, today: TODAY, onMonthChange },
+    });
+    await result.rerender({ year: 2026, month: 10 });
+    expect(onMonthChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("useCalendarState 制御モードのナビゲーション委譲", () => {
+  const cases = [
+    ["next-year", 2027, 9],
+    ["prev-year", 2025, 9],
+    ["goto", 2027, 3],
+    ["goto-date", 2025, 1],
+  ] as const;
+
+  for (const [testId, year, month] of cases) {
+    test(`${testId} は状態を変えず onMonthChange を呼ぶ`, async () => {
+      const onMonthChange = vi.fn();
+      render(HookHarness, {
+        props: { year: 2026, month: 9, today: TODAY, onMonthChange },
+      });
+      await fireEvent.click(screen.getByTestId(testId));
+      expect(screen.getByTestId("title").textContent).toBe("September 2026");
+      expect(onMonthChange).toHaveBeenCalledTimes(1);
+      expect(onMonthChange).toHaveBeenCalledWith(year, month);
+    });
+  }
+
+  test("goToday は today の月へ通知する", async () => {
+    const onMonthChange = vi.fn();
+    render(HookHarness, {
+      props: { year: 2030, month: 5, today: TODAY, onMonthChange },
+    });
+    await fireEvent.click(screen.getByTestId("today"));
+    expect(onMonthChange).toHaveBeenCalledWith(2026, 9);
+  });
+});

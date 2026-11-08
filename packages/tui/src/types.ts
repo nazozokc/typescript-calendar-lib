@@ -81,6 +81,13 @@ export interface CalendarStateOptions<T = unknown> {
   initialYear?: number;
   /** 表示開始月 (1–12)。範囲外は正規化される（例: 13 → 翌年1月） */
   initialMonth?: number;
+  /**
+   * 制御モードの表示年。指定すると `initialYear` より優先され、値が変わるたびに
+   * その年月へ再構築される。月移動は `onMonthChange` で通知するだけになる（hook 側の責務）。
+   */
+  year?: number;
+  /** 制御モードの表示月 (1–12)。`year` と同様に `initialMonth` より優先される */
+  month?: number;
   /** 初期カーソル位置。null なら未フォーカス（矢印キーで今日 or 先頭日付にスナップ） */
   initialCursor?: { row: number; col: number } | null;
   /** 今日の基準日。省略時は生成時に new Date() で解決され、状態に固定される */

@@ -74,6 +74,7 @@ jobs:
           pnpm --filter "@typescript-calendar-lib/web" publish \
             --no-git-checks \
             --access public \
+            --provenance \
             --registry https://registry.npmjs.org/
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

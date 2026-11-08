@@ -308,3 +308,57 @@ describe("updateStateOptions", () => {
     ).toThrow(RangeError);
   });
 });
+
+// ─── 制御モード（year / month）───────────────────────────
+
+describe("制御モード（year / month）", () => {
+  test("createCalendarState は year/month を initialYear/initialMonth より優先する", () => {
+    const state = createCalendarState({
+      initialYear: 2020,
+      initialMonth: 1,
+      year: 2026,
+      month: 9,
+      today: TODAY,
+    });
+    expect(state.year).toBe(2026);
+    expect(state.month).toBe(9);
+    expect(state.monthData.year).toBe(2026);
+    expect(state.monthData.month).toBe(9);
+  });
+
+  test("sameStateOptions は year/month の変化を検知する", () => {
+    expect(sameStateOptions({ year: 2026 }, { year: 2027 })).toBe(false);
+    expect(sameStateOptions({ month: 9 }, { month: 10 })).toBe(false);
+    expect(sameStateOptions({ year: 2026, month: 9 }, { year: 2026 })).toBe(
+      false,
+    );
+    expect(sameStateOptions({ year: 2026, month: 9 }, { year: 2026, month: 9 })).toBe(
+      true,
+    );
+  });
+
+  test("updateStateOptions は制御モードの年月に常に従う", () => {
+    const state = createCalendarState({ today: TODAY });
+    // 内部で月移動した状態を作る
+    const moved = updateStateOptions(state, { year: 2026, month: 9 }, {});
+    const controlled = updateStateOptions(
+      moved,
+      { year: 2026, month: 9, locale: "ja" },
+      { year: 2026, month: 9 },
+    );
+    expect(controlled.year).toBe(2026);
+    expect(controlled.month).toBe(9);
+    expect(controlled.monthData.month).toBe(9);
+  });
+
+  test("制御モードの year/month は正規化される", () => {
+    const state = createCalendarState({
+      year: 2026,
+      month: 13,
+      today: TODAY,
+    });
+    expect(state.year).toBe(2027);
+    expect(state.month).toBe(1);
+    expect(state.monthData.month).toBe(1);
+  });
+});

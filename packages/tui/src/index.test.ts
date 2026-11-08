@@ -66,7 +66,20 @@ describe("public exports", () => {
     expect(keyToAction("ArrowUp")).toBe("up");
     expect(keyToAction("PageUp")).toBe("prev");
     expect(keyToAction("PageDown")).toBe("next");
+    expect(keyToAction("Home")).toBe("firstDay");
+    expect(keyToAction("End")).toBe("lastDay");
+    expect(keyToAction("Escape")).toBe("clear");
     expect(keyToAction("Enter")).toBeUndefined();
     expect(keyToAction("a")).toBeUndefined();
+  });
+
+  test("修飾キー付き PageUp/PageDown は年移動になる", () => {
+    expect(keyToAction("PageUp", { ctrlKey: true })).toBe("prevYear");
+    expect(keyToAction("PageDown", { metaKey: true })).toBe("nextYear");
+    expect(keyToAction("PageUp", { shiftKey: true })).toBe("prevYear");
+    expect(keyToAction("PageDown", { altKey: true })).toBe("nextYear");
+    // 修飾キーが無ければ従来どおり月移動
+    expect(keyToAction("PageUp", {})).toBe("prev");
+    expect(keyToAction("PageDown", { ctrlKey: false })).toBe("next");
   });
 });
