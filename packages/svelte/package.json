@@ -51,7 +51,7 @@
     "jsdom": "^30",
     "svelte-check": "^4",
     "typescript": "^5.9.0",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   },
   "author": "nazozokc",
   "homepage": "https://github.com/nazozokc/typescript-calendar-lib#readme",
