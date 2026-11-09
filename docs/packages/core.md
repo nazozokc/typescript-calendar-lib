@@ -439,7 +439,6 @@ formatDate(date, "yyyy年M月d日", "ja"); // "2026年9月25日"
 
 > **Note:** all of the above validate their inputs and throw `RangeError` on invalid values: dates are checked with `assertValidDate`, `add*` amounts must be integers, and `weekStart` must be `"sunday" | "monday"`.
 
-
 ## Holidays
 
 `core` ships a complete Japanese holiday table — fixed-date holidays, happy-Monday
