@@ -406,6 +406,18 @@ describe("formatDate", () => {
     );
   });
 
+  test("MMM は短縮月名、EEEE は完全曜日名", () => {
+    expect(formatDate(date, "MMM d, yyyy (EEEE)")).toBe(
+      "Sep 25, 2026 (Friday)",
+    );
+    expect(formatDate(date, "MMM d (EEEE)", "ja")).toBe("9月 25 (金曜日)");
+    expect(formatDate(date, "MMM (EEEE)", "fr")).toBe("sept. (vendredi)");
+    expect(formatDate(date, "MMM (EEEE)", "de")).toBe("Sept. (Freitag)");
+    expect(formatDate(date, "MMM (EEEE)", "es")).toBe("sept (viernes)");
+    expect(formatDate(date, "MMM (EEEE)", "ko")).toBe("9월 (금요일)");
+    expect(formatDate(date, "MMM (EEEE)", "zh")).toBe("9月 (星期五)");
+  });
+
   test("日本語ロケール", () => {
     expect(formatDate(date, "yyyy年M月d日（EEE）", "ja")).toBe(
       "2026年9月25日（金）",

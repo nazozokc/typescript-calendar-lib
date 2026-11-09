@@ -1,6 +1,6 @@
 {
   "name": "@typescript-calendar-lib/react",
-  "version": "1.0.0",
+  "version": "0.6.0",
   "description": "React 19 calendar components with CSS themes and color schemes",
   "type": "module",
   "repository": {
@@ -41,11 +41,22 @@
     "@types/react": "^19",
     "@types/react-dom": "^19.3.0",
     "jsdom": "^30",
-    "react": "19.3.0",
-    "react-dom": "19.3.0",
-    "vitest": "^5"
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "vitest": "^5.0.5"
   },
   "peerDependencies": {
     "react": "^19"
-  }
+  },
+  "author": "nazozokc",
+  "homepage": "https://github.com/nazozokc/typescript-calendar-lib#readme",
+  "bugs": {
+    "url": "https://github.com/nazozokc/typescript-calendar-lib/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ]
 }

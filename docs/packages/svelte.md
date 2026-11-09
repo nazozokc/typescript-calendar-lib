@@ -71,7 +71,7 @@ Run the component through a Svelte compiler such as Vite or SvelteKit; the packa
 | `year` | `number` | — (required) | Calendar year |
 | `month` | `number` | — (required) | Month, 1-indexed (`1`–`12`) |
 | `locale` | `"en" \| "ja" \| "es" \| "de" \| "fr" \| "ko" \| "zh"` | `"en"` | Language |
-| `holidayLocale` | `"en" \| "ja" \| "es" \| "de" \| "fr" \| "ko" \| "zh"` | `"ja"` | Holiday rules; currently only `"ja"` is provided |
+| `holidayLocale` | `"en" \| "ja" \| "es" \| "de" \| "fr" \| "ko" \| "zh"` | `"ja"` | Holiday rules (fixed-date holidays for every locale; moving holidays such as Easter are not included) |
 | `weekStart` | `"sunday" \| "monday"` | `"sunday"` | First day of the week |
 | `highlight` | `Date` | — | Date to highlight |
 | `range` | `{ from: Date; to: Date }` | — | Dates to emphasize |

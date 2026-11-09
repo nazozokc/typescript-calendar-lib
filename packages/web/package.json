@@ -1,6 +1,6 @@
 {
   "name": "@typescript-calendar-lib/web",
-  "version": "1.0.0",
+  "version": "0.6.0",
   "description": "Shared presentation data (themes, color schemes, sizes, CSS) for web framework calendar components",
   "type": "module",
   "repository": {
@@ -36,6 +36,17 @@
     "@typescript-calendar-lib/core": "workspace:^"
   },
   "devDependencies": {
-    "@tsdown/css": "^0.23.0"
-  }
+    "@tsdown/css": "^0.23.5"
+  },
+  "author": "nazozokc",
+  "homepage": "https://github.com/nazozokc/typescript-calendar-lib#readme",
+  "bugs": {
+    "url": "https://github.com/nazozokc/typescript-calendar-lib/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ]
 }

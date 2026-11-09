@@ -1,4 +1,5 @@
 import type { CalendarOptions } from "@typescript-calendar-lib/core";
+import { createDate, lastDayOfMonth } from "@typescript-calendar-lib/core";
 import type { SelectionMode } from "@typescript-calendar-lib/tui";
 import { keyToAction } from "@typescript-calendar-lib/tui";
 import type { CSSProperties } from "react";
@@ -21,6 +22,10 @@ export interface InteractiveCalendarProps {
   initialYear?: number;
   /** 表示開始月 (1-12)。範囲外は正規化される */
   initialMonth?: number;
+  /** 制御モードの表示年。指定すると initialYear より優先され、月移動は onMonthChange に委譲される */
+  year?: number;
+  /** 制御モードの表示月 (1-12) */
+  month?: number;
   locale?: CalendarOptions["locale"];
   holidayLocale?: CalendarOptions["holidayLocale"];
   weekStart?: CalendarOptions["weekStart"];
@@ -84,6 +89,8 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     range,
     today,
     isDateDisabled,
+    year,
+    month,
     onMonthChange,
     theme,
     colorScheme,
@@ -100,6 +107,8 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
   const hook = useCalendarState({
     initialYear,
     initialMonth,
+    year,
+    month,
     locale,
     holidayLocale,
     weekStart,
@@ -111,8 +120,17 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     onMonthChange,
   });
 
-  const { state, moveCursor, goPrev, goNext, selectDateAt, setHoveredDate } =
-    hook;
+  const {
+    state,
+    moveCursor,
+    goPrev,
+    goNext,
+    navigateYear,
+    setCursorToDate,
+    clearSelection,
+    selectDateAt,
+    setHoveredDate,
+  } = hook;
   const rootRef = useRef<HTMLDivElement>(null);
 
   // クリック（マウス・Enter/Space 共通）で日付を選択する。
@@ -158,7 +176,7 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
 
   const handleKeyDown = useCallback(
     (e: Parameters<NonNullable<CalendarProps["onKeyDown"]>>[0]) => {
-      const action = keyToAction(e.key);
+      const action = keyToAction(e.key, e);
       if (action === undefined) return;
       e.preventDefault();
       switch (action) {
@@ -168,11 +186,35 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
         case "next":
           goNext();
           break;
+        case "prevYear":
+          navigateYear("prev");
+          break;
+        case "nextYear":
+          navigateYear("next");
+          break;
+        case "firstDay":
+          setCursorToDate(createDate(state.year, state.month - 1, 1));
+          break;
+        case "lastDay":
+          setCursorToDate(lastDayOfMonth(state.year, state.month));
+          break;
+        case "clear":
+          clearSelection();
+          break;
         default:
           moveCursor(action);
       }
     },
-    [moveCursor, goPrev, goNext],
+    [
+      moveCursor,
+      goPrev,
+      goNext,
+      navigateYear,
+      setCursorToDate,
+      clearSelection,
+      state.year,
+      state.month,
+    ],
   );
 
   return (

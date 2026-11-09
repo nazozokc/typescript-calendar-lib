@@ -1544,3 +1544,247 @@ describe("InteractiveCalendar", () => {
     expect(cursorBtn!.getAttribute("aria-label")).toMatch(/September 1/);
   });
 });
+
+// ─── 制御モード（year / month）───────────────────────────
+
+function ControlledHarness({
+  year,
+  month,
+  onMonthChange,
+}: {
+  year: number;
+  month: number;
+  onMonthChange?: (year: number, month: number) => void;
+}) {
+  const { state, goNext, goPrev, navigateYear, goToMonth, goToDate, goToday } =
+    useCalendarState({
+      year,
+      month,
+      today: TODAY,
+      onMonthChange,
+    });
+
+  return createElement(
+    "div",
+    null,
+    createElement("span", { "data-testid": "title" }, state.monthData.title),
+    createElement(
+      "button",
+      { type: "button", "data-testid": "next", onClick: goNext },
+      "Next",
+    ),
+    createElement(
+      "button",
+      { type: "button", "data-testid": "prev", onClick: goPrev },
+      "Prev",
+    ),
+    createElement(
+      "button",
+      {
+        type: "button",
+        "data-testid": "next-year",
+        onClick: () => navigateYear("next"),
+      },
+      "NextYear",
+    ),
+    createElement(
+      "button",
+      {
+        type: "button",
+        "data-testid": "prev-year",
+        onClick: () => navigateYear("prev"),
+      },
+      "PrevYear",
+    ),
+    createElement(
+      "button",
+      {
+        type: "button",
+        "data-testid": "goto",
+        onClick: () => goToMonth(2027, 3),
+      },
+      "GoTo",
+    ),
+    createElement(
+      "button",
+      {
+        type: "button",
+        "data-testid": "goto-date",
+        onClick: () => goToDate(new Date(2025, 0, 20)),
+      },
+      "GoToDate",
+    ),
+    createElement(
+      "button",
+      { type: "button", "data-testid": "today", onClick: goToday },
+      "Today",
+    ),
+  );
+}
+
+describe("useCalendarState 制御モード", () => {
+  test("goNext は内部状態を変えず onMonthChange に翌月を通知する", () => {
+    const onMonthChange = vi.fn();
+    render(
+      createElement(ControlledHarness, {
+        year: 2026,
+        month: 9,
+        onMonthChange,
+      }),
+    );
+    expect(screen.getByTestId("title").textContent).toBe("September 2026");
+
+    fireEvent.click(screen.getByTestId("next"));
+
+    expect(screen.getByTestId("title").textContent).toBe("September 2026");
+    expect(onMonthChange).toHaveBeenCalledTimes(1);
+    expect(onMonthChange).toHaveBeenCalledWith(2026, 10);
+  });
+
+  test("goPrev は年をまたぐ場合も正しい年月を通知する", () => {
+    const onMonthChange = vi.fn();
+    render(
+      createElement(ControlledHarness, {
+        year: 2026,
+        month: 1,
+        onMonthChange,
+      }),
+    );
+    fireEvent.click(screen.getByTestId("prev"));
+    expect(onMonthChange).toHaveBeenCalledWith(2025, 12);
+  });
+
+  test("year/month を変更すると表示月が追従する", () => {
+    const { rerender } = render(
+      createElement(ControlledHarness, { year: 2026, month: 9 }),
+    );
+    expect(screen.getByTestId("title").textContent).toBe("September 2026");
+
+    rerender(createElement(ControlledHarness, { year: 2026, month: 10 }));
+    expect(screen.getByTestId("title").textContent).toBe("October 2026");
+  });
+
+  test("制御モードでは props 変更時に onMonthChange を再通知しない", () => {
+    const onMonthChange = vi.fn();
+    const { rerender } = render(
+      createElement(ControlledHarness, {
+        year: 2026,
+        month: 9,
+        onMonthChange,
+      }),
+    );
+    rerender(
+      createElement(ControlledHarness, {
+        year: 2026,
+        month: 10,
+        onMonthChange,
+      }),
+    );
+    expect(onMonthChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("useCalendarState 制御モードのナビゲーション委譲", () => {
+  const cases = [
+    ["next-year", 2027, 9],
+    ["prev-year", 2025, 9],
+    ["goto", 2027, 3],
+    ["goto-date", 2025, 1],
+    ["today", 2026, 9],
+  ] as const;
+
+  for (const [testId, year, month] of cases) {
+    test(`${testId} は状態を変えず onMonthChange を呼ぶ`, () => {
+      const onMonthChange = vi.fn();
+      render(
+        createElement(ControlledHarness, {
+          year: 2026,
+          month: 9,
+          onMonthChange,
+        }),
+      );
+      fireEvent.click(screen.getByTestId(testId));
+      expect(screen.getByTestId("title").textContent).toBe("September 2026");
+      expect(onMonthChange).toHaveBeenCalledTimes(1);
+      expect(onMonthChange).toHaveBeenCalledWith(year, month);
+    });
+  }
+
+  test("goToday は today の月へ通知する", () => {
+    const onMonthChange = vi.fn();
+    render(
+      createElement(ControlledHarness, {
+        year: 2030,
+        month: 5,
+        onMonthChange,
+      }),
+    );
+    fireEvent.click(screen.getByTestId("today"));
+    expect(onMonthChange).toHaveBeenCalledWith(2026, 9);
+  });
+});
+
+// ─── InteractiveCalendar 拡張キーボード ──────────────────
+
+describe("InteractiveCalendar 拡張キーボード", () => {
+  test("Home / End で月の先頭・末尾へカーソルが移動する", () => {
+    render(
+      createElement(InteractiveCalendar, {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+      }),
+    );
+    const btn = screen.getByRole("button", { name: /September 15, 2026/ });
+    btn.focus();
+
+    fireEvent.keyDown(btn, { key: "Home" });
+    expect(
+      screen.getByRole("button", { name: /September 1, 2026/ }),
+    ).toHaveAttribute("tabindex", "0");
+
+    fireEvent.keyDown(document.activeElement as Element, { key: "End" });
+    expect(
+      screen.getByRole("button", { name: /September 30, 2026/ }),
+    ).toHaveAttribute("tabindex", "0");
+  });
+
+  test("Escape で選択が解除される", () => {
+    render(
+      createElement(InteractiveCalendar, {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+      }),
+    );
+    const cell = screen.getByRole("button", { name: /September 15, 2026/ });
+    fireEvent.click(cell);
+    expect(cell).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.keyDown(document.activeElement as Element, { key: "Escape" });
+    expect(
+      screen.getByRole("button", { name: /September 15, 2026/ }),
+    ).toHaveAttribute("aria-pressed", "false");
+  });
+
+  test("Ctrl+PageDown / Ctrl+PageUp で年移動する", () => {
+    render(
+      createElement(InteractiveCalendar, {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+      }),
+    );
+    const btn = screen.getByRole("button", { name: /September 15, 2026/ });
+    btn.focus();
+
+    fireEvent.keyDown(btn, { key: "PageDown", ctrlKey: true });
+    expect(screen.getByText("September 2027")).toBeInTheDocument();
+
+    fireEvent.keyDown(document.activeElement as Element, {
+      key: "PageUp",
+      ctrlKey: true,
+    });
+    expect(screen.getByText("September 2026")).toBeInTheDocument();
+  });
+});

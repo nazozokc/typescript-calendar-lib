@@ -1,0 +1,79 @@
+name: publish
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org/
+          cache: pnpm
+
+      - name: Get version from tag
+        id: version
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          version="${tag#v}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Sync package versions
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          for pkg in core tui web cli react svelte; do
+            npm --prefix "packages/${pkg}" pkg set "version=${version}"
+          done
+
+      - name: Build packages
+        run: pnpm -r run build
+
+      - name: Publish all packages
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.version }}"
+          # Topological order: consumers are published after their dependencies.
+          for pkg in core tui web cli react svelte; do
+            name="@typescript-calendar-lib/${pkg}"
+            if npm view "${name}@${version}" version >/dev/null 2>&1; then
+              echo "${name}@${version} is already published, skipping"
+              continue
+            fi
+            pnpm --filter "${name}" publish \
+              --no-git-checks \
+              --access public \
+              --provenance \
+              --registry https://registry.npmjs.org/
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Point latest dist-tags at this release
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.version }}"
+          # pnpm only moves `latest` when the published version is the highest,
+          # so pin it explicitly (e.g. web@1.0.0 exists while the release is 0.6.0).
+          for pkg in core tui web cli react svelte; do
+            npm dist-tag add "@typescript-calendar-lib/${pkg}@${version}" latest
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

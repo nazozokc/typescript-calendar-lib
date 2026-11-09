@@ -230,16 +230,19 @@ describe("祝日・営業日のプロパティ", () => {
     );
   });
 
-  test("非 ja ロケールでは祝日にならない", () => {
+  test("ロケールごとに isHoliday と getHolidayName が一致する", () => {
     fc.assert(
       fc.property(
         businessDateArbitrary,
         fc.constantFrom(...nonJapaneseLocales),
         (date, locale) => {
-          const japaneseHolidayName = getHolidayName(date, "ja");
-          expect(isHoliday(date, "ja")).toBe(japaneseHolidayName !== undefined);
-          expect(isHoliday(date, locale)).toBe(false);
-          expect(getHolidayName(date, locale)).toBeUndefined();
+          expect(isHoliday(date, locale)).toBe(
+            getHolidayName(date, locale) !== undefined,
+          );
+          // ja の判定とは独立している（同じ日が ja では祝日でなくてもよい）
+          expect(isHoliday(date, "ja")).toBe(
+            getHolidayName(date, "ja") !== undefined,
+          );
         },
       ),
       FC_OPTIONS,

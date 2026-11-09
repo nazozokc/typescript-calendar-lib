@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { CalendarCellState, CalendarOptions } from "@typescript-calendar-lib/core";
+  import { createDate, lastDayOfMonth } from "@typescript-calendar-lib/core";
   import type { SelectionMode } from "@typescript-calendar-lib/tui";
   import { keyToAction } from "@typescript-calendar-lib/tui";
   import type { Snippet } from "svelte";
@@ -22,6 +23,10 @@
     initialYear?: number;
     /** 表示開始月 (1-12)。範囲外は正規化される */
     initialMonth?: number;
+    /** 制御モードの表示年。指定すると initialYear より優先され、月移動は onMonthChange に委譲される */
+    year?: number;
+    /** 制御モードの表示月 (1-12) */
+    month?: number;
     locale?: CalendarOptions["locale"];
     holidayLocale?: CalendarOptions["holidayLocale"];
     weekStart?: CalendarOptions["weekStart"];
@@ -80,6 +85,8 @@
     selectionMode,
     today,
     isDateDisabled,
+    year,
+    month,
     onMonthChange,
     theme,
     colorScheme,
@@ -96,6 +103,8 @@
   const cal = useCalendarState(() => ({
     initialYear,
     initialMonth,
+    year,
+    month,
     locale,
     holidayLocale,
     weekStart,
@@ -142,7 +151,7 @@
   });
 
   const handleKeyDown = (event: KeyboardEvent) => {
-    const action = keyToAction(event.key);
+    const action = keyToAction(event.key, event);
     if (action === undefined) return;
     event.preventDefault();
     switch (action) {
@@ -151,6 +160,21 @@
         break;
       case "next":
         cal.goNext();
+        break;
+      case "prevYear":
+        cal.navigateYear("prev");
+        break;
+      case "nextYear":
+        cal.navigateYear("next");
+        break;
+      case "firstDay":
+        cal.setCursorToDate(createDate(cal.state.year, cal.state.month - 1, 1));
+        break;
+      case "lastDay":
+        cal.setCursorToDate(lastDayOfMonth(cal.state.year, cal.state.month));
+        break;
+      case "clear":
+        cal.clearSelection();
         break;
       default:
         cal.moveCursor(action);

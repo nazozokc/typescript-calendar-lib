@@ -2,6 +2,7 @@
 import { createRequire } from "node:module";
 import type {
   HighlightStyle,
+  HolidayLocale,
   Locale,
   WeekStart,
 } from "@typescript-calendar-lib/core";
@@ -22,7 +23,7 @@ export interface CliArgs {
   color?: boolean;
   noColor?: boolean;
   locale?: Locale;
-  holidayLocale?: Locale;
+  holidayLocale?: HolidayLocale;
   weekStart?: WeekStart;
   weekNumbers?: boolean;
   highlight?: Date;
@@ -287,7 +288,7 @@ Options:
   --color                  Enable ANSI colors (auto-detected for TTY)
   --no-color               Disable ANSI colors
   --locale <lang>          Language: ${LOCALE_LIST.join(" | ")} (default: en)
-  --holiday-locale <lang>  Holiday rules: currently only ja (default: ja)
+  --holiday-locale <lang>  Holiday rules: en | ja | es | de | fr | ko | zh (default: ja)
   --week-start <day>       First weekday: sunday | monday (default: sunday)
   --week-numbers           Print the week number at the start of each row
   --highlight <YYYY-MM-DD> Highlight a date (e.g. 2026-09-08)

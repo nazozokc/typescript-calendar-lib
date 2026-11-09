@@ -19,6 +19,8 @@ export function sameStateOptions<T>(
   return (
     a.initialYear === b.initialYear &&
     a.initialMonth === b.initialMonth &&
+    a.year === b.year &&
+    a.month === b.month &&
     a.locale === b.locale &&
     a.holidayLocale === b.holidayLocale &&
     a.weekStart === b.weekStart &&
@@ -50,14 +52,16 @@ export function updateStateOptions<T>(
     selectionMode: next.selectionMode ?? state.options.selectionMode,
   });
   const year =
-    next.initialYear !== undefined && next.initialYear !== previous.initialYear
+    next.year ??
+    (next.initialYear !== undefined && next.initialYear !== previous.initialYear
       ? next.initialYear
-      : state.year;
+      : state.year);
   const month =
-    next.initialMonth !== undefined &&
+    next.month ??
+    (next.initialMonth !== undefined &&
     next.initialMonth !== previous.initialMonth
       ? next.initialMonth
-      : state.month;
+      : state.month);
   const monthData = buildMonthData(year, month, options);
   return rebuildState(
     year,
