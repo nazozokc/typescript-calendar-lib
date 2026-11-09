@@ -8,7 +8,7 @@ A TypeScript calendar library spanning the terminal and the web. Render month, y
 - **7 locales** — English, Japanese, Spanish, German, French, Korean, Chinese (Simplified)
 - **Week start** — Sunday or Monday
 - **Highlight today** — bracket (`[8]`) or reverse-video styles
-- **Holidays** — `holidayLocale` flags holiday dates (colored in the CLI, `is-holiday` class in the web layers; currently Japanese rules)
+- **Holidays** — `holidayLocale` flags holiday dates (colored in the CLI, `is-holiday` class in the web layers; fixed-date rules for all 7 locales)
 - **Range coloring** — emphasize a span of dates (opt-in)
 - **Disabled dates** — block dates with an `isDateDisabled` predicate in every layer (cursor skips them, selection is blocked)
 - **Range selection** — `selectionMode: "range"` (React/Svelte/TUI) commits a start–end range with a click sequence: anchor → range → reset
@@ -194,7 +194,7 @@ Render a single month.
 | `year`            | `number`                                               | —            | Calendar year (e.g. `2026`)                                                                                                     |
 | `month`           | `number`                                               | —            | Month, 1-indexed (`1`–`12`)                                                                                                     |
 | `locale`          | `"en" \| "ja" \| "es" \| "de" \| "fr" \| "ko" \| "zh"` | `"en"`       | Language                                                                                                                        |
-| `holidayLocale`   | `"en" \| "ja" \| "es" \| "de" \| "fr" \| "ko" \| "zh"` | `"ja"`       | Holiday rules; currently only `"ja"` is provided                                                                                |
+| `holidayLocale`   | `"en" \| "ja" \| "es" \| "de" \| "fr" \| "ko" \| "zh"` | `"ja"`       | Holiday rules (fixed-date holidays for every locale; moving holidays such as Easter are not included)                           |
 | `weekStart`       | `"sunday" \| "monday"`                                 | `"sunday"`   | First day of the week                                                                                                           |
 | `highlight`       | `Date`                                                 | —            | Date to highlight (e.g. today)                                                                                                  |
 | `highlightStyle`  | `"bracket" \| "reverse"`                               | `"bracket"`  | Highlight appearance                                                                                                            |

@@ -180,15 +180,44 @@ describe("祝日（主要年）", () => {
     expect(getHolidayName(createDate(1973, 3, 30))).toBe("振替休日");
   });
 
-  test("範囲外の年・ロケール", () => {
+  test("範囲外の年", () => {
     expect(isHoliday(createDate(1948, 10, 3))).toBe(false); // 1948-11-03 文化の日は対象外
     expect(isHoliday(createDate(2101, 0, 1))).toBe(false); // 上限超
     expect(getHolidayName(createDate(2101, 0, 1))).toBeUndefined();
-    expect(isHoliday(createDate(2026, 0, 1), "en")).toBe(false);
-    expect(getHolidayName(createDate(2026, 0, 1), "en")).toBeUndefined();
     expect(HOLIDAY_MIN_YEAR).toBe(1949);
     expect(HOLIDAY_MAX_YEAR).toBe(2100);
     expect(() => isHoliday(new Date("invalid"))).toThrow(RangeError);
+  });
+
+  test("ja 以外のロケールは固定日祝日を返す", () => {
+    const cases = [
+      ["en", 2026, 7, 4, "Independence Day"],
+      ["de", 2026, 10, 3, "Tag der Deutschen Einheit"],
+      ["fr", 2026, 7, 14, "Fête Nationale"],
+      ["es", 2026, 10, 12, "Fiesta Nacional de España"],
+      ["ko", 2026, 3, 1, "삼일절"],
+      ["zh", 2026, 10, 1, "国庆节"],
+    ] as const;
+    for (const [locale, year, month, day, name] of cases) {
+      expect(getHolidayName(createDate(year, month - 1, day), locale)).toBe(
+        name,
+      );
+      expect(isHoliday(createDate(year, month - 1, day), locale)).toBe(true);
+    }
+    // 日本の祝日は ja 以外では祝日にならない（例: 2026-05-04 みどりの日）
+    expect(isHoliday(createDate(2026, 4, 4), "en")).toBe(false);
+    // アメリカの祝日は ja では祝日にならない（例: 2026-07-04）
+    expect(isHoliday(createDate(2026, 6, 4), "ja")).toBe(false);
+  });
+
+  test("固定日祝日の施行年（since）が反映される", () => {
+    // Juneteenth は 2021 年から
+    expect(isHoliday(createDate(2020, 5, 19), "en")).toBe(false);
+    expect(isHoliday(createDate(2021, 5, 19), "en")).toBe(true);
+    // 韓国のハングルの日は 1991-2012 の間は祝日ではない
+    expect(isHoliday(createDate(1995, 9, 9), "ko")).toBe(false);
+    expect(isHoliday(createDate(1989, 9, 9), "ko")).toBe(true);
+    expect(isHoliday(createDate(2013, 9, 9), "ko")).toBe(true);
   });
 });
 

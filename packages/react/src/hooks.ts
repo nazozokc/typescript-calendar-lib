@@ -40,6 +40,13 @@ export interface UseCalendarStateOptions
   > {
   initialYear?: number;
   initialMonth?: number;
+  /**
+   * 制御モードの表示年。指定すると `initialYear` より優先され、値が変わるたびに
+   * その年月へ再構築される。月移動は内部状態を変えず `onMonthChange` に通知する。
+   */
+  year?: number;
+  /** 制御モードの表示月 (1–12)。`year` と併用する */
+  month?: number;
   /** 表示中の年月が変わったときに呼ばれる */
   onMonthChange?: (year: number, month: number) => void;
 }
@@ -104,6 +111,16 @@ export function useCalendarState(
   // ホバー中の日付は React ローカル state で保持する（tui 状態には入れない）。
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
 
+  // 制御モード（year/month を外部から渡す）かどうか。
+  // 制御モードでは月移動は内部状態を変えず onMonthChange に委譲する。
+  const controlled = options.year !== undefined || options.month !== undefined;
+  const controlledRef = useRef(controlled);
+  controlledRef.current = controlled;
+
+  // 最新 state を参照するための ref（controlled 分岐で同期的に次月を計算する）
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
   // options の「値の変化」を検知して状態を再構築する。
   // 初回は prevOptions が同一なので何もしない。値が同じままの再レンダリング
   // でも何もしないため、インラインリテラルを毎回渡しても無限ループしない。
@@ -119,14 +136,17 @@ export function useCalendarState(
   const onMonthChangeRef = useRef(options.onMonthChange);
   onMonthChangeRef.current = options.onMonthChange;
 
-  // 表示月が変わったら onMonthChange を通知し、古い月を指すホバーをクリアする
+  // 表示月が変わったら onMonthChange を通知し、古い月を指すホバーをクリアする。
+  // 制御モードでは props 側が月を決めているので再通知しない（二重通知の抑止）。
   const prevMonthRef = useRef({ year: state.year, month: state.month });
   useEffect(() => {
     const prev = prevMonthRef.current;
     if (prev.year !== state.year || prev.month !== state.month) {
       prevMonthRef.current = { year: state.year, month: state.month };
-      onMonthChangeRef.current?.(state.year, state.month);
       setHoveredDate(null);
+      if (!controlledRef.current) {
+        onMonthChangeRef.current?.(state.year, state.month);
+      }
     }
   }, [state.year, state.month]);
 
@@ -136,29 +156,54 @@ export function useCalendarState(
       (direction: Direction) => setState((prev) => moveCursor(prev, direction)),
       [],
     ),
-    goNext: useCallback(
-      () => setState((prev) => navigateMonth(prev, "next")),
-      [],
-    ),
-    goPrev: useCallback(
-      () => setState((prev) => navigateMonth(prev, "prev")),
-      [],
-    ),
-    navigateYear: useCallback(
-      (direction: MonthDirection) =>
-        setState((prev) => navigateYear(prev, direction)),
-      [],
-    ),
-    goToMonth: useCallback(
-      (year: number, month: number) =>
-        setState((prev) => goToMonth(prev, year, month)),
-      [],
-    ),
-    goToDate: useCallback(
-      (date: Date) => setState((prev) => goToDate(prev, date)),
-      [],
-    ),
-    goToday: useCallback(() => setState((prev) => goToToday(prev)), []),
+    goNext: useCallback(() => {
+      if (controlledRef.current) {
+        const next = navigateMonth(stateRef.current, "next");
+        onMonthChangeRef.current?.(next.year, next.month);
+        return;
+      }
+      setState((prev) => navigateMonth(prev, "next"));
+    }, []),
+    goPrev: useCallback(() => {
+      if (controlledRef.current) {
+        const next = navigateMonth(stateRef.current, "prev");
+        onMonthChangeRef.current?.(next.year, next.month);
+        return;
+      }
+      setState((prev) => navigateMonth(prev, "prev"));
+    }, []),
+    navigateYear: useCallback((direction: MonthDirection) => {
+      if (controlledRef.current) {
+        const next = navigateYear(stateRef.current, direction);
+        onMonthChangeRef.current?.(next.year, next.month);
+        return;
+      }
+      setState((prev) => navigateYear(prev, direction));
+    }, []),
+    goToMonth: useCallback((year: number, month: number) => {
+      if (controlledRef.current) {
+        const next = goToMonth(stateRef.current, year, month);
+        onMonthChangeRef.current?.(next.year, next.month);
+        return;
+      }
+      setState((prev) => goToMonth(prev, year, month));
+    }, []),
+    goToDate: useCallback((date: Date) => {
+      if (controlledRef.current) {
+        const next = goToDate(stateRef.current, date);
+        onMonthChangeRef.current?.(next.year, next.month);
+        return;
+      }
+      setState((prev) => goToDate(prev, date));
+    }, []),
+    goToday: useCallback(() => {
+      if (controlledRef.current) {
+        const next = goToToday(stateRef.current);
+        onMonthChangeRef.current?.(next.year, next.month);
+        return;
+      }
+      setState((prev) => goToToday(prev));
+    }, []),
     selectDate: useCallback(() => setState((prev) => selectDate(prev)), []),
     setCursorToDate: useCallback(
       (date: Date) => setState((prev) => setCursorToDate(prev, date)),

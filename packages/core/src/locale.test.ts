@@ -10,8 +10,11 @@ describe("LOCALES", () => {
 
   test("全ロケールが7曜日のヘッダを持つ", () => {
     for (const locale of Object.keys(LOCALES) as (keyof typeof LOCALES)[]) {
+      expect(LOCALES[locale].months).toHaveLength(12);
+      expect(LOCALES[locale].monthsShort).toHaveLength(12);
       expect(LOCALES[locale].weekdays).toHaveLength(7);
       expect(LOCALES[locale].weekdaysShort).toHaveLength(7);
+      expect(LOCALES[locale].weekdaysLong).toHaveLength(7);
       expect(LOCALES[locale].weekdaysMonday).toHaveLength(7);
       expect(LOCALES[locale].weekdaysMondayShort).toHaveLength(7);
     }

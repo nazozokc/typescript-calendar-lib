@@ -24,8 +24,8 @@ export function createCalendarState<T>(
 ): CalendarState<T> {
   const resolved = resolveOptions<T>(options);
   const { year, month } = shiftMonth(
-    options.initialYear ?? resolved.today.getFullYear(),
-    options.initialMonth ?? resolved.today.getMonth() + 1,
+    options.year ?? options.initialYear ?? resolved.today.getFullYear(),
+    options.month ?? options.initialMonth ?? resolved.today.getMonth() + 1,
     0,
   );
 
