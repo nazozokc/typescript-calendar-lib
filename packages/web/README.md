@@ -56,8 +56,13 @@ Color schemes are maps of `--cal-*` CSS custom properties applied to the root el
 
 ```ts
 type ColorSchemeName =
-  | "default" | "ocean" | "forest" | "sunset"
-  | "mono" | "midnight" | "blossom";
+  | "default"
+  | "ocean"
+  | "forest"
+  | "sunset"
+  | "mono"
+  | "midnight"
+  | "blossom";
 ```
 
 ### `WebColorScheme`
@@ -68,24 +73,24 @@ type WebColorScheme = Record<`--cal-${string}`, string>;
 
 Available variables:
 
-| Variable | Purpose |
-| :--- | :--- |
-| `--cal-bg` | Background |
-| `--cal-fg` | Foreground |
-| `--cal-accent` | Accent (highlight) |
-| `--cal-weekend-fg` | Weekend foreground |
-| `--cal-holiday-fg` | Holiday foreground |
-| `--cal-border` | Borders |
-| `--cal-header-bg` | Header background |
-| `--cal-highlight-bg` | Highlight background |
-| `--cal-highlight-fg` | Highlight foreground |
-| `--cal-range-bg` | Range background |
+| Variable                 | Purpose                                                   |
+| :----------------------- | :-------------------------------------------------------- |
+| `--cal-bg`               | Background                                                |
+| `--cal-fg`               | Foreground                                                |
+| `--cal-accent`           | Accent (highlight)                                        |
+| `--cal-weekend-fg`       | Weekend foreground                                        |
+| `--cal-holiday-fg`       | Holiday foreground                                        |
+| `--cal-border`           | Borders                                                   |
+| `--cal-header-bg`        | Header background                                         |
+| `--cal-highlight-bg`     | Highlight background                                      |
+| `--cal-highlight-fg`     | Highlight foreground                                      |
+| `--cal-range-bg`         | Range background                                          |
 | `--cal-range-preview-bg` | Range preview background (falls back to `--cal-range-bg`) |
-| `--cal-today-bg` | Today background |
-| `--cal-today-fg` | Today foreground |
-| `--cal-selected-bg` | Selected cell background |
-| `--cal-selected-fg` | Selected cell foreground |
-| `--cal-disabled-fg` | Disabled date foreground |
+| `--cal-today-bg`         | Today background                                          |
+| `--cal-today-fg`         | Today foreground                                          |
+| `--cal-selected-bg`      | Selected cell background                                  |
+| `--cal-selected-fg`      | Selected cell foreground                                  |
+| `--cal-disabled-fg`      | Disabled date foreground                                  |
 
 `calendar.css` also uses a CSS-only `--cal-hover-bg` (falls back to `--cal-range-bg`) for the interactive hover state; set it in your own CSS or on the root element.
 
@@ -153,7 +158,11 @@ Maps an already-computed `CalendarCellState` (from core) to the state classes â€
 Only the positional classes derived by comparing dates â€” `is-in-range-preview`, `is-hovered`, `is-selected`, `is-cursor`. Combine it with `getCellStateClasses` when you already hold the cell state:
 
 ```ts
-import { getCellStateClasses, getSelectionCellClasses, joinCellClassLists } from "@typescript-calendar-lib/web";
+import {
+  getCellStateClasses,
+  getSelectionCellClasses,
+  joinCellClassLists,
+} from "@typescript-calendar-lib/web";
 
 const state = getCalendarCellState(date, options);
 const className = joinCellClassLists(

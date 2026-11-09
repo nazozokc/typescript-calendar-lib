@@ -45,9 +45,15 @@ export function CalendarDemo() {
           alignItems: "center",
         }}
       >
-        <button type="button" onClick={goPrev}>‹</button>
-        <button type="button" onClick={goNext}>›</button>
-        <button type="button" onClick={goToday}>Today</button>
+        <button type="button" onClick={goPrev}>
+          ‹
+        </button>
+        <button type="button" onClick={goNext}>
+          ›
+        </button>
+        <button type="button" onClick={goToday}>
+          Today
+        </button>
         <span>{state.monthData.title}</span>
       </div>
 
@@ -65,8 +71,12 @@ export function CalendarDemo() {
         <p>Cursor: {cursorDate?.toDateString() ?? "—"}</p>
         <p>Selected: {selectedDate?.toDateString() ?? "—"}</p>
         <div style={{ display: "flex", gap: "0.5rem" }}>
-          <button type="button" onClick={selectDate}>Select</button>
-          <button type="button" onClick={clearSelection}>Clear</button>
+          <button type="button" onClick={selectDate}>
+            Select
+          </button>
+          <button type="button" onClick={clearSelection}>
+            Clear
+          </button>
         </div>
       </div>
     </div>
@@ -191,13 +201,7 @@ function KeyboardCalendar() {
     return () => window.removeEventListener("keydown", onKey);
   }, [moveCursor]);
 
-  return (
-    <Calendar
-      year={state.year}
-      month={state.month}
-      interactive
-    />
-  );
+  return <Calendar year={state.year} month={state.month} interactive />;
 }
 ```
 
@@ -220,16 +224,36 @@ let state = createCalendarState({ weekStart: "monday" });
 
 function onKey(key: string) {
   switch (key) {
-    case "left":  state = moveCursor(state, "left");    break;
-    case "right": state = moveCursor(state, "right");   break;
-    case "up":    state = moveCursor(state, "up");      break;
-    case "down":  state = moveCursor(state, "down");    break;
-    case "p":     state = navigateMonth(state, "prev"); break;
-    case "n":     state = navigateMonth(state, "next"); break;
-    case "y-":    state = navigateYear(state, "prev");  break;
-    case "y+":    state = navigateYear(state, "next");  break;
-    case "enter": state = selectDate(state);            break;
-    case "esc":   state = clearSelection(state);        break;
+    case "left":
+      state = moveCursor(state, "left");
+      break;
+    case "right":
+      state = moveCursor(state, "right");
+      break;
+    case "up":
+      state = moveCursor(state, "up");
+      break;
+    case "down":
+      state = moveCursor(state, "down");
+      break;
+    case "p":
+      state = navigateMonth(state, "prev");
+      break;
+    case "n":
+      state = navigateMonth(state, "next");
+      break;
+    case "y-":
+      state = navigateYear(state, "prev");
+      break;
+    case "y+":
+      state = navigateYear(state, "next");
+      break;
+    case "enter":
+      state = selectDate(state);
+      break;
+    case "esc":
+      state = clearSelection(state);
+      break;
   }
   draw(state); // フレームワークの描画関数に state を渡す
 }
@@ -248,10 +272,10 @@ import {
 } from "@typescript-calendar-lib/tui";
 
 const data = state.monthData;
-const today = findTodayCell(data);                          // 今日のセル位置
-const first = findFirstDayCell(data);                       // 先頭の日付セル
-const target = findDateCell(data, new Date(2026, 8, 8));    // 指定日のセル位置
-const clamped = clampCursor({ row: 9, col: 9 }, data);      // 範囲に収める
+const today = findTodayCell(data); // 今日のセル位置
+const first = findFirstDayCell(data); // 先頭の日付セル
+const target = findDateCell(data, new Date(2026, 8, 8)); // 指定日のセル位置
+const clamped = clampCursor({ row: 9, col: 9 }, data); // 範囲に収める
 ```
 
 ## CLI: ターミナルで確認

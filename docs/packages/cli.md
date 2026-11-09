@@ -47,25 +47,27 @@ console.log(calendarYear({ year: 2026 }));
 Render every month from `from` to `to` (inclusive), each on its own block:
 
 ```ts
-console.log(calendarRange({
-  from: new Date(2026, 5, 1),
-  to: new Date(2026, 8, 30),
-}));
+console.log(
+  calendarRange({
+    from: new Date(2026, 5, 1),
+    to: new Date(2026, 8, 30),
+  }),
+);
 ```
 
 ### Options
 
 All options from [`core`](/packages/core) are supported, plus these CLI-specific extras:
 
-| Option | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `theme` | `ThemeName \| CliTheme` | `"default"` | Visual theme (`"default"` \| `"modern"`) or custom theme object |
-| `colorScheme` | `ColorSchemeName \| CliPalette` | `"default"` | Color scheme, active when `color: true` |
-| `today` | `Date` | `new Date()` | Reference date for "today" coloring |
-| `isDateDisabled` | `(date: Date) => boolean` | — | Mark dates as non-selectable; rendered with the `dim` color |
-| `cellData` | `(date: Date) => unknown` | — | Resolve per-cell data; passed to `renderCell` |
-| `renderCell` | `(day, date, state, data?) => string` | — | Custom cell text; replaces the day cell verbatim |
-| `showWeekNumbers` | `boolean` | `false` | Print a 2-char week-number column at the start of each row. `weekStart: "monday"` → ISO 8601 week; `"sunday"` → week-containing-Jan-1 week (US `cal -w` convention) |
+| Option            | Type                                  | Default      | Description                                                                                                                                                         |
+| :---------------- | :------------------------------------ | :----------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `theme`           | `ThemeName \| CliTheme`               | `"default"`  | Visual theme (`"default"` \| `"modern"`) or custom theme object                                                                                                     |
+| `colorScheme`     | `ColorSchemeName \| CliPalette`       | `"default"`  | Color scheme, active when `color: true`                                                                                                                             |
+| `today`           | `Date`                                | `new Date()` | Reference date for "today" coloring                                                                                                                                 |
+| `isDateDisabled`  | `(date: Date) => boolean`             | —            | Mark dates as non-selectable; rendered with the `dim` color                                                                                                         |
+| `cellData`        | `(date: Date) => unknown`             | —            | Resolve per-cell data; passed to `renderCell`                                                                                                                       |
+| `renderCell`      | `(day, date, state, data?) => string` | —            | Custom cell text; replaces the day cell verbatim                                                                                                                    |
+| `showWeekNumbers` | `boolean`                             | `false`      | Print a 2-char week-number column at the start of each row. `weekStart: "monday"` → ISO 8601 week; `"sunday"` → week-containing-Jan-1 week (US `cal -w` convention) |
 
 ## CLI Binary
 
@@ -141,11 +143,11 @@ const myTheme: CliTheme = {
 };
 ```
 
-| Property | Type | Description |
-| :--- | :--- | :--- |
-| `cellWidth` | `number` | Width of each date cell |
-| `separator` | `string` | Separator between cells |
-| `frame` | `FrameChars \| null` | Frame characters, or `null` for no frame |
+| Property    | Type                 | Description                              |
+| :---------- | :------------------- | :--------------------------------------- |
+| `cellWidth` | `number`             | Width of each date cell                  |
+| `separator` | `string`             | Separator between cells                  |
+| `frame`     | `FrameChars \| null` | Frame characters, or `null` for no frame |
 
 ### `FrameChars`
 
@@ -155,10 +157,10 @@ interface FrameChars {
   topRight: string;
   bottomLeft: string;
   bottomRight: string;
-  h: string;      // horizontal line
-  v: string;      // vertical line
-  j: string;      // header/body intersection (┬, ┼)
-  footJ: string;  // bottom intersection (┴)
+  h: string; // horizontal line
+  v: string; // vertical line
+  j: string; // header/body intersection (┬, ┼)
+  footJ: string; // bottom intersection (┴)
 }
 ```
 

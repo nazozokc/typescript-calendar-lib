@@ -23,14 +23,14 @@ A TypeScript calendar library spanning the terminal and the web. Render month, y
 
 ## Packages
 
-| Package | Description |
-| :--- | :--- |
-| [`@typescript-calendar-lib/core`](packages/core/README.md) | Date math, locales, grid building — shared by everything else |
-| [`@typescript-calendar-lib/cli`](packages/cli/README.md) | Terminal renderer with themes, ANSI colors, and a `typescript-calendar-lib` binary |
-| [`@typescript-calendar-lib/tui`](packages/tui/README.md) | Headless calendar data & state machine for any TUI framework |
-| [`@typescript-calendar-lib/web`](packages/web/README.md) | Shared presentation data (themes, color schemes, sizes, CSS) |
-| [`@typescript-calendar-lib/react`](packages/react/README.md) | React 19 component + `useCalendarState` hook |
-| [`@typescript-calendar-lib/svelte`](packages/svelte/README.md) | Svelte 5 component + `useCalendarState` hook |
+| Package                                                        | Description                                                                        |
+| :------------------------------------------------------------- | :--------------------------------------------------------------------------------- |
+| [`@typescript-calendar-lib/core`](packages/core/README.md)     | Date math, locales, grid building — shared by everything else                      |
+| [`@typescript-calendar-lib/cli`](packages/cli/README.md)       | Terminal renderer with themes, ANSI colors, and a `typescript-calendar-lib` binary |
+| [`@typescript-calendar-lib/tui`](packages/tui/README.md)       | Headless calendar data & state machine for any TUI framework                       |
+| [`@typescript-calendar-lib/web`](packages/web/README.md)       | Shared presentation data (themes, color schemes, sizes, CSS)                       |
+| [`@typescript-calendar-lib/react`](packages/react/README.md)   | React 19 component + `useCalendarState` hook                                       |
+| [`@typescript-calendar-lib/svelte`](packages/svelte/README.md) | Svelte 5 component + `useCalendarState` hook                                       |
 
 ## Install
 
@@ -45,7 +45,11 @@ npm install @typescript-calendar-lib/cli
 ### CLI (plain text)
 
 ```ts
-import { calendar, calendarYear, calendarRange } from "@typescript-calendar-lib/cli";
+import {
+  calendar,
+  calendarYear,
+  calendarRange,
+} from "@typescript-calendar-lib/cli";
 
 // Month calendar
 console.log(calendar({ year: 2026, month: 9 }));
@@ -54,10 +58,12 @@ console.log(calendar({ year: 2026, month: 9 }));
 console.log(calendarYear({ year: 2026 }));
 
 // Arbitrary date range
-console.log(calendarRange({
-  from: new Date(2026, 5, 1),
-  to: new Date(2026, 8, 30),
-}));
+console.log(
+  calendarRange({
+    from: new Date(2026, 5, 1),
+    to: new Date(2026, 8, 30),
+  }),
+);
 ```
 
 Or use the `typescript-calendar-lib` binary:
@@ -113,7 +119,7 @@ Next.js App Router Server Components render React calendars on the server by def
 The React and Svelte calendars keep a fixed 7-column grid, which can overflow narrow phone screens. Pass `responsive` to make the grid shrink its cells, fonts, and padding below `480px` (and a touch more below `360px`) so it always fits:
 
 ```tsx
-<Calendar year={2026} month={9} responsive />
+<Calendar year={2026} month={9} responsive />;
 ```
 
 ```svelte
@@ -127,7 +133,14 @@ It is **off by default** — existing layouts are untouched. Both `Calendar` and
 Pass `showWeekNumbers` to print the week number at the start of each row. With `weekStart: "monday"` it uses ISO 8601 week numbers; with `"sunday"` it uses the US convention (week containing January 1 is week 1):
 
 ```ts
-console.log(calendar({ year: 2026, month: 9, weekStart: "monday", showWeekNumbers: true }));
+console.log(
+  calendar({
+    year: 2026,
+    month: 9,
+    weekStart: "monday",
+    showWeekNumbers: true,
+  }),
+);
 ```
 
 ```text
@@ -141,7 +154,7 @@ console.log(calendar({ year: 2026, month: 9, weekStart: "monday", showWeekNumber
 ```
 
 ```tsx
-<Calendar year={2026} month={9} weekStart="monday" showWeekNumbers />
+<Calendar year={2026} month={9} weekStart="monday" showWeekNumbers />;
 ```
 
 ```svelte
@@ -153,7 +166,7 @@ console.log(calendar({ year: 2026, month: 9, weekStart: "monday", showWeekNumber
 `selectionMode: "range"` commits a start–end range with two clicks. Clicking a third date starts a new selection:
 
 ```tsx
-<InteractiveCalendar selectionMode="range" />
+<InteractiveCalendar selectionMode="range" />;
 ```
 
 The committed range stays highlighted until the next pick starts; `useCalendarState` exposes it via `selectedRange` and `selectRange(from, to)`. The same mode is available headlessly in the TUI package.
@@ -176,24 +189,24 @@ Sun Mon Tue Wed Thu Fri Sat
 
 Render a single month.
 
-| Option | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `year` | `number` | — | Calendar year (e.g. `2026`) |
-| `month` | `number` | — | Month, 1-indexed (`1`–`12`) |
-| `locale` | `"en" \| "ja" \| "es" \| "de" \| "fr" \| "ko" \| "zh"` | `"en"` | Language |
-| `holidayLocale` | `"en" \| "ja" \| "es" \| "de" \| "fr" \| "ko" \| "zh"` | `"ja"` | Holiday rules (fixed-date holidays for every locale; moving holidays such as Easter are not included) |
-| `weekStart` | `"sunday" \| "monday"` | `"sunday"` | First day of the week |
-| `highlight` | `Date` | — | Date to highlight (e.g. today) |
-| `highlightStyle` | `"bracket" \| "reverse"` | `"bracket"` | Highlight appearance |
-| `range` | `{ from: Date; to: Date }` | — | Dates to color |
-| `showWeekNumbers` | `boolean` | `false` | Print the week number at the start of each row (`monday` start → ISO 8601 week, `sunday` start → week-of-year containing Jan 1) |
-| `isDateDisabled` | `(date: Date) => boolean` | — | Dates to render dimmed as non-selectable |
-| `today` | `Date` | `new Date()` | Reference date for "today" coloring |
-| `theme` | `ThemeName \| CliTheme` | `"default"` | Visual theme (`"default"` \| `"modern"`) or custom theme object |
-| `colorScheme` | `ColorSchemeName \| CliPalette` | `"default"` | Color scheme, active when `color: true` |
-| `cellData` | `(date: Date) => unknown` | — | Resolve per-cell data; passed to `renderCell` |
-| `renderCell` | `(day, date, state, data?) => string` | — | Custom cell text; replaces the day cell verbatim |
-| `color` | `boolean` | `false` | Emit ANSI color codes |
+| Option            | Type                                                   | Default      | Description                                                                                                                     |
+| :---------------- | :----------------------------------------------------- | :----------- | :------------------------------------------------------------------------------------------------------------------------------ |
+| `year`            | `number`                                               | —            | Calendar year (e.g. `2026`)                                                                                                     |
+| `month`           | `number`                                               | —            | Month, 1-indexed (`1`–`12`)                                                                                                     |
+| `locale`          | `"en" \| "ja" \| "es" \| "de" \| "fr" \| "ko" \| "zh"` | `"en"`       | Language                                                                                                                        |
+| `holidayLocale`   | `"en" \| "ja" \| "es" \| "de" \| "fr" \| "ko" \| "zh"` | `"ja"`       | Holiday rules (fixed-date holidays for every locale; moving holidays such as Easter are not included)                           |
+| `weekStart`       | `"sunday" \| "monday"`                                 | `"sunday"`   | First day of the week                                                                                                           |
+| `highlight`       | `Date`                                                 | —            | Date to highlight (e.g. today)                                                                                                  |
+| `highlightStyle`  | `"bracket" \| "reverse"`                               | `"bracket"`  | Highlight appearance                                                                                                            |
+| `range`           | `{ from: Date; to: Date }`                             | —            | Dates to color                                                                                                                  |
+| `showWeekNumbers` | `boolean`                                              | `false`      | Print the week number at the start of each row (`monday` start → ISO 8601 week, `sunday` start → week-of-year containing Jan 1) |
+| `isDateDisabled`  | `(date: Date) => boolean`                              | —            | Dates to render dimmed as non-selectable                                                                                        |
+| `today`           | `Date`                                                 | `new Date()` | Reference date for "today" coloring                                                                                             |
+| `theme`           | `ThemeName \| CliTheme`                                | `"default"`  | Visual theme (`"default"` \| `"modern"`) or custom theme object                                                                 |
+| `colorScheme`     | `ColorSchemeName \| CliPalette`                        | `"default"`  | Color scheme, active when `color: true`                                                                                         |
+| `cellData`        | `(date: Date) => unknown`                              | —            | Resolve per-cell data; passed to `renderCell`                                                                                   |
+| `renderCell`      | `(day, date, state, data?) => string`                  | —            | Custom cell text; replaces the day cell verbatim                                                                                |
+| `color`           | `boolean`                                              | `false`      | Emit ANSI color codes                                                                                                           |
 
 ### `calendarYear(options: CalendarYearOptions): string`
 

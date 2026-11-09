@@ -37,10 +37,10 @@ const data = buildMonthData(2026, 9, { weekStart: "monday" });
 interface MonthData {
   year: number;
   month: number; // 1–12
-  title: string;             // e.g. "September 2026" or "9月 2026"
-  weekdays: readonly string[];  // e.g. ["Sun", "Mon", ...]
-  cells: CalendarCell[][];      // 6×7 grid
-  visibleRows: number;          // rows that contain dates
+  title: string; // e.g. "September 2026" or "9月 2026"
+  weekdays: readonly string[]; // e.g. ["Sun", "Mon", ...]
+  cells: CalendarCell[][]; // 6×7 grid
+  visibleRows: number; // rows that contain dates
 }
 ```
 
@@ -48,17 +48,17 @@ interface MonthData {
 
 ```ts
 interface CalendarCell<T = unknown> {
-  day: number | null;       // day of month (1–31), null for empty
-  date: Date | null;        // full Date, null when day is null
-  dayOfWeek: number;        // 0 = first day per weekStart
-  isCurrentMonth: boolean;  // false for padded cells
-  isWeekend: boolean;       // true for Saturday/Sunday
-  isHoliday: boolean;       // holiday per `holidayLocale` (default "ja")
+  day: number | null; // day of month (1–31), null for empty
+  date: Date | null; // full Date, null when day is null
+  dayOfWeek: number; // 0 = first day per weekStart
+  isCurrentMonth: boolean; // false for padded cells
+  isWeekend: boolean; // true for Saturday/Sunday
+  isHoliday: boolean; // holiday per `holidayLocale` (default "ja")
   isToday: boolean;
   isHighlight: boolean;
   isInRange: boolean;
-  isDisabled: boolean;      // true for isDateDisabled dates
-  data?: T;                 // cellData's resolved value; omitted when undefined
+  isDisabled: boolean; // true for isDateDisabled dates
+  data?: T; // cellData's resolved value; omitted when undefined
 }
 ```
 
@@ -66,11 +66,11 @@ interface CalendarCell<T = unknown> {
 
 ```ts
 interface MonthDataOptions<T = unknown> {
-  locale?: Locale;              // "en" | "ja" | "es" | "de" | "fr" | "ko" | "zh", default "en"
-  holidayLocale?: Locale;       // holiday rules; currently only "ja" (default "ja")
-  weekStart?: WeekStart;        // "sunday" | "monday", default "sunday"
-  today?: Date;                 // reference for isToday, default new Date()
-  highlight?: Date;             // sets isHighlight
+  locale?: Locale; // "en" | "ja" | "es" | "de" | "fr" | "ko" | "zh", default "en"
+  holidayLocale?: Locale; // holiday rules; currently only "ja" (default "ja")
+  weekStart?: WeekStart; // "sunday" | "monday", default "sunday"
+  today?: Date; // reference for isToday, default new Date()
+  highlight?: Date; // sets isHighlight
   range?: { from: Date; to: Date }; // sets isInRange
   isDateDisabled?: (date: Date) => boolean; // sets isDisabled
   cellData?: (date: Date) => T | undefined; // per-cell data; undefined = no data
@@ -126,18 +126,18 @@ const state = createCalendarState<Schedule>({
 
 ```ts
 interface CalendarStateOptions<T = unknown> {
-  initialYear?: number;         // default: today's year
-  initialMonth?: number;        // default: today's month
+  initialYear?: number; // default: today's year
+  initialMonth?: number; // default: today's month
   initialCursor?: { row: number; col: number } | null; // null = unfocused
-  today?: Date;                 // resolved once at creation, fixed in state
+  today?: Date; // resolved once at creation, fixed in state
   locale?: Locale;
-  holidayLocale?: Locale;       // holiday rules; currently only "ja" (default "ja")
+  holidayLocale?: Locale; // holiday rules; currently only "ja" (default "ja")
   weekStart?: WeekStart;
   highlight?: Date;
   range?: { from: Date; to: Date };
   isDateDisabled?: (date: Date) => boolean; // blocks selection & cursor movement
   cellData?: (date: Date) => T | undefined; // per-cell data; undefined = no data
-  selectionMode?: SelectionMode;    // "single" | "range", default "single"
+  selectionMode?: SelectionMode; // "single" | "range", default "single"
 }
 ```
 
@@ -171,8 +171,8 @@ interface CalendarState<T = unknown> {
   cursor: { row: number; col: number } | null; // null = unfocused
   selectedDate: Date | null;
   selectedRange: DateRange | null; // committed range in range mode; always null in single mode
-  options: ResolvedOptions<T>;  // options fixed at creation
-  monthData: MonthData<T>;      // cached data for current month
+  options: ResolvedOptions<T>; // options fixed at creation
+  monthData: MonthData<T>; // cached data for current month
 }
 ```
 
@@ -230,12 +230,15 @@ The committed `selectedRange` survives month navigation.
 ```ts
 import { selectRange, getSelectedRange } from "@typescript-calendar-lib/tui";
 
-let state = createCalendarState({ weekStart: "monday", selectionMode: "range" });
+let state = createCalendarState({
+  weekStart: "monday",
+  selectionMode: "range",
+});
 
-state = selectDate(state);                 // picks the cursor date (anchor)
-state = selectDate(state);                 // commits the range
-getSelectedRange(state);                   // { from: Date; to: Date } | null
-clearSelection(state);                     // clears selectedDate and selectedRange
+state = selectDate(state); // picks the cursor date (anchor)
+state = selectDate(state); // commits the range
+getSelectedRange(state); // { from: Date; to: Date } | null
+clearSelection(state); // clears selectedDate and selectedRange
 ```
 
 ### `selectRange(state, from, to): CalendarState`
@@ -289,11 +292,11 @@ import {
   getDateData,
 } from "@typescript-calendar-lib/tui";
 
-findTodayCell(monthData);    // { row, col } | null (enabled cells only)
+findTodayCell(monthData); // { row, col } | null (enabled cells only)
 findDateCell(monthData, date); // { row, col } | null
 findFirstDayCell(monthData); // { row, col } | null (enabled cells only)
 clampCursor(cursor, monthData); // clamps to visible rows/cols
-getDateData(state, date);    // resolved user data for a date (T | undefined)
+getDateData(state, date); // resolved user data for a date (T | undefined)
 ```
 
 ## Option Sync (for UI framework wrappers)
@@ -301,10 +304,14 @@ getDateData(state, date);    // resolved user data for a date (T | undefined)
 `resolveOptions`, `sameStateOptions`, and `updateStateOptions` power the React/Svelte wrapper hooks: they detect option changes by value (so inline `Date`/object literals don't cause rebuild loops) and rebuild state while preserving the cursor and selection.
 
 ```ts
-import { sameStateOptions, updateStateOptions, resolveOptions } from "@typescript-calendar-lib/tui";
+import {
+  sameStateOptions,
+  updateStateOptions,
+  resolveOptions,
+} from "@typescript-calendar-lib/tui";
 
-resolveOptions(options);        // fix `today` into state, apply defaults
-sameStateOptions(a, b);         // true when options are value-equal (Dates via getTime)
+resolveOptions(options); // fix `today` into state, apply defaults
+sameStateOptions(a, b); // true when options are value-equal (Dates via getTime)
 updateStateOptions(state, next, prev);
 // - preserves cursor & selectedDate
 // - jumps only when initialYear/initialMonth actually changed
@@ -343,8 +350,8 @@ type ColorSchemeName = "default" | "ocean" | "forest" | "sunset" | "mono";
 
 ```ts
 interface CellStyle {
-  fg?: number;        // ANSI foreground (0–255)
-  bg?: number;        // ANSI background (0–255)
+  fg?: number; // ANSI foreground (0–255)
+  bg?: number; // ANSI background (0–255)
   bold?: boolean;
   dim?: boolean;
   underline?: boolean;
@@ -391,13 +398,27 @@ let state = createCalendarState({
 // Arrow-key style interaction loop
 const onKey = (key: string) => {
   switch (key) {
-    case "left":  state = moveCursor(state, "left");  break;
-    case "right": state = moveCursor(state, "right"); break;
-    case "up":    state = moveCursor(state, "up");    break;
-    case "down":  state = moveCursor(state, "down");  break;
-    case "p":     state = navigateMonth(state, "prev"); break;
-    case "n":     state = navigateMonth(state, "next"); break;
-    case "enter": state = selectDate(state); break;
+    case "left":
+      state = moveCursor(state, "left");
+      break;
+    case "right":
+      state = moveCursor(state, "right");
+      break;
+    case "up":
+      state = moveCursor(state, "up");
+      break;
+    case "down":
+      state = moveCursor(state, "down");
+      break;
+    case "p":
+      state = navigateMonth(state, "prev");
+      break;
+    case "n":
+      state = navigateMonth(state, "next");
+      break;
+    case "enter":
+      state = selectDate(state);
+      break;
   }
   const cursorDate = getCursorDate(state);
   // Draw state.monthData.cells using your TUI framework
