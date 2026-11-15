@@ -33,6 +33,9 @@ export const SIDEBAR: NavGroup[] = [
     text: "Guide",
     items: [
       { text: "Getting Started", link: "/guide/getting-started" },
+      { text: "Examples & Recipes", link: "/guide/examples" },
+      { text: "Theming & Styling", link: "/guide/theming" },
+      { text: "Accessibility", link: "/guide/accessibility" },
       { text: "Interactive Demo", link: "/guide/interactive-demo" },
       { text: "Architecture", link: "/guide/architecture" },
     ],
@@ -50,6 +53,9 @@ export const SIDEBAR: NavGroup[] = [
   },
 ];
 
+/** Every navigable doc page, in sidebar order (used by prev/next links). */
+export const FLAT_NAV: NavItem[] = SIDEBAR.flatMap((group) => group.items);
+
 export const PACKAGES: NavItem[] = [
   { text: "core", link: "/packages/core" },
   { text: "cli", link: "/packages/cli" },
@@ -63,6 +69,9 @@ export const PACKAGES: NavItem[] = [
 export const TITLES: Record<string, string> = {
   "/": "typescript-calendar-lib",
   "/guide/getting-started": "Getting Started | typescript-calendar-lib",
+  "/guide/examples": "Examples & Recipes | typescript-calendar-lib",
+  "/guide/theming": "Theming & Styling | typescript-calendar-lib",
+  "/guide/accessibility": "Accessibility | typescript-calendar-lib",
   "/guide/interactive-demo": "Interactive Demo | typescript-calendar-lib",
   "/guide/architecture": "Architecture | typescript-calendar-lib",
   "/packages/core": "@typescript-calendar-lib/core | typescript-calendar-lib",

@@ -1,9 +1,23 @@
 <script lang="ts">
   import Home from "./Home.svelte";
   import Markdown from "./Markdown.svelte";
-  import { GITHUB_URL, PACKAGES, SIDEBAR, withBase } from "../nav";
+  import Search from "./Search.svelte";
+  import { FLAT_NAV, GITHUB_URL, PACKAGES, SIDEBAR, withBase } from "../nav";
+  import type { SearchEntry } from "../search";
 
-  let { path, html }: { path: string; html: string } = $props();
+  let {
+    path,
+    html,
+    searchIndex,
+  }: { path: string; html: string; searchIndex: SearchEntry[] } = $props();
+
+  const navIndex = $derived(FLAT_NAV.findIndex((item) => item.link === path));
+  const previous = $derived(navIndex > 0 ? FLAT_NAV[navIndex - 1] : undefined);
+  const next = $derived(
+    navIndex >= 0 && navIndex < FLAT_NAV.length - 1
+      ? FLAT_NAV[navIndex + 1]
+      : undefined,
+  );
 
   function isActive(link: string): boolean {
     return path === link;
@@ -22,6 +36,7 @@
         {/each}
       </div>
     </details>
+    <Search index={searchIndex} />
     <a
       class="github"
       href={GITHUB_URL}
@@ -57,6 +72,24 @@
       <Home />
     {:else}
       <Markdown {html} />
+      {#if previous || next}
+        <nav class="page-nav" aria-label="Page navigation">
+          {#if previous}
+            <a class="page-nav-link page-nav-prev" href={withBase(previous.link)}>
+              <span>← Previous</span>
+              <strong>{previous.text}</strong>
+            </a>
+          {:else}
+            <span></span>
+          {/if}
+          {#if next}
+            <a class="page-nav-link page-nav-next" href={withBase(next.link)}>
+              <span>Next →</span>
+              <strong>{next.text}</strong>
+            </a>
+          {/if}
+        </nav>
+      {/if}
     {/if}
   </main>
 </div>

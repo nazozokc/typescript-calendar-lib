@@ -103,7 +103,7 @@ A turnkey component that wires `useCalendarState` and `Calendar` together with b
 
 ```svelte
 <script lang="ts">
-  import InteractiveCalendar from "@typescript-calendar-lib/svelte";
+  import { InteractiveCalendar } from "@typescript-calendar-lib/svelte";
   import "@typescript-calendar-lib/svelte/calendar.css";
 </script>
 

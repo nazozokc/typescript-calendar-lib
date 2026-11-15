@@ -134,6 +134,13 @@ import type {
 } from "@typescript-calendar-lib/cli";
 ```
 
+## Next steps
+
+- [Examples & Recipes](/guide/examples) — date pickers, range selection, availability
+- [Theming & Styling](/guide/theming) — themes, color schemes, CSS variables
+- [Accessibility](/guide/accessibility) — keyboard and screen-reader behavior
+- [Interactive Demo](/guide/interactive-demo) — wire mouse and keyboard interaction
+
 ## Development
 
 ```sh
