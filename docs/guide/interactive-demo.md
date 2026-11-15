@@ -164,7 +164,7 @@ Svelte は同じ props です:
 
 ```svelte
 <script lang="ts">
-  import InteractiveCalendar from "@typescript-calendar-lib/svelte";
+  import { InteractiveCalendar } from "@typescript-calendar-lib/svelte";
   import "@typescript-calendar-lib/svelte/calendar.css";
 </script>
 
