@@ -350,6 +350,15 @@ describe("getWeekOfYear", () => {
   test("2026-12-31（木）は第53週（日曜始まり）", () => {
     expect(getWeekOfYear(new Date(2026, 11, 31))).toBe(53);
   });
+
+  test("年末の週が翌年の第1週と重なっても54にはならず53（日曜始まり）", () => {
+    expect(getWeekOfYear(new Date(2000, 11, 31))).toBe(53);
+    expect(getWeekOfYear(new Date(2028, 11, 31))).toBe(53);
+  });
+
+  test("年末の週が翌年の第1週と重なっても54にはならず53（月曜始まり）", () => {
+    expect(getWeekOfYear(new Date(2012, 11, 31), "monday")).toBe(53);
+  });
 });
 
 describe("getDayOfYear", () => {

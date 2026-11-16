@@ -281,6 +281,28 @@ describe("営業日", () => {
     ).toBe(4);
   });
 
+  test("diffInBusinessDays は時刻を無視して暦日で数える", () => {
+    const mondayNoon = new Date(2026, 8, 7, 12, 0); // 月曜 12:00
+    const tuesdayMorning = new Date(2026, 8, 8, 9, 0); // 火曜 09:00
+    expect(diffInBusinessDays(mondayNoon, tuesdayMorning)).toBe(1);
+    expect(diffInBusinessDays(tuesdayMorning, mondayNoon)).toBe(-1);
+
+    const lateMonday = new Date(2026, 8, 7, 23, 0);
+    const earlyTuesday = new Date(2026, 8, 8, 0, 30);
+    expect(diffInBusinessDays(lateMonday, earlyTuesday)).toBe(1);
+
+    // 同じ暦日なら時刻が違っても 0（-0 にはならない）
+    expect(
+      Object.is(
+        diffInBusinessDays(tuesdayMorning, new Date(2026, 8, 8, 18, 0)),
+        -0,
+      ),
+    ).toBe(false);
+    expect(
+      diffInBusinessDays(tuesdayMorning, new Date(2026, 8, 8, 18, 0)),
+    ).toBe(0);
+  });
+
   test("addBusinessDays と diffInBusinessDays の逆関係", () => {
     const start = createDate(2026, 3, 1); // 2026-04-01（水）
     for (const n of [-10, -5, -1, 0, 1, 5, 10]) {

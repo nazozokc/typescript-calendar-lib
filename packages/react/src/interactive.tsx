@@ -180,12 +180,16 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     hook.selectedRange ??
     buildRangePreview(hook.selectedDate, hook.hoveredDate);
 
-  // カーソルが動いたときだけ、そのセルへフォーカスを移す（初回マウントでは動かさない）
+  // カーソルが動いたときだけ、そのセルへフォーカスを移す（初回マウントでは動かさない）。
+  // 位置のオブジェクトは状態再構築のたびに作り直されるため、参照ではなく row/col で比較する
+  // （highlight などの無関係なオプション変更でフォーカスを奪わない）。
   const prevCursorRef = useRef(state.cursor);
   useEffect(() => {
     const prev = prevCursorRef.current;
     prevCursorRef.current = state.cursor;
-    if (prev === state.cursor) return;
+    if (prev?.row === state.cursor?.row && prev?.col === state.cursor?.col) {
+      return;
+    }
     const btn = rootRef.current?.querySelector<HTMLButtonElement>(
       '[data-cursor="true"]',
     );

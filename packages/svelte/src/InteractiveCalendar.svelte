@@ -158,12 +158,14 @@
     cal.selectedRange ?? buildRangePreview(cal.selectedDate, cal.hoveredDate),
   );
 
-  // カーソルが動いたときだけ、そのセルへフォーカスを移す（初回マウントでは動かさない）
+  // カーソルが動いたときだけ、そのセルへフォーカスを移す（初回マウントでは動かさない）。
+  // 位置のオブジェクトは状態再構築のたびに作り直されるため、参照ではなく row/col で比較する
+  // （highlight などの無関係なオプション変更でフォーカスを奪わない）。
   let root: HTMLDivElement | undefined = $state();
   let prevCursor = cal.state.cursor;
   $effect(() => {
     const next = cal.state.cursor;
-    if (next === prevCursor) return;
+    if (next?.row === prevCursor?.row && next?.col === prevCursor?.col) return;
     prevCursor = next;
     root
       ?.querySelector<HTMLButtonElement>('[data-cursor="true"]')

@@ -208,9 +208,11 @@ export function getISOWeek(date: Date): number {
 }
 
 /**
- * 年始（1月1日）を含む週を第1週とする週番号を返す。
+ * 年始（1月1日）を含む週を第1週とする週番号を返す（1-53）。
  * 1月1日より前の週の末日（例: 日曜始まりの 1月1日が土曜のとき）は前年の第52週/第53週になる。
- * 北米のカレンダー（cal -w 相当）で使われる規則。
+ * 北米のカレンダー（`date +%U` / `date +%W` 相当）で使われる規則。
+ *
+ * 年末の週が翌年の第1週と重なる場合は 53 に丸める（54 は返さない）。
  */
 export function getWeekOfYear(
   date: Date,
@@ -221,7 +223,10 @@ export function getWeekOfYear(
   const day = startOfDay(date);
   const jan1 = createDate(day.getFullYear(), 0, 1);
   const weekStartJan1 = startOfWeek(jan1, weekStart);
-  return Math.floor(diffInCalendarDays(weekStartJan1, day) / 7) + 1;
+  return Math.min(
+    53,
+    Math.floor(diffInCalendarDays(weekStartJan1, day) / 7) + 1,
+  );
 }
 
 /** 年の通算日（1月1日 = 1、12月31日 = 365/366）を返す */

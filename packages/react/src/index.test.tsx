@@ -1761,6 +1761,8 @@ describe("InteractiveCalendar 拡張キーボード", () => {
     fireEvent.click(cell);
     expect(cell).toHaveAttribute("aria-pressed", "true");
 
+    // 実際のブラウザではクリックでボタンにフォーカスが移る（jsdom の fireEvent は移動しない）
+    cell.focus();
     fireEvent.keyDown(document.activeElement as Element, { key: "Escape" });
     expect(
       screen.getByRole("button", { name: /September 15, 2026/ }),

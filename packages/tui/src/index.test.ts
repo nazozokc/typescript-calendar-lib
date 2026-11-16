@@ -71,6 +71,9 @@ describe("public exports", () => {
     expect(keyToAction("Escape")).toBe("clear");
     expect(keyToAction("Enter")).toBeUndefined();
     expect(keyToAction("a")).toBeUndefined();
+    // Object.prototype のプロパティ名をアクションとして返さない
+    expect(keyToAction("__proto__")).toBeUndefined();
+    expect(keyToAction("constructor")).toBeUndefined();
   });
 
   test("修飾キー付き PageUp/PageDown は年移動になる", () => {
