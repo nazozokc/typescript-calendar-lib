@@ -94,6 +94,32 @@ function App() {
 <Calendar year={2026} month={9} colorScheme="ocean" theme="modern" />
 ```
 
+### Pass a `Date` instead of year/month
+
+React and Svelte `<Calendar>` accept `date` as a shorthand for `year` + `month`, so a date you already hold can drive the view directly:
+
+```tsx
+<Calendar date={today} />;
+```
+
+```svelte
+<Calendar date={selectedDate} />
+```
+
+`InteractiveCalendar` accepts `initialDate` for the same purpose (`initialYear` / `initialMonth` take precedence when both are given). The `core` package exports `getYearMonth(date)` returning the matching `{ year, month }` pair (month is 1-indexed).
+
+### Styling hooks
+
+Attach your own class to the root element without adding a wrapper: use `className` in React and `class` in Svelte. It is appended after the built-in `calendar` and theme classes, so it can drive layout or additional styling.
+
+```tsx
+<Calendar date={today} className="my-calendar" />;
+```
+
+```svelte
+<Calendar date={selectedDate} class="my-calendar" />
+```
+
 ### Server-side rendering
 
 The React and Svelte components render without browser globals. React can be rendered with `react-dom/server`; Svelte 5 provides `render` from `svelte/server`:

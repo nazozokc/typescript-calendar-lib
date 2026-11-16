@@ -1220,3 +1220,60 @@ describe("useCalendarState 制御モードのナビゲーション委譲", () =>
     expect(onMonthChange).toHaveBeenCalledWith(2026, 9);
   });
 });
+
+// ─── consumer ergonomics ────────────────────────────────
+
+describe("Calendar date / class", () => {
+  test("date だけで表示月を指定できる", () => {
+    render(Calendar, {
+      props: { date: new Date(2026, 8, 15), today: TODAY },
+    });
+    expect(screen.getByText("September 2026")).toBeTruthy();
+  });
+
+  test("date は year/month より優先される", () => {
+    render(Calendar, {
+      props: {
+        date: new Date(2026, 8, 15),
+        year: 2025,
+        month: 1,
+        today: TODAY,
+      },
+    });
+    expect(screen.getByText("September 2026")).toBeTruthy();
+  });
+
+  test("class が root に追加される", () => {
+    const { container } = render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        today: TODAY,
+        class: "my-calendar",
+      },
+    });
+    expect(container.firstChild).toHaveClass("calendar");
+    expect(container.firstChild).toHaveClass("my-calendar");
+  });
+});
+
+describe("InteractiveCalendar initialDate / class", () => {
+  test("initialDate だけで開始月を指定できる", () => {
+    render(InteractiveCalendar, {
+      props: { initialDate: new Date(2026, 8, 15), today: TODAY },
+    });
+    expect(screen.getByText("September 2026")).toBeTruthy();
+  });
+
+  test("class が calendar root に追加される", () => {
+    const { container } = render(InteractiveCalendar, {
+      props: {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+        class: "my-calendar",
+      },
+    });
+    expect(container.querySelector(".calendar")).toHaveClass("my-calendar");
+  });
+});

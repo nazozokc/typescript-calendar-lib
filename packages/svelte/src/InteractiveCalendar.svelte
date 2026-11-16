@@ -1,6 +1,10 @@
 <script lang="ts">
   import type { CalendarCellState, CalendarOptions } from "@typescript-calendar-lib/core";
-  import { createDate, lastDayOfMonth } from "@typescript-calendar-lib/core";
+  import {
+    createDate,
+    getYearMonth,
+    lastDayOfMonth,
+  } from "@typescript-calendar-lib/core";
   import type { SelectionMode } from "@typescript-calendar-lib/tui";
   import { keyToAction } from "@typescript-calendar-lib/tui";
   import type { Snippet } from "svelte";
@@ -23,6 +27,11 @@
     initialYear?: number;
     /** 表示開始月 (1-12)。範囲外は正規化される */
     initialMonth?: number;
+    /**
+     * 表示開始位置を `Date` で指定する。`initialYear` / `initialMonth` を
+     * 個別に指定した場合はそちらが優先される。
+     */
+    initialDate?: Date;
     /** 制御モードの表示年。指定すると initialYear より優先され、月移動は onMonthChange に委譲される */
     year?: number;
     /** 制御モードの表示月 (1-12) */
@@ -52,6 +61,8 @@
     size?: CalendarSize;
     /** 狭い画面（スマホ等）でセルサイズと余白を自動調整する */
     responsive?: boolean;
+    /** root 要素に追加するクラス。レイアウトや追加スタイルのフックに使う */
+    class?: string;
     style?: CSSProperties;
     /** セル内容のカスタムレンダリング。文字列または Snippet。第4引数に該当日のデータが渡る */
     renderCell?: (
@@ -76,6 +87,7 @@
   let {
     initialYear,
     initialMonth,
+    initialDate,
     locale,
     holidayLocale,
     weekStart,
@@ -92,6 +104,7 @@
     colorScheme,
     size,
     responsive,
+    class: className,
     style,
     renderCell,
     cellData,
@@ -100,21 +113,28 @@
     onDateLeave,
   }: InteractiveCalendarProps = $props();
 
-  const cal = useCalendarState(() => ({
-    initialYear,
-    initialMonth,
-    year,
-    month,
-    locale,
-    holidayLocale,
-    weekStart,
-    today,
-    highlight,
-    range,
-    isDateDisabled,
-    selectionMode,
-    onMonthChange,
-  }));
+  // initialDate は initialYear / initialMonth のショートハンド。
+  // 個別指定があればそちらを優先する。getter 内で解決するのは、
+  // 値の変化を追跡しつつ props の初期値キャプチャ警告を避けるため。
+  const cal = useCalendarState(() => {
+    const initialFromDate =
+      initialDate !== undefined ? getYearMonth(initialDate) : undefined;
+    return {
+      initialYear: initialYear ?? initialFromDate?.year,
+      initialMonth: initialMonth ?? initialFromDate?.month,
+      year,
+      month,
+      locale,
+      holidayLocale,
+      weekStart,
+      today,
+      highlight,
+      range,
+      isDateDisabled,
+      selectionMode,
+      onMonthChange,
+    };
+  });
 
   // クリック（マウス・Enter/Space 共通）で日付を選択する。
   // 従来の onDateClick コールバックも引き続き発火し、第2引数に該当日のデータが渡る。
@@ -198,6 +218,7 @@
     colorScheme={colorScheme}
     size={size}
     responsive={responsive}
+    class={className}
     style={style}
     interactive
     renderCell={renderCell}

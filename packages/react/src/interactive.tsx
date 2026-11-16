@@ -1,5 +1,9 @@
 import type { CalendarOptions } from "@typescript-calendar-lib/core";
-import { createDate, lastDayOfMonth } from "@typescript-calendar-lib/core";
+import {
+  createDate,
+  getYearMonth,
+  lastDayOfMonth,
+} from "@typescript-calendar-lib/core";
 import type { SelectionMode } from "@typescript-calendar-lib/tui";
 import { keyToAction } from "@typescript-calendar-lib/tui";
 import type { CSSProperties } from "react";
@@ -22,6 +26,11 @@ export interface InteractiveCalendarProps {
   initialYear?: number;
   /** 表示開始月 (1-12)。範囲外は正規化される */
   initialMonth?: number;
+  /**
+   * 表示開始位置を `Date` で指定する。`initialYear` / `initialMonth` を
+   * 個別に指定した場合はそちらが優先される。
+   */
+  initialDate?: Date;
   /** 制御モードの表示年。指定すると initialYear より優先され、月移動は onMonthChange に委譲される */
   year?: number;
   /** 制御モードの表示月 (1-12) */
@@ -51,6 +60,8 @@ export interface InteractiveCalendarProps {
   size?: CalendarSize;
   /** 狭い画面（スマホ等）でセルサイズと余白を自動調整する */
   responsive?: boolean;
+  /** root 要素に追加するクラス。レイアウトや追加スタイルのフックに使う */
+  className?: string;
   style?: CSSProperties;
   /** セル内容のカスタムレンダリング。第4引数に該当日のデータが渡る */
   renderCell?: CalendarProps["renderCell"];
@@ -80,6 +91,7 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
   const {
     initialYear,
     initialMonth,
+    initialDate,
     locale,
     holidayLocale,
     weekStart,
@@ -96,6 +108,7 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     colorScheme,
     size,
     responsive,
+    className,
     style,
     renderCell,
     cellData,
@@ -104,9 +117,14 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     onDateLeave,
   } = props;
 
+  // initialDate は initialYear / initialMonth のショートハンド。
+  // 個別指定があればそちらを優先する。
+  const initialFromDate =
+    initialDate !== undefined ? getYearMonth(initialDate) : undefined;
+
   const hook = useCalendarState({
-    initialYear,
-    initialMonth,
+    initialYear: initialYear ?? initialFromDate?.year,
+    initialMonth: initialMonth ?? initialFromDate?.month,
     year,
     month,
     locale,
@@ -234,6 +252,7 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
       colorScheme={colorScheme}
       size={size}
       responsive={responsive}
+      className={className}
       style={style}
       interactive
       renderCell={renderCell}

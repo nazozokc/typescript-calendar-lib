@@ -11,6 +11,7 @@ import {
   getMonthName,
   getWeekdayHeaders,
   getWeekOfYear,
+  getYearMonth,
   isSameDay,
 } from "@typescript-calendar-lib/core";
 import {
@@ -45,8 +46,15 @@ export type {
 } from "./size.ts";
 
 export interface CalendarProps {
-  year: number;
-  month: number;
+  /**
+   * 表示する年月を `Date` で指定する。`year` / `month` の代わりに使える
+   * （両方を併用した場合は `date` を優先する）。
+   */
+  date?: Date;
+  /** 表示する年。`date` 省略時は `month` と併せて必須 */
+  year?: number;
+  /** 表示する月 (1–12)。`date` 省略時は `year` と併せて必須 */
+  month?: number;
   locale?: CalendarOptions["locale"];
   holidayLocale?: CalendarOptions["holidayLocale"];
   weekStart?: CalendarOptions["weekStart"];
@@ -67,6 +75,8 @@ export interface CalendarProps {
   size?: CalendarSize;
   /** 狭い画面（スマホ等）でセルサイズと余白を自動調整する。既定は false（無効） */
   responsive?: boolean;
+  /** root 要素に追加するクラス。レイアウトや追加スタイルのフックに使う */
+  className?: string;
   /** root 要素に追加するスタイル。CSS変数（--cal-*）で自由に上書きできる */
   style?: CSSProperties;
 
@@ -109,6 +119,7 @@ export interface CalendarProps {
 
 /** 月カレンダーコンポーネント */
 export function Calendar({
+  date: dateProp,
   year,
   month,
   locale = "en",
@@ -122,6 +133,7 @@ export function Calendar({
   colorScheme = "default",
   size = "md",
   responsive = false,
+  className,
   style,
   interactive = false,
   onDateClick,
@@ -137,10 +149,25 @@ export function Calendar({
   rangePreview,
   ref,
 }: CalendarProps) {
+  // date が指定されればそれを優先し、なければ year/month を使う。
+  // どちらも揃っていない場合は、黙って現在月を出さずに即座に失敗させる。
+  const yearMonth =
+    dateProp !== undefined
+      ? getYearMonth(dateProp)
+      : year !== undefined && month !== undefined
+        ? { year, month }
+        : null;
+  if (yearMonth === null) {
+    throw new TypeError(
+      "Calendar requires either `date` or both `year` and `month`.",
+    );
+  }
+  const { year: displayYear, month: displayMonth } = yearMonth;
+
   // グリッドは月単位で不変。ホバー・選択の再描画でも再計算しない
   const grid = useMemo(
-    () => buildMonthGrid(year, month, weekStart),
-    [year, month, weekStart],
+    () => buildMonthGrid(displayYear, displayMonth, weekStart),
+    [displayYear, displayMonth, weekStart],
   );
 
   const handleCellClick = (date: Date, data?: unknown) => {
@@ -155,14 +182,14 @@ export function Calendar({
     if (interactive && onDateLeave) onDateLeave();
   };
 
-  const title = `${getMonthName(locale, month)} ${year}`;
+  const title = `${getMonthName(locale, displayMonth)} ${displayYear}`;
   // 週番号の行ヘッダー（scope="row"）用ラベル。行ごとに一意の名前にするため
   // 番号を含める（aria-label が内容の数字を上書きしないように）
   const weekLabel = uiString("weekNumber", locale);
   const weekOf = (row: (number | null)[]): number | null => {
     const firstIdx = row.findIndex((d) => d !== null);
     if (firstIdx === -1) return null;
-    const firstDate = createDate(year, month - 1, row[firstIdx]!);
+    const firstDate = createDate(displayYear, displayMonth - 1, row[firstIdx]!);
     const weekStartDate = addDays(firstDate, -firstIdx);
     return weekStart === "monday"
       ? getISOWeek(weekStartDate)
@@ -182,7 +209,7 @@ export function Calendar({
     // biome-ignore lint/a11y/noStaticElementInteractions: onMouseLeave はホバー状態クリア用の補助イベント。キーボード操作（role=grid）は独立して対応済み
     <div
       ref={ref}
-      className={`calendar ${resolveTheme(theme).className}${isSizeName(size) ? ` calendar-size-${size}` : ""}${interactive ? " calendar-interactive" : ""}${responsive ? " calendar-responsive" : ""}`}
+      className={`calendar ${resolveTheme(theme).className}${isSizeName(size) ? ` calendar-size-${size}` : ""}${interactive ? " calendar-interactive" : ""}${responsive ? " calendar-responsive" : ""}${className ? ` ${className}` : ""}`}
       onMouseLeave={interactive ? handleMouseLeave : undefined}
       style={{
         ...(mergeColorScheme(colorScheme) as CSSProperties),
@@ -248,7 +275,7 @@ export function Calendar({
                   }
                   // 1セルにつき Date・状態・クラスを1回だけ計算する。
                   // Date は year/month 固定で day のみ変わるため createDate で正確に作る
-                  const date = createDate(year, month - 1, day);
+                  const date = createDate(displayYear, displayMonth - 1, day);
                   const state = getCalendarCellState(date, {
                     today,
                     holidayLocale,
@@ -297,7 +324,12 @@ export function Calendar({
                           onMouseEnter={onEnter}
                           tabIndex={cursor ? 0 : -1}
                           data-cursor={cursor ? "true" : undefined}
-                          aria-label={formatCellLabel(locale, year, month, day)}
+                          aria-label={formatCellLabel(
+                            locale,
+                            displayYear,
+                            displayMonth,
+                            day,
+                          )}
                           aria-pressed={selected}
                           disabled={state.isDisabled}
                         >

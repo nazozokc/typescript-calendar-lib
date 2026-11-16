@@ -9,6 +9,7 @@
     getMonthName,
     getWeekOfYear,
     getWeekdayHeaders,
+    getYearMonth,
     isSameDay,
   } from "@typescript-calendar-lib/core";
   import {
@@ -33,8 +34,15 @@
   import { mergeColorScheme, resolveTheme } from "./themes.js";
 
   interface CalendarProps {
-    year: number;
-    month: number;
+    /**
+     * 表示する年月を `Date` で指定する。`year` / `month` の代わりに使える
+     * （両方を併用した場合は `date` を優先する）。
+     */
+    date?: Date;
+    /** 表示する年。`date` 省略時は `month` と併せて必須 */
+    year?: number;
+    /** 表示する月 (1–12)。`date` 省略時は `year` と併せて必須 */
+    month?: number;
     locale?: CalendarOptions["locale"];
     holidayLocale?: CalendarOptions["holidayLocale"];
     weekStart?: CalendarOptions["weekStart"];
@@ -61,6 +69,8 @@
     responsive?: boolean;
     /** 行の先頭に週番号を表示する。既定は false（非表示） */
     showWeekNumbers?: boolean;
+    /** root 要素に追加するクラス。レイアウトや追加スタイルのフックに使う */
+    class?: string;
     /** root 要素に追加するスタイル。CSS変数（--cal-*）で自由に上書きできる */
     style?: CSSProperties;
 
@@ -96,6 +106,7 @@
   }
 
   let {
+    date: dateProp,
     year,
     month,
     locale = "en",
@@ -113,6 +124,7 @@
     size = "md",
     responsive = false,
     showWeekNumbers = false,
+    class: className,
     style,
     interactive = false,
     onDateClick,
@@ -124,6 +136,16 @@
     isDateDisabled,
   }: CalendarProps = $props();
 
+  // date が指定されればそれを優先し、なければ year/month を使う。
+  // どちらも揃っていない場合は、黙って現在月を出さずに即座に失敗させる。
+  const yearMonth = $derived.by(() => {
+    if (dateProp !== undefined) return getYearMonth(dateProp);
+    if (year !== undefined && month !== undefined) return { year, month };
+    throw new TypeError(
+      "Calendar requires either `date` or both `year` and `month`.",
+    );
+  });
+
   // interactive 時のみ APG の grid セマンティクスを付与する。静的表示では
   // ネイティブの table/cell セマンティクスをそのまま使う。
   const gridCellRole = $derived(interactive ? "gridcell" : undefined);
@@ -132,7 +154,8 @@
   // id が衝突し aria-labelledby が別のカレンダーを見指すため。
   const headingId = $props.id();
 
-  const cellDate = (day: number): Date => createDate(year, month - 1, day);
+  const cellDate = (day: number): Date =>
+    createDate(yearMonth.year, yearMonth.month - 1, day);
 
   /**
    * 1セルぶんの表示データ（Date・状態・クラス・aria 用の状態）を1回の計算でまとめる。
@@ -185,7 +208,11 @@
   const weekOf = (row: (number | null)[]): number | null => {
     const firstIdx = row.findIndex((d) => d !== null);
     if (firstIdx === -1) return null;
-    const firstDate = createDate(year, month - 1, row[firstIdx]!);
+    const firstDate = createDate(
+      yearMonth.year,
+      yearMonth.month - 1,
+      row[firstIdx]!,
+    );
     const weekStartDate = addDays(firstDate, -firstIdx);
     return weekStart === "monday"
       ? getISOWeek(weekStartDate)
@@ -204,7 +231,9 @@
   };
 
   // グリッド・曜日ヘッダーは月単位で不変。$derived なので年月が変わったときだけ再計算される
-  const grid = $derived(buildMonthGrid(year, month, weekStart));
+  const grid = $derived(
+    buildMonthGrid(yearMonth.year, yearMonth.month, weekStart),
+  );
   const weekdays = $derived(getWeekdayHeaders(locale, weekStart));
   // 週番号は表示時のみ計算する。グリッドと同じ月単位の依存
   const weekNumbers = $derived(showWeekNumbers ? grid.map(weekOf) : null);
@@ -224,6 +253,19 @@
       ...style,
     }),
   );
+
+  const rootClass = $derived(
+    [
+      "calendar",
+      resolveTheme(theme).className,
+      isSizeName(size) ? `calendar-size-${size}` : "",
+      interactive ? "calendar-interactive" : "",
+      responsive ? "calendar-responsive" : "",
+      className ?? "",
+    ]
+      .filter(Boolean)
+      .join(" "),
+  );
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -231,7 +273,7 @@
      InteractiveCalendar が table 上で扱う。root 自体は widget ではないため
      ARIA role は持たない。 -->
 <div
-  class="calendar {resolveTheme(theme).className}{isSizeName(size) ? ` calendar-size-${size}` : ""}{interactive ? " calendar-interactive" : ""}{responsive ? " calendar-responsive" : ""}"
+  class={rootClass}
   style={rootStyle}
   onmouseleave={interactive ? handleMouseLeave : undefined}
   onkeydown={onkeydown}
@@ -247,7 +289,7 @@
       aria-live={interactive ? "polite" : undefined}
       aria-atomic={interactive ? "true" : undefined}
     >
-      {getMonthName(locale, month)} {year}
+      {getMonthName(locale, yearMonth.month)} {yearMonth.year}
     </h2>
   </div>
   <!-- interactive 時のみ APG の grid セマンティクスを付与する。静的表示では
@@ -294,7 +336,12 @@
                       onmouseenter={cell.isDisabled ? undefined : () => handleCellHover(cell)}
                       tabindex={cell.isCursor ? 0 : -1}
                       data-cursor={cell.isCursor ? "true" : undefined}
-                      aria-label={formatCellLabel(locale, year, month, day)}
+                      aria-label={formatCellLabel(
+                        locale,
+                        yearMonth.year,
+                        yearMonth.month,
+                        day,
+                      )}
                       aria-pressed={cell.isSelected}
                       disabled={cell.isDisabled}
                     >
