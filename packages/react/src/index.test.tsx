@@ -1788,3 +1788,81 @@ describe("InteractiveCalendar 拡張キーボード", () => {
     expect(screen.getByText("September 2026")).toBeInTheDocument();
   });
 });
+
+// ─── consumer ergonomics ────────────────────────────────
+
+describe("Calendar date / className", () => {
+  test("date だけで表示月を指定できる", () => {
+    render(
+      createElement(Calendar, {
+        date: new Date(2026, 8, 15),
+        today: TODAY,
+      }),
+    );
+    expect(screen.getByText("September 2026")).toBeTruthy();
+  });
+
+  test("date は year/month より優先される", () => {
+    render(
+      createElement(Calendar, {
+        date: new Date(2026, 8, 15),
+        year: 2025,
+        month: 1,
+        today: TODAY,
+      }),
+    );
+    expect(screen.getByText("September 2026")).toBeTruthy();
+  });
+
+  test("date も year/month も無い場合は TypeError", () => {
+    expect(() => render(createElement(Calendar, { today: TODAY }))).toThrow(
+      TypeError,
+    );
+  });
+
+  test("不正な date は RangeError", () => {
+    expect(() =>
+      render(
+        createElement(Calendar, { date: new Date("invalid"), today: TODAY }),
+      ),
+    ).toThrow(RangeError);
+  });
+
+  test("className が root に追加される", () => {
+    const { container } = render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 9,
+        today: TODAY,
+        className: "my-calendar",
+      }),
+    );
+    const root = container.firstChild as HTMLElement;
+    expect(root).toHaveClass("calendar");
+    expect(root).toHaveClass("my-calendar");
+  });
+});
+
+describe("InteractiveCalendar initialDate / className", () => {
+  test("initialDate だけで開始月を指定できる", () => {
+    render(
+      createElement(InteractiveCalendar, {
+        initialDate: new Date(2026, 8, 15),
+        today: TODAY,
+      }),
+    );
+    expect(screen.getByText("September 2026")).toBeTruthy();
+  });
+
+  test("className が root に追加される", () => {
+    const { container } = render(
+      createElement(InteractiveCalendar, {
+        initialYear: 2026,
+        initialMonth: 9,
+        today: TODAY,
+        className: "my-calendar",
+      }),
+    );
+    expect(container.firstChild).toHaveClass("my-calendar");
+  });
+});

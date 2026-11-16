@@ -36,6 +36,19 @@ export function sortRange(
   return a.getTime() <= b.getTime() ? { from: a, to: b } : { from: b, to: a };
 }
 
+/**
+ * 日付から 1 始まりの年月を取り出す。
+ *
+ * `new Date()` や状態から得た `Date` をそのままカレンダー API へ渡したいときに使う。
+ * 年は 1–9999 の範囲で検証される。
+ */
+export function getYearMonth(date: Date): { year: number; month: number } {
+  assertValidDate(date);
+  const year = date.getFullYear();
+  assertValidYear(year);
+  return { year, month: date.getMonth() + 1 };
+}
+
 /** 月初日（1日）を返す */
 export function firstDayOfMonth(year: number, month: number): Date {
   assertValidYearMonth(year, month);

@@ -230,6 +230,16 @@ getMonthRange(new Date(2026, 5, 1), new Date(2026, 8, 30));
 
 Throws `RangeError` when `from` is after `to`, or when either date is invalid.
 
+### `getYearMonth(date): { year: number; month: number }`
+
+Extract a 1-indexed year/month pair from a `Date`. Useful when you already hold a `Date` and want to pass it to a calendar API:
+
+```ts
+getYearMonth(new Date(2026, 8, 15)); // { year: 2026, month: 9 }
+```
+
+Throws `RangeError` for an invalid `Date` or a year outside `1`–`9999`.
+
 ### `createDate(year, monthIndex, day): Date`
 
 Creates a local `Date` at `00:00:00` without the `new Date(year, ...)` 1900-interpretation for years `0`–`99`. `monthIndex` is 0-based like `Date`.
@@ -550,6 +560,7 @@ import {
   getLocaleData,
   getMonthName,
   getMonthRange,
+  getYearMonth,
   getWeekOfYear,
   getWeekdayHeaders,
   isAfter,

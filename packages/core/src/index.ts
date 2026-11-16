@@ -58,6 +58,7 @@ export {
   firstDayOfMonth,
   getCalendarCellState,
   getMonthRange,
+  getYearMonth,
   isDateInRange,
   isLeapYear,
   isSameDay,

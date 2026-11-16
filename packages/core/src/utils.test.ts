@@ -5,6 +5,7 @@ import {
   firstDayOfMonth,
   getCalendarCellState,
   getMonthRange,
+  getYearMonth,
   isDateInRange,
   isLeapYear,
   isSameDay,
@@ -399,5 +400,38 @@ describe("sortRange", () => {
     expect(sortRange(null, jun10)).toBeUndefined();
     expect(sortRange(jun1, null)).toBeUndefined();
     expect(sortRange(null, null)).toBeUndefined();
+  });
+});
+
+// ─── getYearMonth ────────────────────────────────────────
+
+describe("getYearMonth", () => {
+  test("Date から 1 始まりの年月を取り出す", () => {
+    expect(getYearMonth(new Date(2026, 8, 15))).toEqual({
+      year: 2026,
+      month: 9,
+    });
+  });
+
+  test("月初と月末も同じ年月", () => {
+    expect(getYearMonth(new Date(2026, 0, 1))).toEqual({
+      year: 2026,
+      month: 1,
+    });
+    expect(getYearMonth(new Date(2026, 11, 31))).toEqual({
+      year: 2026,
+      month: 12,
+    });
+  });
+
+  test("100 年未満の年もそのまま返す", () => {
+    const date = new Date(0);
+    date.setHours(0, 0, 0, 0);
+    date.setFullYear(50, 8, 1);
+    expect(getYearMonth(date)).toEqual({ year: 50, month: 9 });
+  });
+
+  test("Invalid Date は RangeError", () => {
+    expect(() => getYearMonth(new Date("invalid"))).toThrow(RangeError);
   });
 });
