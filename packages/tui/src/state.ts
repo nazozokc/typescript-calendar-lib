@@ -17,6 +17,7 @@ import type {
  * カレンダー状態を初期化する。
  *
  * カーソルはデフォルトで「今日」のセル、今日が当月に無ければ最初の日付セルに置かれる。
+ * `initialCursor: null` を明示すると未フォーカス（cursor は null）で開始する。
  * `initialYear`/`initialMonth` は shiftMonth で正規化される（例: month=13 → 翌年1月）。
  */
 export function createCalendarState<T>(
@@ -31,9 +32,9 @@ export function createCalendarState<T>(
 
   const monthData = buildMonthData<T>(year, month, resolved);
   const cursor = clampCursor(
-    options.initialCursor ??
-      findTodayCell(monthData) ??
-      findFirstDayCell(monthData),
+    options.initialCursor !== undefined
+      ? options.initialCursor
+      : (findTodayCell(monthData) ?? findFirstDayCell(monthData)),
     monthData,
   );
 

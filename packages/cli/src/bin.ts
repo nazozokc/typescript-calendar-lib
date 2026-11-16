@@ -1,5 +1,7 @@
 #!/usr/bin/env node
+import { realpathSync } from "node:fs";
 import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 import type {
   HighlightStyle,
   HolidayLocale,
@@ -72,7 +74,10 @@ export function resolveColor(
   if (noColorFlag) return false;
   if (colorFlag) return true;
   if (env.NO_COLOR) return false;
-  if (env.FORCE_COLOR) return true;
+  if (env.FORCE_COLOR !== undefined && env.FORCE_COLOR !== "") {
+    // Node や他ツールと同じく "0" / "false" は明示的な無効化として扱う
+    return env.FORCE_COLOR !== "0" && env.FORCE_COLOR.toLowerCase() !== "false";
+  }
   return isTTY;
 }
 
@@ -305,7 +310,23 @@ Color:
 `;
 }
 
-if (import.meta.main) {
+/**
+ * このモジュールがエントリーポイントとして実行されているか。
+ *
+ * `import.meta.main` は Node 22.18 / 24.2 以降にしか無いため、`engines: ">=22"` を
+ * 満たす古い Node でも動くよう argv と自身のパスを比較する。
+ */
+function isMainModule(): boolean {
+  const entry = process.argv[1];
+  if (entry === undefined) return false;
+  try {
+    return realpathSync(entry) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
+if (isMainModule()) {
   const { args, error, help, version } = parseArgs(process.argv.slice(2));
 
   if (version) {

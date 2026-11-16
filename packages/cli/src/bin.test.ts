@@ -369,6 +369,21 @@ describe("resolveColor", () => {
       true,
     );
   });
+
+  test("FORCE_COLOR=0 / false は TTY でも無効化する", () => {
+    expect(resolveColor(undefined, undefined, { FORCE_COLOR: "0" }, true)).toBe(
+      false,
+    );
+    expect(
+      resolveColor(undefined, undefined, { FORCE_COLOR: "false" }, true),
+    ).toBe(false);
+  });
+
+  test("FORCE_COLOR 空文字列は無視される", () => {
+    expect(resolveColor(undefined, undefined, { FORCE_COLOR: "" }, false)).toBe(
+      false,
+    );
+  });
 });
 
 describe("getVersion", () => {

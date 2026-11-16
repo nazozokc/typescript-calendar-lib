@@ -297,9 +297,12 @@ export function Calendar({
                     selectedDate !== null && isSameDay(date, selectedDate);
                   const cursor =
                     cursorDate !== null && isSameDay(date, cursorDate);
+                  // cellData はセルごとに1回だけ解決し、クリック時と描画時で同じ値を渡す
+                  const data =
+                    interactive || renderCell ? cellData?.(date) : undefined;
                   const onClick =
                     interactive && !state.isDisabled
-                      ? () => handleCellClick(date, cellData?.(date))
+                      ? () => handleCellClick(date, data)
                       : undefined;
                   const onEnter =
                     interactive && !state.isDisabled
@@ -334,11 +337,11 @@ export function Calendar({
                           disabled={state.isDisabled}
                         >
                           {renderCell
-                            ? renderCell(day, date, state, cellData?.(date))
+                            ? renderCell(day, date, state, data)
                             : day}
                         </button>
                       ) : renderCell ? (
-                        renderCell(day, date, state, cellData?.(date))
+                        renderCell(day, date, state, data)
                       ) : (
                         day
                       )}

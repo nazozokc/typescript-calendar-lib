@@ -1,4 +1,4 @@
-import { addDays } from "./date-math.ts";
+import { addDays, diffInCalendarDays, startOfDay } from "./date-math.ts";
 import {
   FIXED_HOLIDAY_RULES,
   type HolidayRule,
@@ -300,6 +300,8 @@ export function addBusinessDays(
  * 2つの日付の間の営業日数（to - from 方向）を返す。マイナスもありうる。
  * from 自身は数えず、to は数える。例: 月曜→火曜 = 1、金曜→翌月曜 = 1（土日はスキップ）。
  * `addBusinessDays(from, n) === to` と `diffInBusinessDays(from, to) === n` は同値。
+ *
+ * 時刻は無視され、暦日単位で数える（例: 月曜 12:00 → 火曜 09:00 は 1）。
  */
 export function diffInBusinessDays(
   from: Date,
@@ -308,18 +310,13 @@ export function diffInBusinessDays(
 ): number {
   assertValidDate(from);
   assertValidDate(to);
-  const sign = to.getTime() >= from.getTime() ? 1 : -1;
-  const cursor = new Date(from.getTime());
+  const days = diffInCalendarDays(from, to);
+  if (days === 0) return 0;
+  const sign = days > 0 ? 1 : -1;
+  const cursor = startOfDay(from);
   let count = 0;
-  for (;;) {
+  for (let remaining = Math.abs(days); remaining > 0; remaining--) {
     cursor.setDate(cursor.getDate() + sign);
-    if (
-      sign > 0
-        ? cursor.getTime() > to.getTime()
-        : cursor.getTime() < to.getTime()
-    ) {
-      break;
-    }
     if (isBusinessDay(cursor, locale)) count++;
   }
   return count * sign;

@@ -35,6 +35,11 @@ describe("createCalendarState", () => {
     expect(state.cursor).toEqual({ row: 2, col: 3 });
   });
 
+  test("initialCursor: null は未フォーカス（今日にスナップしない）", () => {
+    const state = createCalendarState({ today: TODAY, initialCursor: null });
+    expect(state.cursor).toBeNull();
+  });
+
   test("selectedDate は初期状態で null", () => {
     const state = createCalendarState({ today: TODAY });
     expect(state.selectedDate).toBeNull();

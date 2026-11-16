@@ -58,5 +58,6 @@ export function keyToAction(
     if (key === "PageUp") return "prevYear";
     if (key === "PageDown") return "nextYear";
   }
-  return KEY_ACTIONS[key];
+  // Object.prototype 由来のキー（"constructor" 等）を誤って返さない
+  return Object.hasOwn(KEY_ACTIONS, key) ? KEY_ACTIONS[key] : undefined;
 }
