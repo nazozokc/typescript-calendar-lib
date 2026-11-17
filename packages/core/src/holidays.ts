@@ -10,7 +10,7 @@ import { assertValidDate, createDate } from "./validation.ts";
 export type { HolidayRule, YearHoliday } from "./holiday-rules.ts";
 export type { HolidayLocale } from "./types.ts";
 
-// ─── 日本の祝日 ───────────────────────────────────────────
+// ─── 日本の祝日 ───────────────────────────────────────────────
 
 /** 日本の祝日が計算できる年範囲（1949 年以降の現行祝日法制に基づく） */
 export const HOLIDAY_MIN_YEAR = 1949;
@@ -24,7 +24,9 @@ const ONE_OFF_HOLIDAYS: readonly YearHolidayWithYear[] = [
   { year: 1989, month: 2, day: 24, name: "昭和天皇の大喪の礼" },
   { year: 1990, month: 11, day: 12, name: "即位の礼正殿の儀" },
   { year: 1993, month: 6, day: 9, name: "皇太子徳仁親王の結婚の儀" },
+  { year: 2019, month: 4, day: 30, name: "休日" }, // 天皇の即位の日及び即位礼正殿の儀の行われる日を休日とする法律
   { year: 2019, month: 5, day: 1, name: "天皇即位の日" },
+  { year: 2019, month: 5, day: 2, name: "休日" }, // 同上
   { year: 2019, month: 10, day: 22, name: "即位礼正殿の儀" },
 ];
 
