@@ -41,6 +41,7 @@ describe("server rendering", () => {
     });
 
     expect(body).toContain('aria-label="September 15, 2026"');
-    expect(body).toContain('aria-pressed="false"');
+    expect(body).toContain('class="calendar-sr-only"');
+    expect(body).not.toContain("aria-pressed=");
   });
 });

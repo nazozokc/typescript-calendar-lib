@@ -12,6 +12,8 @@ export {
   getSelectionCellClasses,
   joinCellClassLists,
 } from "./cell-classes.ts";
+export type { FocusDateOptions } from "./focus.ts";
+export { getFocusDate } from "./focus.ts";
 export { formatCellLabel, UI_STRINGS, uiString } from "./label.ts";
 export type {
   CalendarCustomSize,
@@ -20,6 +22,8 @@ export type {
   CssVarMap,
 } from "./size.ts";
 export { buildSizeStyle, isSizeName } from "./size.ts";
+export type { SwipePoint } from "./swipe.ts";
+export { getSwipeDirection } from "./swipe.ts";
 export type {
   ColorSchemeName,
   MergedColorScheme,
@@ -30,6 +34,7 @@ export type {
 export {
   COLOR_SCHEMES,
   mergeColorScheme,
+  resolveAutoColorScheme,
   resolveColorScheme,
   resolveTheme,
   THEMES,

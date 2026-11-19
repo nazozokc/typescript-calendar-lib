@@ -40,6 +40,7 @@ describe("server rendering", () => {
     );
 
     expect(html).toContain('aria-label="September 15, 2026"');
-    expect(html).toContain('aria-pressed="false"');
+    expect(html).toContain('class="calendar-sr-only"');
+    expect(html).not.toContain("aria-pressed=");
   });
 });

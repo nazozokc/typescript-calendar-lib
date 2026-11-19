@@ -12,6 +12,7 @@ export type {
 export {
   COLOR_SCHEMES,
   mergeColorScheme,
+  resolveAutoColorScheme,
   resolveColorScheme,
   resolveTheme,
   THEMES,

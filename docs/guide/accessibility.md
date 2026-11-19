@@ -45,9 +45,12 @@ const cal = useCalendarState({ initialYear: 2026, initialMonth: 9 });
 - Interactive mode exposes `role="grid"` with `role="gridcell"` cells. The
   non-interactive table keeps native table semantics.
 - Today's cell gets `aria-current="date"`. The selected date gets `aria-selected`
-  on the grid cell and `aria-pressed` on its button.
+  on the grid cell. Following the APG pattern, day buttons do **not** use
+  `aria-pressed`; selection is announced once through the gridcell.
 - Day buttons use a localized `aria-label`; weekday headers use `scope="col"`
   and week-number cells use `th[scope="row"]`.
+- The grid has an `aria-describedby` hint with localized arrow-key / PageUp /
+  PageDown instructions, visually hidden but available to screen readers.
 - Padding cells carry `is-blank` instead of relying on `td:empty`, so layout
   helpers do not change the accessibility tree.
 

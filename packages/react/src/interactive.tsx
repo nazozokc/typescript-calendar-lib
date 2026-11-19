@@ -1,12 +1,16 @@
 import type { CalendarOptions } from "@typescript-calendar-lib/core";
 import {
   createDate,
+  getMonthName,
   getYearMonth,
   lastDayOfMonth,
+  MAX_YEAR,
+  MIN_YEAR,
 } from "@typescript-calendar-lib/core";
 import type { SelectionMode } from "@typescript-calendar-lib/tui";
 import { keyToAction } from "@typescript-calendar-lib/tui";
-import type { CSSProperties } from "react";
+import { getSwipeDirection, uiString } from "@typescript-calendar-lib/web";
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { useCallback, useEffect, useRef } from "react";
 import { Calendar, type CalendarProps } from "./Calendar.tsx";
 import { useCalendarState } from "./hooks.ts";
@@ -63,6 +67,10 @@ export interface InteractiveCalendarProps {
   /** root 要素に追加するクラス。レイアウトや追加スタイルのフックに使う */
   className?: string;
   style?: CSSProperties;
+  /** ヘッダーに前月/翌月・今日・月/年選択を表示する。既定は false */
+  showNavigation?: boolean;
+  /** 水平スワイプで月を移動する。既定は false（縦スクロールを妨げない） */
+  swipeToNavigate?: boolean;
   /** セル内容のカスタムレンダリング。第4引数に該当日のデータが渡る */
   renderCell?: CalendarProps["renderCell"];
   /** 各セルに付与するユーザー定義データを解決する関数。実セルのみに呼ばれる */
@@ -110,6 +118,8 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     responsive,
     className,
     style,
+    showNavigation = false,
+    swipeToNavigate = false,
     renderCell,
     cellData,
     onDateClick,
@@ -143,6 +153,8 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     moveCursor,
     goPrev,
     goNext,
+    goToday,
+    goToMonth,
     navigateYear,
     setCursorToDate,
     clearSelection,
@@ -173,6 +185,42 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     setHoveredDate(null);
     onDateLeave?.();
   }, [setHoveredDate, onDateLeave]);
+
+  // スワイプは pointerdown/up の座標差だけで判定する。クリック（タップ）は
+  // 移動量が閾値未満なので選択動作と衝突しない。
+  const swipeStartRef = useRef<{
+    x: number;
+    y: number;
+    pointerId: number;
+  } | null>(null);
+  const handlePointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (!swipeToNavigate) return;
+      swipeStartRef.current = {
+        x: event.clientX,
+        y: event.clientY,
+        pointerId: event.pointerId,
+      };
+    },
+    [swipeToNavigate],
+  );
+  const handlePointerUp = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      const start = swipeStartRef.current;
+      swipeStartRef.current = null;
+      if (start === null || start.pointerId !== event.pointerId) return;
+      const direction = getSwipeDirection(start, {
+        x: event.clientX,
+        y: event.clientY,
+      });
+      if (direction === "next") goNext();
+      if (direction === "prev") goPrev();
+    },
+    [goNext, goPrev],
+  );
+  const handlePointerCancel = useCallback(() => {
+    swipeStartRef.current = null;
+  }, []);
 
   // 確定済みの選択範囲は、次のピックが始まるまでプレビューとして表示し続ける。
   // 未確定なら選択済み日付とホバー日付の間を範囲プレビューとして表示する。
@@ -239,6 +287,74 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     ],
   );
 
+  const displayLocale = state.options.locale ?? "en";
+  const years = Array.from(
+    { length: 21 },
+    (_, i) => state.year - 10 + i,
+  ).filter((year) => year >= MIN_YEAR && year <= MAX_YEAR);
+
+  const headerStart = showNavigation
+    ? [
+        <button
+          key="prev"
+          type="button"
+          aria-label={uiString("previousMonth", displayLocale)}
+          onClick={goPrev}
+        >
+          ‹
+        </button>,
+        <select
+          key="month"
+          aria-label={uiString("month", displayLocale)}
+          value={state.month}
+          onChange={(event) =>
+            goToMonth(state.year, Number(event.currentTarget.value))
+          }
+        >
+          {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+            <option key={month} value={month}>
+              {getMonthName(displayLocale, month)}
+            </option>
+          ))}
+        </select>,
+        <select
+          key="year"
+          aria-label={uiString("year", displayLocale)}
+          value={state.year}
+          onChange={(event) =>
+            goToMonth(Number(event.currentTarget.value), state.month)
+          }
+        >
+          {years.map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </select>,
+      ]
+    : undefined;
+
+  const headerEnd = showNavigation
+    ? [
+        <button
+          key="today"
+          type="button"
+          className="calendar-nav-today"
+          onClick={goToday}
+        >
+          {uiString("goToToday", displayLocale)}
+        </button>,
+        <button
+          key="next"
+          type="button"
+          aria-label={uiString("nextMonth", displayLocale)}
+          onClick={goNext}
+        >
+          ›
+        </button>,
+      ]
+    : undefined;
+
   return (
     <Calendar
       ref={rootRef}
@@ -256,8 +372,14 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
       colorScheme={colorScheme}
       size={size}
       responsive={responsive}
-      className={className}
+      className={
+        [className, swipeToNavigate ? "calendar-swipe" : ""]
+          .filter(Boolean)
+          .join(" ") || undefined
+      }
       style={style}
+      headerStart={headerStart}
+      headerEnd={headerEnd}
       interactive
       renderCell={renderCell}
       cellData={cellData}
@@ -269,6 +391,9 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
       onDateHover={handleDateHover}
       onDateLeave={handleDateLeave}
       onKeyDown={handleKeyDown}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
     />
   );
 }

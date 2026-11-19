@@ -79,11 +79,12 @@ Run the component through a Svelte compiler such as Vite or SvelteKit; the packa
 | `rangePreview`    | `{ from: Date; to: Date }`                             | —           | Candidate range preview (hover preview), rendered with the `is-in-range-preview` class                                                                                              |
 | `isDateDisabled`  | `(date: Date) => boolean`                              | —           | Mark dates as non-selectable in interactive mode (`is-disabled` class)                                                                                                              |
 | `today`           | `Date`                                                 | —           | Reference date for "today" styling                                                                                                                                                  |
-| `selected`        | `Date \| null`                                         | —           | Selected date (`.is-selected` class, `aria-pressed="true"` in interactive mode; other buttons are `"false"`)                                                                        |
+| `selected`        | `Date \| null`                                         | —           | Selected date (`.is-selected` class, `aria-selected` on the gridcell)                                                                                                               |
+| `selectedDate`    | `Date \| null`                                         | —           | Alias of `selected` matching the React prop name; takes precedence when both are given                                                                                              |
 | `cursorDate`      | `Date \| null`                                         | —           | Cursor position (`.is-cursor` class)                                                                                                                                                |
 | `hoveredDate`     | `Date \| null`                                         | —           | Hovered date (`.is-hovered` class)                                                                                                                                                  |
 | `theme`           | `ThemeName \| SvelteTheme`                             | `"default"` | CSS class-based theme                                                                                                                                                               |
-| `colorScheme`     | `ColorSchemeName \| SvelteColorScheme`                 | `"default"` | CSS variable-based colors                                                                                                                                                           |
+| `colorScheme`     | `ColorSchemeName \| SvelteColorScheme`                 | `"default"` | CSS variable-based colors. `"auto"` follows `prefers-color-scheme` (`default` for light, `midnight` for dark)                                                                       |
 | `size`            | `CalendarSize`                                         | `"md"`      | Cell size                                                                                                                                                                           |
 | `responsive`      | `boolean`                                              | `false`     | Shrink cells & padding below `480px` so the grid fits phone screens                                                                                                                 |
 | `showWeekNumbers` | `boolean`                                              | `false`     | Render a leading week-number column (`th[scope="row"]` with class `calendar-week`); the number follows `weekStart` (`"monday"` → ISO week, `"sunday"` → week-containing-Jan-1 week) |
@@ -161,9 +162,11 @@ Combines `useCalendarState` options, `Calendar` visual props, and event callback
 | `onkeydown`       | `(event: KeyboardEvent) => void`                 | Keyboard handler fired on the root element (arrow keys etc.)                                |
 | `onMonthChange`   | `(year: number, month: number) => void`          | Called when the displayed month changes                                                     |
 | `theme`           | `ThemeName \| SvelteTheme`                       | CSS class-based theme                                                                       |
-| `colorScheme`     | `ColorSchemeName \| SvelteColorScheme`           | CSS variable-based colors                                                                   |
+| `colorScheme`     | `ColorSchemeName \| SvelteColorScheme`           | CSS variable-based colors; `"auto"` follows `prefers-color-scheme`                          |
 | `size`            | `CalendarSize`                                   | Cell size                                                                                   |
 | `responsive`      | `boolean`                                        | Shrink cells & padding below `480px` so the grid fits phone screens                         |
+| `showNavigation`  | `boolean`                                        | Render prev/next buttons, a Today button, and month/year selects (default `false`)          |
+| `swipeToNavigate` | `boolean`                                        | Horizontal pointer swipe changes month; vertical scrolling is preserved (default `false`)   |
 | `class`           | `string`                                         | Extra class on the root element                                                             |
 | `style`           | `CSSProperties`                                  | Extra styles for the root element                                                           |
 | `cellData`        | `(date: Date) => unknown`                        | Resolve per-cell data; passed to `renderCell` and `onDateClick`                             |
@@ -183,7 +186,7 @@ Combines `useCalendarState` options, `Calendar` visual props, and event callback
 
 ## Interactive Mode
 
-Set `interactive` to make day cells clickable. Each cell becomes a `<button class="calendar-day-btn">` — clickable, hoverable, and keyboard-accessible (Enter / Space). Buttons are announced with a localized `aria-label` and an explicit `aria-pressed="true"` or `"false"`; today's cell gets `aria-current="date"`. The table is labelled by the visible `<h2>` heading via `aria-labelledby`, weekday headers use `scope="col"`, and week-number cells use `th[scope="row"]`. In interactive mode it is exposed as a `role="grid"` table with `role="gridcell"` cells (WAI-ARIA APG calendar pattern), today's cell gets `aria-current="date"`, the selected date gets `aria-selected`, and only the cursor cell is tabbable (roving tabindex):
+Set `interactive` to make day cells clickable. Each cell becomes a `<button class="calendar-day-btn">` — clickable, hoverable, and keyboard-accessible (Enter / Space). Buttons are announced with a localized `aria-label`; today's cell gets `aria-current="date"`. The table is labelled by the visible `<h2>` heading via `aria-labelledby`, weekday headers use `scope="col"`, and week-number cells use `th[scope="row"]`. In interactive mode it is exposed as a `role="grid"` table with `role="gridcell"` cells (WAI-ARIA APG calendar pattern), today's cell gets `aria-current="date"`, the selected date gets `aria-selected` (buttons omit `aria-pressed`), the grid has a visually hidden `aria-describedby` keyboard hint, and only the cursor cell is tabbable (roving tabindex):
 
 ```svelte
 <Calendar
@@ -447,7 +450,7 @@ It's **off by default** to keep existing layouts unchanged. The calendar root ge
 
 ## Cell Classes
 
-Each day cell gets semantic classes you can target with CSS. The table is labelled by the visible `<h2>` heading via `aria-labelledby`, weekday headers use `scope="col"`, week-number cells use `th[scope="row"]`, today's cell uses `aria-current="date"`, and interactive day buttons expose `aria-pressed="true"` or `"false"`:
+Each day cell gets semantic classes you can target with CSS. The table is labelled by the visible `<h2>` heading via `aria-labelledby`, weekday headers use `scope="col"`, week-number cells use `th[scope="row"]`, today's cell uses `aria-current="date"`, and interactive day buttons are labelled only by their localized `aria-label` (selection is conveyed by the gridcell's `aria-selected`):
 
 | Class                 | When                                                          |
 | :-------------------- | :------------------------------------------------------------ |

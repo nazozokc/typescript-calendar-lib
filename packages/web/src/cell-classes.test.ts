@@ -52,4 +52,43 @@ describe("getCellClasses", () => {
       "",
     );
   });
+
+  test("範囲の両端に start / end クラスが付く", () => {
+    const range = {
+      from: new Date(2026, 8, 10),
+      to: new Date(2026, 8, 20),
+    };
+    const start = getCellClasses(range.from, { range });
+    const middle = getCellClasses(TODAY, { range });
+    const end = getCellClasses(range.to, { range });
+    expect(start).toContain("is-range-start");
+    expect(start).not.toContain("is-range-end");
+    expect(middle).not.toContain("is-range-start");
+    expect(middle).not.toContain("is-range-end");
+    expect(end).toContain("is-range-end");
+  });
+
+  test("1 日だけの範囲は start と end の両方が付く", () => {
+    const classes = getCellClasses(TODAY, {
+      range: { from: TODAY, to: TODAY },
+    });
+    expect(classes).toContain("is-range-start");
+    expect(classes).toContain("is-range-end");
+  });
+
+  test("範囲プレビューも両端が分かる", () => {
+    const rangePreview = {
+      from: new Date(2026, 8, 10),
+      to: new Date(2026, 8, 20),
+    };
+    expect(getCellClasses(rangePreview.from, { rangePreview })).toContain(
+      "is-range-preview-start",
+    );
+    expect(getCellClasses(rangePreview.to, { rangePreview })).toContain(
+      "is-range-preview-end",
+    );
+    expect(getCellClasses(TODAY, { rangePreview })).not.toContain(
+      "is-range-preview-start",
+    );
+  });
 });

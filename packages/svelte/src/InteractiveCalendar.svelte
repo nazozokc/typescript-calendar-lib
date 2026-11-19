@@ -2,11 +2,15 @@
   import type { CalendarCellState, CalendarOptions } from "@typescript-calendar-lib/core";
   import {
     createDate,
+    getMonthName,
     getYearMonth,
     lastDayOfMonth,
+    MAX_YEAR,
+    MIN_YEAR,
   } from "@typescript-calendar-lib/core";
   import type { SelectionMode } from "@typescript-calendar-lib/tui";
   import { keyToAction } from "@typescript-calendar-lib/tui";
+  import { getSwipeDirection, uiString } from "@typescript-calendar-lib/web";
   import type { Snippet } from "svelte";
   import Calendar from "./Calendar.svelte";
   import { buildRangePreview } from "./range-preview.js";
@@ -64,6 +68,10 @@
     /** root 要素に追加するクラス。レイアウトや追加スタイルのフックに使う */
     class?: string;
     style?: CSSProperties;
+    /** ヘッダーに前月/翌月・今日・月/年選択を表示する。既定は false */
+    showNavigation?: boolean;
+    /** 水平スワイプで月を移動する。既定は false（縦スクロールを妨げない） */
+    swipeToNavigate?: boolean;
     /** セル内容のカスタムレンダリング。文字列または Snippet。第4引数に該当日のデータが渡る */
     renderCell?: (
       day: number,
@@ -106,6 +114,8 @@
     responsive,
     class: className,
     style,
+    showNavigation = false,
+    swipeToNavigate = false,
     renderCell,
     cellData,
     onDateClick,
@@ -202,6 +212,40 @@
         cal.moveCursor(action);
     }
   };
+
+  // スワイプは pointerdown/up の座標差だけで判定する。タップは移動量が
+  // 閾値未満なので選択動作と衝突しない。
+  let swipeStart: { x: number; y: number; pointerId: number } | null = null;
+  const handlePointerDown = (event: PointerEvent) => {
+    if (!swipeToNavigate) return;
+    swipeStart = {
+      x: event.clientX,
+      y: event.clientY,
+      pointerId: event.pointerId,
+    };
+  };
+  const handlePointerUp = (event: PointerEvent) => {
+    const start = swipeStart;
+    swipeStart = null;
+    if (start === null || start.pointerId !== event.pointerId) return;
+    const direction = getSwipeDirection(start, {
+      x: event.clientX,
+      y: event.clientY,
+    });
+    if (direction === "next") cal.goNext();
+    if (direction === "prev") cal.goPrev();
+  };
+  const handlePointerCancel = () => {
+    swipeStart = null;
+  };
+
+  const displayLocale = $derived(cal.state.options.locale ?? "en");
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+  const years = $derived(
+    Array.from({ length: 21 }, (_, i) => cal.state.year - 10 + i).filter(
+      (year) => year >= MIN_YEAR && year <= MAX_YEAR,
+    ),
+  );
 </script>
 
 <div bind:this={root} class="interactive-calendar">
@@ -220,12 +264,14 @@
     colorScheme={colorScheme}
     size={size}
     responsive={responsive}
-    class={className}
+    class={[className, swipeToNavigate ? "calendar-swipe" : ""]
+      .filter(Boolean)
+      .join(" ") || undefined}
     style={style}
     interactive
     renderCell={renderCell}
     cellData={cellData}
-    selected={cal.selectedDate}
+    selectedDate={cal.selectedDate}
     cursorDate={cal.cursorDate}
     hoveredDate={cal.hoveredDate}
     rangePreview={rangePreview}
@@ -233,5 +279,54 @@
     onDateHover={handleDateHover}
     onDateLeave={handleDateLeave}
     onkeydown={handleKeyDown}
-  />
+    onpointerdown={handlePointerDown}
+    onpointerup={handlePointerUp}
+    onpointercancel={handlePointerCancel}
+  >
+    {#snippet headerStart()}
+      {#if showNavigation}
+        <button
+          type="button"
+          aria-label={uiString("previousMonth", displayLocale)}
+          onclick={cal.goPrev}
+        >
+          ‹
+        </button>
+        <select
+          aria-label={uiString("month", displayLocale)}
+          value={cal.state.month}
+          onchange={(event) =>
+            cal.goToMonth(cal.state.year, Number(event.currentTarget.value))}
+        >
+          {#each months as month (month)}
+            <option value={month}>{getMonthName(displayLocale, month)}</option>
+          {/each}
+        </select>
+        <select
+          aria-label={uiString("year", displayLocale)}
+          value={cal.state.year}
+          onchange={(event) =>
+            cal.goToMonth(Number(event.currentTarget.value), cal.state.month)}
+        >
+          {#each years as year (year)}
+            <option value={year}>{year}</option>
+          {/each}
+        </select>
+      {/if}
+    {/snippet}
+    {#snippet headerEnd()}
+      {#if showNavigation}
+        <button type="button" class="calendar-nav-today" onclick={cal.goToday}>
+          {uiString("goToToday", displayLocale)}
+        </button>
+        <button
+          type="button"
+          aria-label={uiString("nextMonth", displayLocale)}
+          onclick={cal.goNext}
+        >
+          ›
+        </button>
+      {/if}
+    {/snippet}
+  </Calendar>
 </div>
