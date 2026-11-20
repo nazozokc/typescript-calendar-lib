@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { createElement } from "react";
+import { createElement, useState } from "react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { useCalendarState } from "./hooks.ts";
@@ -467,6 +467,22 @@ describe("Calendar showWeekNumbers", () => {
     expect(weekCells.length).toBe(
       [...container.querySelectorAll("tbody tr")].length,
     );
+  });
+
+  test("1月の先頭行は前年ではなく第1週になる", () => {
+    const { container } = render(
+      createElement(Calendar, {
+        year: 2026,
+        month: 1,
+        weekStart: "sunday",
+        showWeekNumbers: true,
+      }),
+    );
+    const weekCells = container.querySelectorAll(
+      "th.calendar-week[scope='row']",
+    );
+    expect(weekCells[0]?.textContent).toBe("1");
+    expect(weekCells[0]?.getAttribute("aria-label")).toBe("Week number 1");
   });
 
   test("曜日ヘッダーに scope=col がつく", () => {
@@ -2016,6 +2032,31 @@ describe("InteractiveCalendar swipeToNavigate", () => {
     const root = container.querySelector(".calendar") as HTMLElement;
     fireEvent.pointerDown(root, { clientX: 100, clientY: 100, pointerId: 1 });
     fireEvent.pointerUp(root, { clientX: 160, clientY: 220, pointerId: 1 });
+    expect(screen.getByText("September 2026")).toBeTruthy();
+  });
+
+  test("ジェスチャ中に無効化すると月移動しない", () => {
+    function Wrapper() {
+      const [enabled, setEnabled] = useState(true);
+      return createElement(
+        "div",
+        null,
+        createElement(
+          "button",
+          { type: "button", onClick: () => setEnabled(false) },
+          "disable",
+        ),
+        createElement(InteractiveCalendar, {
+          ...props,
+          swipeToNavigate: enabled,
+        }),
+      );
+    }
+    const { container } = render(createElement(Wrapper));
+    const root = container.querySelector(".calendar") as HTMLElement;
+    fireEvent.pointerDown(root, { clientX: 200, clientY: 100, pointerId: 1 });
+    fireEvent.click(screen.getByRole("button", { name: "disable" }));
+    fireEvent.pointerUp(root, { clientX: 100, clientY: 100, pointerId: 1 });
     expect(screen.getByText("September 2026")).toBeTruthy();
   });
 

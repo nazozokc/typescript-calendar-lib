@@ -19,7 +19,9 @@ export const THEMES: Record<ThemeName, WebTheme> = {
 
 export function resolveTheme(theme?: ThemeName | WebTheme): WebTheme {
   if (theme === undefined) return THEMES.default;
-  if (typeof theme === "string") return THEMES[theme] ?? THEMES.default;
+  if (typeof theme === "string") {
+    return Object.hasOwn(THEMES, theme) ? THEMES[theme] : THEMES.default;
+  }
   return theme;
 }
 
@@ -225,7 +227,9 @@ export function resolveColorScheme(
 ): WebColorScheme {
   if (scheme === undefined) return COLOR_SCHEMES.default;
   if (typeof scheme === "string") {
-    return COLOR_SCHEMES[scheme] ?? COLOR_SCHEMES.default;
+    return Object.hasOwn(COLOR_SCHEMES, scheme)
+      ? COLOR_SCHEMES[scheme]
+      : COLOR_SCHEMES.default;
   }
   return scheme;
 }

@@ -64,12 +64,20 @@ function holidaysOfYear(year: number): YearHoliday[] {
     return 1 + offset + (n - 1) * 7;
   };
   const monday = (n: number, month: number): number => nthWeekday(1, n, month);
-  const springEquinox = Math.floor(
-    20.8431 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4),
-  );
-  const fallEquinox = Math.floor(
-    23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4),
-  );
+  // 近似式は 1851〜2099 年用。上限の 2100 年だけ実際の分点日と 1 日ずれる
+  // （春分 3/20・秋分 9/23）ため補正する。
+  const springEquinox =
+    year === 2100
+      ? 20
+      : Math.floor(
+          20.8431 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4),
+        );
+  const fallEquinox =
+    year === 2100
+      ? 23
+      : Math.floor(
+          23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4),
+        );
 
   // ── ① 国民の祝日（法律上の規則） ──
   if (year >= 1949) add(1, 1, "元日");
@@ -225,7 +233,10 @@ function holidayIndexOf(
   date: Date,
   locale: HolidayLocale,
 ): HolidayIndex | null {
-  const rule = HOLIDAY_RULES[locale];
+  // Object.prototype の継承プロパティ（"constructor" 等）はロケールではない
+  const rule = Object.hasOwn(HOLIDAY_RULES, locale)
+    ? HOLIDAY_RULES[locale]
+    : undefined;
   if (rule === undefined) return null;
   const year = date.getFullYear();
   const key = `${locale}:${year}`;

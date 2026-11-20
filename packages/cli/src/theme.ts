@@ -101,6 +101,8 @@ export function resolveColorScheme(
   scheme?: ColorSchemeName | CliPalette,
 ): CliPalette {
   return typeof scheme === "string"
-    ? (COLOR_SCHEMES[scheme] ?? COLOR_SCHEMES.default)
+    ? Object.hasOwn(COLOR_SCHEMES, scheme)
+      ? COLOR_SCHEMES[scheme]
+      : COLOR_SCHEMES.default
     : (scheme ?? COLOR_SCHEMES.default);
 }

@@ -516,6 +516,20 @@ describe("Calendar showWeekNumbers", () => {
     expect(new Set(labels).size).toBe(labels.length);
   });
 
+  test("1月の先頭行は前年ではなく第1週になる", () => {
+    const { container } = render(Calendar, {
+      props: {
+        year: 2026,
+        month: 1,
+        weekStart: "sunday",
+        showWeekNumbers: true,
+      },
+    });
+    const week = container.querySelector("th.calendar-week[scope='row']");
+    expect(week?.textContent).toBe("1");
+    expect(week).toHaveAttribute("aria-label", "Week number 1");
+  });
+
   test("曜日ヘッダーに scope=col がつく", () => {
     const { container } = render(Calendar, {
       props: { year: 2026, month: 9 },
@@ -1385,6 +1399,22 @@ describe("InteractiveCalendar showNavigation", () => {
     expect(screen.getByText("December 2027")).toBeTruthy();
   });
 
+  test("月選択要素上のキー操作でカレンダーは移動しない", async () => {
+    render(InteractiveCalendar, {
+      props: { ...props, showNavigation: true },
+    });
+    const select = screen.getByRole("combobox", { name: "Month" });
+    const event = new KeyboardEvent("keydown", {
+      key: "PageDown",
+      bubbles: true,
+      cancelable: true,
+    });
+    select.dispatchEvent(event);
+    await tick();
+    expect(event.defaultPrevented).toBe(false);
+    expect(screen.getByText("September 2026")).toBeTruthy();
+  });
+
   test("locale に合わせたラベルになる", () => {
     render(InteractiveCalendar, {
       props: { ...props, locale: "ja", showNavigation: true },
@@ -1448,6 +1478,25 @@ describe("InteractiveCalendar swipeToNavigate", () => {
     await fireEvent.pointerUp(root, {
       clientX: 160,
       clientY: 220,
+      pointerId: 1,
+    });
+    expect(screen.getByText("September 2026")).toBeTruthy();
+  });
+
+  test("ジェスチャ中に無効化すると月移動しない", async () => {
+    const { container, rerender } = render(InteractiveCalendar, {
+      props: { ...props, swipeToNavigate: true },
+    });
+    const root = container.querySelector(".calendar") as HTMLElement;
+    await fireEvent.pointerDown(root, {
+      clientX: 200,
+      clientY: 100,
+      pointerId: 1,
+    });
+    await rerender({ ...props, swipeToNavigate: false });
+    await fireEvent.pointerUp(root, {
+      clientX: 100,
+      clientY: 100,
       pointerId: 1,
     });
     expect(screen.getByText("September 2026")).toBeTruthy();

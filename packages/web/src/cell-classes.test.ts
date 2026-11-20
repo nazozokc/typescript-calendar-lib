@@ -68,6 +68,16 @@ describe("getCellClasses", () => {
     expect(end).toContain("is-range-end");
   });
 
+  test("時刻付きの範囲でも開始日のセルに start が付く", () => {
+    const range = {
+      from: new Date(2026, 8, 10, 15, 0),
+      to: new Date(2026, 8, 20, 9, 0),
+    };
+    const start = getCellClasses(new Date(2026, 8, 10), { range });
+    expect(start).toContain("is-in-range");
+    expect(start).toContain("is-range-start");
+  });
+
   test("1 日だけの範囲は start と end の両方が付く", () => {
     const classes = getCellClasses(TODAY, {
       range: { from: TODAY, to: TODAY },

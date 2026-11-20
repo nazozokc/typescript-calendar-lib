@@ -288,7 +288,8 @@ export const LOCALES: Record<Locale, LocaleData> = {
 
 /** ロケールデータを取得する（未知のロケールは RangeError） */
 export function getLocaleData(locale: Locale): LocaleData {
-  const data = LOCALES[locale];
+  // Object.prototype の継承プロパティ（"constructor" 等）はロケールではない。
+  const data = Object.hasOwn(LOCALES, locale) ? LOCALES[locale] : undefined;
   if (data === undefined) {
     throw new RangeError(`Invalid locale: "${locale}"`);
   }

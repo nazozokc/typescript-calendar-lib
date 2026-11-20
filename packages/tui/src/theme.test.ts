@@ -20,6 +20,11 @@ describe("resolveTheme", () => {
   test("不明な名前は default にフォールバックする", () => {
     // @ts-expect-error 不明なテーマ名
     expect(resolveTheme("unknown")).toBe(THEMES.default);
+    // Object.prototype 由来のキーもフォールバックする
+    // @ts-expect-error 不正なテーマ名
+    expect(resolveTheme("constructor")).toBe(THEMES.default);
+    // @ts-expect-error 不正なテーマ名
+    expect(resolveTheme("toString")).toBe(THEMES.default);
   });
 
   test("カスタムテーマを受け付ける", () => {
@@ -43,6 +48,13 @@ describe("resolveColorScheme", () => {
     const s = resolveColorScheme("ocean");
     expect(s.highlight.reverse).toBe(true);
     expect(s.title.fg).toBe(36);
+  });
+
+  test("Object.prototype 由来のキーは default にフォールバックする", () => {
+    // @ts-expect-error 不正なスキーム名
+    expect(resolveColorScheme("constructor")).toBe(COLOR_SCHEMES.default);
+    // @ts-expect-error 不正なスキーム名
+    expect(resolveColorScheme("toString")).toBe(COLOR_SCHEMES.default);
   });
 
   test("カスタムスキームを受け付ける", () => {

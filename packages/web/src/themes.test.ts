@@ -30,6 +30,9 @@ describe("resolveTheme", () => {
 
   test("未知の名前は default にフォールバック", () => {
     expect(resolveTheme("unknown" as ThemeName)).toBe(THEMES.default);
+    // Object.prototype 由来のキーもフォールバックする
+    expect(resolveTheme("constructor" as ThemeName)).toBe(THEMES.default);
+    expect(resolveTheme("toString" as ThemeName)).toBe(THEMES.default);
   });
 
   test("カスタムテーマはそのまま返す", () => {
@@ -176,6 +179,9 @@ describe("resolveColorScheme", () => {
 
   test("未知の名前は default にフォールバック", () => {
     expect(resolveColorScheme("unknown" as ColorSchemeName)).toBe(
+      COLOR_SCHEMES.default,
+    );
+    expect(resolveColorScheme("constructor" as ColorSchemeName)).toBe(
       COLOR_SCHEMES.default,
     );
   });

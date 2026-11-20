@@ -180,6 +180,13 @@ describe("祝日（主要年）", () => {
     expect(getHolidayName(createDate(1973, 3, 30))).toBe("振替休日");
   });
 
+  test("2100年の分点は近似式の1日ずれを補正する", () => {
+    expect(getHolidayName(createDate(2100, 2, 20))).toBe("春分の日");
+    expect(getHolidayName(createDate(2100, 2, 19))).toBeUndefined();
+    expect(getHolidayName(createDate(2100, 8, 23))).toBe("秋分の日");
+    expect(getHolidayName(createDate(2100, 8, 22))).toBeUndefined();
+  });
+
   test("範囲外の年", () => {
     expect(isHoliday(createDate(1948, 10, 3))).toBe(false); // 1948-11-03 文化の日は対象外
     expect(isHoliday(createDate(2101, 0, 1))).toBe(false); // 上限超
@@ -208,6 +215,15 @@ describe("祝日（主要年）", () => {
     expect(isHoliday(createDate(2026, 4, 4), "en")).toBe(false);
     // アメリカの祝日は ja では祝日にならない（例: 2026-07-04）
     expect(isHoliday(createDate(2026, 6, 4), "ja")).toBe(false);
+  });
+
+  test("Object.prototype 由来のキーはロケールとして扱わない", () => {
+    for (const key of ["constructor", "toString", "__proto__"]) {
+      // @ts-expect-error 実行時に不正なロケールが渡されるケース
+      expect(isHoliday(createDate(2026, 8, 15), key)).toBe(false);
+      // @ts-expect-error 実行時に不正なロケールが渡されるケース
+      expect(getHolidayName(createDate(2026, 8, 15), key)).toBeUndefined();
+    }
   });
 
   test("固定日祝日の施行年（since）が反映される", () => {

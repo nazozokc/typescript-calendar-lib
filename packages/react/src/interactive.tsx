@@ -208,6 +208,7 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
     (event: ReactPointerEvent<HTMLDivElement>) => {
       const start = swipeStartRef.current;
       swipeStartRef.current = null;
+      if (!swipeToNavigate) return;
       if (start === null || start.pointerId !== event.pointerId) return;
       const direction = getSwipeDirection(start, {
         x: event.clientX,
@@ -216,7 +217,7 @@ export function InteractiveCalendar(props: InteractiveCalendarProps) {
       if (direction === "next") goNext();
       if (direction === "prev") goPrev();
     },
-    [goNext, goPrev],
+    [goNext, goPrev, swipeToNavigate],
   );
   const handlePointerCancel = useCallback(() => {
     swipeStartRef.current = null;

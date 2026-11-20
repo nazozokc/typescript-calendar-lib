@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { getMonthName, getWeekdayHeaders, LOCALES } from "./locale.ts";
+import {
+  getLocaleData,
+  getMonthName,
+  getWeekdayHeaders,
+  LOCALES,
+} from "./locale.ts";
 
 describe("LOCALES", () => {
   test("全ロケールが12ヶ月分の月名を持つ", () => {
@@ -24,6 +29,13 @@ describe("LOCALES", () => {
     expect(Object.keys(LOCALES)).toEqual(
       expect.arrayContaining(["en", "ja", "es", "de", "fr", "ko", "zh"]),
     );
+  });
+
+  test("Object.prototype 由来のキーはロケールとして扱わない", () => {
+    for (const key of ["constructor", "toString", "__proto__"]) {
+      // @ts-expect-error 実行時に不正なロケールが渡されるケース
+      expect(() => getLocaleData(key)).toThrow(RangeError);
+    }
   });
 });
 

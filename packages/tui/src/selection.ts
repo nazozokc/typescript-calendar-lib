@@ -27,11 +27,10 @@ function selectRangeMode<T>(
   if (state.selectedRange !== null || state.selectedDate === null) {
     return { ...state, selectedDate: date, selectedRange: null };
   }
-  return {
-    ...state,
-    selectedDate: date,
-    selectedRange: sortRange(state.selectedDate, date) ?? null,
-  };
+  const range = sortRange(state.selectedDate, date);
+  if (range === undefined) return state;
+  // selectedDate は range 方式でもソート済み範囲の終端を指す（selectRange と同じ規約）
+  return { ...state, selectedDate: range.to, selectedRange: range };
 }
 
 /** 日付を選択する（選択方式は state.options.selectionMode に従う） */
