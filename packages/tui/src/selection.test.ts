@@ -48,6 +48,8 @@ describe("range 選択モード", () => {
       from: new Date(2026, 8, 10),
       to: new Date(2026, 8, 15),
     });
+    // 逆順でも selectedDate はソート済み範囲の終端（selectRange と同じ規約）
+    expect(getSelectedDate(picked)).toEqual(new Date(2026, 8, 15));
   });
 
   test("同日を2回選ぶと1日の範囲になる", () => {

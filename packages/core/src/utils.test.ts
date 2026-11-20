@@ -94,6 +94,18 @@ describe("isDateInRange", () => {
   test("範囲外の翌日はfalse", () => {
     expect(isDateInRange(new Date(2026, 8, 16), range)).toBe(false);
   });
+
+  test("時刻を持つ端点でも開始日・終了日を終日含む", () => {
+    const withTime = {
+      from: new Date(2026, 8, 10, 15, 30),
+      to: new Date(2026, 8, 20, 9, 0),
+    };
+    expect(isDateInRange(new Date(2026, 8, 10), withTime)).toBe(true);
+    expect(isDateInRange(new Date(2026, 8, 10, 8, 0), withTime)).toBe(true);
+    expect(isDateInRange(new Date(2026, 8, 20, 23, 0), withTime)).toBe(true);
+    expect(isDateInRange(new Date(2026, 8, 9), withTime)).toBe(false);
+    expect(isDateInRange(new Date(2026, 8, 21), withTime)).toBe(false);
+  });
 });
 
 describe("isSameDay", () => {

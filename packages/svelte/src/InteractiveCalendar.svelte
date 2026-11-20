@@ -227,6 +227,8 @@
   const handlePointerUp = (event: PointerEvent) => {
     const start = swipeStart;
     swipeStart = null;
+    // ジェスチャ中に無効化されたら、pointerdown 時の状態に関係なくキャンセルする
+    if (!swipeToNavigate) return;
     if (start === null || start.pointerId !== event.pointerId) return;
     const direction = getSwipeDirection(start, {
       x: event.clientX,

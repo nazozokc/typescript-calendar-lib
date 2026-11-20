@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { CalendarCellState, CalendarOptions } from "@typescript-calendar-lib/core";
   import {
-    addDays,
     buildMonthGrid,
     createDate,
     getCalendarCellState,
@@ -268,10 +267,11 @@
       yearMonth.month - 1,
       row[firstIdx]!,
     );
-    const weekStartDate = addDays(firstDate, -firstIdx);
+    // 行の先頭実セルを基準にする。週開始日に戻すと 1 月の先頭行が前年の
+    // 最終週（53）として表示されてしまう。
     return weekStart === "monday"
-      ? getISOWeek(weekStartDate)
-      : getWeekOfYear(weekStartDate);
+      ? getISOWeek(firstDate)
+      : getWeekOfYear(firstDate);
   };
   const handleCellClick = (cell: DayCell) => {
     if (interactive && onDateClick) {
@@ -324,14 +324,13 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<!-- onmouseleave はホバー状態クリア用の補助イベント、onkeydown は
-     InteractiveCalendar が table 上で扱う。root 自体は widget ではないため
-     ARIA role は持たない。 -->
+<!-- onmouseleave はホバー状態クリア用の補助イベント。root 自体は widget
+     ではないため ARIA role は持たない。onkeydown はナビゲーション要素
+     （select/button）のキー操作を奪わないよう table 側に付ける。 -->
 <div
   class={rootClass}
   style={rootStyle}
   onmouseleave={interactive ? handleMouseLeave : undefined}
-  onkeydown={onkeydown}
   onpointerdown={onpointerdown}
   onpointerup={onpointerup}
   onpointercancel={onpointercancel}
@@ -367,6 +366,7 @@
     role={interactive ? "grid" : undefined}
     aria-labelledby={headingId}
     aria-describedby={interactive ? hintId : undefined}
+    onkeydown={onkeydown}
   >
     <thead>
       <tr>

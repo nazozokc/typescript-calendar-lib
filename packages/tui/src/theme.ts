@@ -17,6 +17,10 @@ export interface FrameChars {
   j: string;
   /** 下端区切りで使う交差（┴） */
   footJ: string;
+  /** 行区切りの左端（├）。省略時は j を使う */
+  leftJ?: string;
+  /** 行区切りの右端（┤）。省略時は j を使う */
+  rightJ?: string;
 }
 
 /**
@@ -51,13 +55,17 @@ export const THEMES: Record<ThemeName, Theme> = {
       v: "│",
       j: "┬",
       footJ: "┴",
+      leftJ: "├",
+      rightJ: "┤",
     },
   },
 };
 
 export function resolveTheme(theme?: ThemeName | Theme): Theme {
   if (theme === undefined) return THEMES.default;
-  if (typeof theme === "string") return THEMES[theme] ?? THEMES.default;
+  if (typeof theme === "string") {
+    return Object.hasOwn(THEMES, theme) ? THEMES[theme] : THEMES.default;
+  }
   return theme;
 }
 
@@ -139,7 +147,9 @@ export function resolveColorScheme(
 ): ColorScheme {
   if (scheme === undefined) return COLOR_SCHEMES.default;
   if (typeof scheme === "string") {
-    return COLOR_SCHEMES[scheme] ?? COLOR_SCHEMES.default;
+    return Object.hasOwn(COLOR_SCHEMES, scheme)
+      ? COLOR_SCHEMES[scheme]
+      : COLOR_SCHEMES.default;
   }
   return scheme;
 }

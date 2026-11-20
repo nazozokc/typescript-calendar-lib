@@ -112,8 +112,13 @@ export function isDateInRange(
   if (!range) return false;
   assertValidRange(range.from, range.to);
   assertValidDate(date);
+  // カレンダーの範囲は「日」単位。時刻を持つ端点でもその日終日を含む。
+  // （セルの日付は 00:00 なので、単純なタイムスタンプ比較だと開始日が漏れる）
   const time = date.getTime();
-  return time >= range.from.getTime() && time <= range.to.getTime();
+  const afterStart =
+    time >= range.from.getTime() || isSameDay(date, range.from);
+  const beforeEnd = time <= range.to.getTime() || isSameDay(date, range.to);
+  return afterStart && beforeEnd;
 }
 
 /** 日付が今日と一致するか（日付のみ比較） */

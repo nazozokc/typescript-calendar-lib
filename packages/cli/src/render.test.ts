@@ -1,6 +1,41 @@
 import { describe, expect, test } from "vitest";
 import { displayWidth } from "./align.ts";
+import { separatorRow } from "./border.ts";
 import { renderMonth, renderYear } from "./render.ts";
+import type { FrameChars } from "./theme.ts";
+import { COLOR_SCHEMES, resolveColorScheme } from "./theme.ts";
+
+describe("separatorRow", () => {
+  const asciiFrame: FrameChars = {
+    topLeft: "+",
+    topRight: "+",
+    bottomLeft: "+",
+    bottomRight: "+",
+    h: "-",
+    v: "|",
+    j: "+",
+    footJ: "+",
+  };
+
+  test("カスタム枠線の交差文字を使う（├/┤ を決め打ちしない）", () => {
+    expect(separatorRow(asciiFrame, 3, 3)).toBe("+---+---+---+");
+  });
+
+  test("明示指定した leftJ/rightJ を使う", () => {
+    expect(separatorRow({ ...asciiFrame, leftJ: "[", rightJ: "]" }, 3, 2)).toBe(
+      "[---+---]",
+    );
+  });
+});
+
+describe("resolveColorScheme", () => {
+  test("Object.prototype 由来のキーは default にフォールバックする", () => {
+    // @ts-expect-error 不正なスキーム名
+    expect(resolveColorScheme("constructor")).toBe(COLOR_SCHEMES.default);
+    // @ts-expect-error 不正なスキーム名
+    expect(resolveColorScheme("toString")).toBe(COLOR_SCHEMES.default);
+  });
+});
 
 describe("renderMonth", () => {
   test("日曜始まりのタイトル行と曜日ヘッダー", () => {

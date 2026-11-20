@@ -3,7 +3,6 @@ import type {
   CalendarOptions,
 } from "@typescript-calendar-lib/core";
 import {
-  addDays,
   buildMonthGrid,
   createDate,
   getCalendarCellState,
@@ -222,10 +221,11 @@ export function Calendar({
     const firstIdx = row.findIndex((d) => d !== null);
     if (firstIdx === -1) return null;
     const firstDate = createDate(displayYear, displayMonth - 1, row[firstIdx]!);
-    const weekStartDate = addDays(firstDate, -firstIdx);
+    // 行の先頭実セルを基準にする。週開始日に戻すと 1 月の先頭行が前年の
+    // 最終週（53）として表示されてしまう。
     return weekStart === "monday"
-      ? getISOWeek(weekStartDate)
-      : getWeekOfYear(weekStartDate);
+      ? getISOWeek(firstDate)
+      : getWeekOfYear(firstDate);
   };
   // インタラクティブ時のみ APG の grid セマンティクスを付与する。
   // 静的表示ではネイティブの table/cell セマンティクスをそのまま使う。

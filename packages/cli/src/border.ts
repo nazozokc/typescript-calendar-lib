@@ -63,5 +63,14 @@ export function separatorRow(
   cols: number,
   weekWidth = 0,
 ): string {
-  return divider(frame, cellWidth, cols, "├", "┤", frame.j, weekWidth);
+  // カスタム枠線では ├/┤ を決め打ちせず、交差文字から導出する
+  return divider(
+    frame,
+    cellWidth,
+    cols,
+    frame.leftJ ?? frame.j,
+    frame.rightJ ?? frame.j,
+    frame.j,
+    weekWidth,
+  );
 }

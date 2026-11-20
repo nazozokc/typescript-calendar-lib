@@ -161,6 +161,8 @@ interface FrameChars {
   v: string; // vertical line
   j: string; // header/body intersection (┬, ┼)
   footJ: string; // bottom intersection (┴)
+  leftJ?: string; // row-separator left end (├); falls back to j
+  rightJ?: string; // row-separator right end (┤); falls back to j
 }
 ```
 
