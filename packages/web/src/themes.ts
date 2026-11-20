@@ -28,6 +28,7 @@ export function resolveTheme(theme?: ThemeName | WebTheme): WebTheme {
 /** 組み込みカラースキーム名。カスタムは CSS 変数マップを直接渡せる */
 export type ColorSchemeName =
   | "default"
+  | "auto"
   | "ocean"
   | "forest"
   | "sunset"
@@ -58,26 +59,30 @@ const SCHEME_KEYS = [
   "--cal-disabled-fg",
 ] as const;
 
+/** light 相当の既定値。"auto" は OS 設定に応じてこの値か midnight を選ぶ */
+const DEFAULT_SCHEME_VALUES = [
+  "#ffffff",
+  "#1e293b",
+  "#dc2626",
+  "#586a84",
+  "#dc2626",
+  "#a7b6d0",
+  "#f8fafc",
+  "#dc2626",
+  "#ffffff",
+  "#fef3c7",
+  "#fef9c3",
+  "#fff7ed",
+  "#c2410c",
+  "#dc2626",
+  "#ffffff",
+  "#5b799d",
+] as const;
+
 /** カラースキームごとの値を SCHEME_KEYS の並びで定義する */
 const SCHEME_VALUES: Record<ColorSchemeName, readonly string[]> = {
-  default: [
-    "#ffffff",
-    "#1e293b",
-    "#dc2626",
-    "#586a84",
-    "#dc2626",
-    "#a7b6d0",
-    "#f8fafc",
-    "#dc2626",
-    "#ffffff",
-    "#fef3c7",
-    "#fef9c3",
-    "#fff7ed",
-    "#c2410c",
-    "#dc2626",
-    "#ffffff",
-    "#5b799d",
-  ],
+  default: DEFAULT_SCHEME_VALUES,
+  auto: DEFAULT_SCHEME_VALUES,
   ocean: [
     "#f0f9ff",
     "#0f172a",
@@ -223,4 +228,18 @@ export function resolveColorScheme(
     return COLOR_SCHEMES[scheme] ?? COLOR_SCHEMES.default;
   }
   return scheme;
+}
+
+/**
+ * `"auto"` を OS の設定に応じた具体的な配色名へ解決する。
+ * カスタム配色オブジェクトはそのまま返す（SSR では light として扱う）。
+ */
+export function resolveAutoColorScheme<
+  S extends ColorSchemeName | WebColorScheme,
+>(
+  scheme: S | undefined,
+  prefersDark: boolean,
+): Exclude<S, "auto"> | ColorSchemeName {
+  if (scheme === "auto") return prefersDark ? "midnight" : "default";
+  return (scheme ?? "default") as Exclude<S, "auto"> | ColorSchemeName;
 }

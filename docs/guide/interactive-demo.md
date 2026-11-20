@@ -2,6 +2,8 @@
 
 ここでは各パッケージのインタラクティブな使い方を説明します。コードはそのままプロジェクトにコピーして使えます。
 
+このページ下部には Svelte の `InteractiveCalendar` を埋め込んだ **Live playground** があります。テーマ・配色・ロケール・選択モード・ナビゲーション・スワイプを切り替えて挙動を確認できます。`colorScheme="auto"` は OS の `prefers-color-scheme` に追従します。
+
 ## React: フルインタラクション（推奨）
 
 `useCalendarState` と `<Calendar interactive />` を組み合わせると、月移動・カーソル・選択が一つの状態で完結します。
@@ -123,7 +125,9 @@ function App() {
       initialYear={2026}
       initialMonth={9}
       theme="modern"
-      colorScheme="ocean"
+      colorScheme="auto"
+      showNavigation
+      swipeToNavigate
       onDateClick={(date) => console.log("Selected", date)}
       onDateHover={(date) => console.log("Hovered", date)}
       onDateLeave={() => console.log("Mouse left")}
@@ -137,6 +141,8 @@ function App() {
 - **クリック** — 日付を選択し、カーソルもそこへ移動（キーボードの Enter/Space も同じ）
 - **ホバー** — ホバー中のセルに `is-hovered` クラス。マウスがカレンダーから離れると解除
 - **選択 + ホバー** — 選択済み日付とホバー日付の間が `is-in-range-preview` クラスでプレビュー表示（逆順ホバーでも正しい範囲が出る）
+- **showNavigation** — 前月/翌月・Today・月/年セレクトをヘッダーに表示
+- **swipeToNavigate** — 水平スワイプで月移動（縦スクロールは維持）
 
 ### 範囲選択（React / Svelte）
 

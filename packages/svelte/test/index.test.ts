@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import type { CalendarCellState } from "@typescript-calendar-lib/core";
+import { tick } from "svelte";
 import Calendar from "../src/Calendar.svelte";
 import InteractiveCalendar from "../src/InteractiveCalendar.svelte";
 import { isSizeName } from "../src/size.js";
@@ -562,6 +563,20 @@ describe("Calendar selected / cursorDate", () => {
     expect(cell!.textContent).toBe("10");
   });
 
+  test("selectedDate エイリアスも selected と同じように効く", () => {
+    const { container } = render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        selectedDate: new Date(2026, 8, 11),
+        today: TODAY,
+      },
+    });
+    const cell = container.querySelector("td.is-selected");
+    expect(cell).not.toBeNull();
+    expect(cell!.textContent).toBe("11");
+  });
+
   test("cursorDate の日にちに is-cursor クラスが付く", () => {
     const { container } = render(Calendar, {
       props: {
@@ -588,7 +603,7 @@ describe("Calendar selected / cursorDate", () => {
     expect(container.querySelector("td.is-selected")).toBeNull();
   });
 
-  test("interactive で selected の button に aria-pressed=true が付く", () => {
+  test("interactive で selected の gridcell に aria-selected=true が付く", () => {
     const { container } = render(Calendar, {
       props: {
         year: 2026,
@@ -598,12 +613,12 @@ describe("Calendar selected / cursorDate", () => {
         today: TODAY,
       },
     });
-    const pressed = container.querySelector('button[aria-pressed="true"]');
-    expect(pressed).not.toBeNull();
-    expect(pressed!.textContent).toBe("10");
+    const selected = container.querySelector('td[aria-selected="true"]');
+    expect(selected).not.toBeNull();
+    expect(selected!.textContent).toBe("10");
   });
 
-  test("selected 以外の button には aria-pressed=false が付く", () => {
+  test("button には aria-pressed を付けない（aria-selected に一本化）", () => {
     const { container } = render(Calendar, {
       props: {
         year: 2026,
@@ -616,9 +631,7 @@ describe("Calendar selected / cursorDate", () => {
     const buttons = container.querySelectorAll("button");
     expect(buttons.length).toBeGreaterThan(1);
     for (const button of buttons) {
-      if (button.textContent !== "10") {
-        expect(button).toHaveAttribute("aria-pressed", "false");
-      }
+      expect(button).not.toHaveAttribute("aria-pressed");
     }
   });
 
@@ -808,11 +821,11 @@ describe("InteractiveCalendar", () => {
     today: TODAY,
   });
 
-  test("セルクリックで日付が選択され aria-pressed が付く", async () => {
+  test("セルクリックで日付が選択され aria-selected が付く", async () => {
     render(InteractiveCalendar, { props: props() });
     const btn = screen.getByRole("button", { name: /September 10, 2026/ });
     await fireEvent.click(btn);
-    expect(btn).toHaveAttribute("aria-pressed", "true");
+    expect(btn.closest("td")).toHaveAttribute("aria-selected", "true");
     expect(btn.closest("td")).toHaveClass("is-selected");
   });
 
@@ -927,7 +940,7 @@ describe("InteractiveCalendar", () => {
     // keyDown 後の click で再現する（実ブラウザでは Enter が click を発火する）
     await fireEvent.keyDown(btn, { key: "Enter" });
     await fireEvent.click(btn);
-    expect(btn).toHaveAttribute("aria-pressed", "true");
+    expect(btn.closest("td")).toHaveAttribute("aria-selected", "true");
   });
 });
 
@@ -1122,12 +1135,52 @@ describe("Calendar アクセシビリティ parity", () => {
     const { container } = render(InteractiveCalendar, {
       props: { initialYear: 2026, initialMonth: 9 },
     });
-    // live region 用の別要素に複製しない（読み上げが二重になるため）
-    expect(container.querySelectorAll(".calendar-sr-only")).toHaveLength(0);
+    // 追加した sr-only はキーボード説明のみ。月名を複製しない（二重読み防止）
+    const hints = container.querySelectorAll(".calendar-sr-only");
+    expect(hints).toHaveLength(1);
+    expect(hints[0]).not.toHaveTextContent("September 2026");
+    expect(hints[0]).toHaveTextContent("arrow keys");
     const matches = [...container.querySelectorAll("h2, [aria-live]")].filter(
       (el) => el.textContent?.trim() === "September 2026",
     );
     expect(matches).toHaveLength(1);
+  });
+
+  test("interactive の table はキーボード説明を aria-describedby で参照する", () => {
+    const { container } = render(Calendar, {
+      props: { year: 2026, month: 9, interactive: true },
+    });
+    const table = container.querySelector("table")!;
+    const id = table.getAttribute("aria-describedby")!;
+    expect(id).toBeTruthy();
+    expect(id).not.toBe(table.getAttribute("aria-labelledby"));
+    expect(container.querySelector(`[id="${id}"]`)).toHaveTextContent(
+      "arrow keys",
+    );
+  });
+
+  test("cursorDate が無い場合は today のセルが tabindex=0 になる", () => {
+    render(Calendar, {
+      props: { year: 2026, month: 9, interactive: true, today: TODAY },
+    });
+    expect(
+      screen.getByRole("button", { name: /September 15, 2026/ }),
+    ).toHaveAttribute("tabindex", "0");
+  });
+
+  test("cursorDate / today が使えない場合は先頭の有効日が tabindex=0 になる", () => {
+    render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        interactive: true,
+        cursorDate: new Date(2026, 7, 20),
+        isDateDisabled: (date: Date) => date.getDate() <= 5,
+      },
+    });
+    expect(
+      screen.getByRole("button", { name: /September 6, 2026/ }),
+    ).toHaveAttribute("tabindex", "0");
   });
 
   test("同じ月のカレンダーが複数あっても見出し id が衝突しない", () => {
@@ -1275,5 +1328,194 @@ describe("InteractiveCalendar initialDate / class", () => {
       },
     });
     expect(container.querySelector(".calendar")).toHaveClass("my-calendar");
+  });
+});
+
+// ─── InteractiveCalendar showNavigation ───────────────────
+
+describe("InteractiveCalendar showNavigation", () => {
+  const props = { initialYear: 2026, initialMonth: 9, today: TODAY };
+
+  test("既定ではナビゲーションを表示しない", () => {
+    const { container } = render(InteractiveCalendar, { props });
+    expect(screen.queryByRole("button", { name: "Previous month" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Go to today" })).toBeNull();
+    expect(container.querySelector(".calendar-nav")?.textContent?.trim()).toBe(
+      "",
+    );
+  });
+
+  test("前月/翌月/今日ボタンと月年選択が表示される", () => {
+    render(InteractiveCalendar, {
+      props: { ...props, showNavigation: true },
+    });
+    expect(screen.getByRole("button", { name: "Previous month" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Next month" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Go to today" })).toBeTruthy();
+    expect(screen.getByRole("combobox", { name: "Month" })).toHaveValue("9");
+    expect(screen.getByRole("combobox", { name: "Year" })).toHaveValue("2026");
+  });
+
+  test("前月/翌月ボタンで月が変わり、Today で戻る", async () => {
+    render(InteractiveCalendar, {
+      props: { ...props, showNavigation: true },
+    });
+    await fireEvent.click(screen.getByRole("button", { name: "Next month" }));
+    expect(screen.getByText("October 2026")).toBeTruthy();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Previous month" }),
+    );
+    expect(screen.getByText("September 2026")).toBeTruthy();
+    await fireEvent.click(screen.getByRole("button", { name: "Next month" }));
+    await fireEvent.click(screen.getByRole("button", { name: "Go to today" }));
+    expect(screen.getByText("September 2026")).toBeTruthy();
+  });
+
+  test("月/年選択で直接ジャンプできる", async () => {
+    render(InteractiveCalendar, {
+      props: { ...props, showNavigation: true },
+    });
+    await fireEvent.change(screen.getByRole("combobox", { name: "Month" }), {
+      target: { value: "12" },
+    });
+    expect(screen.getByText("December 2026")).toBeTruthy();
+    await fireEvent.change(screen.getByRole("combobox", { name: "Year" }), {
+      target: { value: "2027" },
+    });
+    expect(screen.getByText("December 2027")).toBeTruthy();
+  });
+
+  test("locale に合わせたラベルになる", () => {
+    render(InteractiveCalendar, {
+      props: { ...props, locale: "ja", showNavigation: true },
+    });
+    expect(screen.getByRole("button", { name: "前の月" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "今日へ移動" })).toBeTruthy();
+  });
+});
+
+// ─── InteractiveCalendar swipeToNavigate ──────────────────
+
+describe("InteractiveCalendar swipeToNavigate", () => {
+  const props = { initialYear: 2026, initialMonth: 9, today: TODAY };
+
+  test("有効にすると root に calendar-swipe が付く", () => {
+    const { container } = render(InteractiveCalendar, {
+      props: { ...props, swipeToNavigate: true },
+    });
+    expect(container.querySelector(".calendar")).toHaveClass("calendar-swipe");
+  });
+
+  test("左スワイプで翌月、右スワイプで前月に移動する", async () => {
+    const { container } = render(InteractiveCalendar, {
+      props: { ...props, swipeToNavigate: true },
+    });
+    const root = container.querySelector(".calendar") as HTMLElement;
+    await fireEvent.pointerDown(root, {
+      clientX: 200,
+      clientY: 100,
+      pointerId: 1,
+    });
+    await fireEvent.pointerUp(root, {
+      clientX: 100,
+      clientY: 100,
+      pointerId: 1,
+    });
+    expect(screen.getByText("October 2026")).toBeTruthy();
+    await fireEvent.pointerDown(root, {
+      clientX: 100,
+      clientY: 100,
+      pointerId: 2,
+    });
+    await fireEvent.pointerUp(root, {
+      clientX: 200,
+      clientY: 100,
+      pointerId: 2,
+    });
+    expect(screen.getByText("September 2026")).toBeTruthy();
+  });
+
+  test("縦スクロールは月移動しない", async () => {
+    const { container } = render(InteractiveCalendar, {
+      props: { ...props, swipeToNavigate: true },
+    });
+    const root = container.querySelector(".calendar") as HTMLElement;
+    await fireEvent.pointerDown(root, {
+      clientX: 100,
+      clientY: 100,
+      pointerId: 1,
+    });
+    await fireEvent.pointerUp(root, {
+      clientX: 160,
+      clientY: 220,
+      pointerId: 1,
+    });
+    expect(screen.getByText("September 2026")).toBeTruthy();
+  });
+
+  test("無効時はスワイプしても月移動しない", async () => {
+    const { container } = render(InteractiveCalendar, { props });
+    const root = container.querySelector(".calendar") as HTMLElement;
+    expect(root).not.toHaveClass("calendar-swipe");
+    await fireEvent.pointerDown(root, {
+      clientX: 200,
+      clientY: 100,
+      pointerId: 1,
+    });
+    await fireEvent.pointerUp(root, {
+      clientX: 100,
+      clientY: 100,
+      pointerId: 1,
+    });
+    expect(screen.getByText("September 2026")).toBeTruthy();
+  });
+});
+
+// ─── Calendar colorScheme="auto" ──────────────────────────
+
+describe("Calendar colorScheme auto", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const stubDark = (matches: boolean) => {
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches,
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    }));
+  };
+
+  test("light では default の配色になる", async () => {
+    stubDark(false);
+    const { container } = render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        today: TODAY,
+        colorScheme: "auto",
+      },
+    });
+    await tick();
+    const root = container.querySelector(".calendar") as HTMLElement;
+    expect(root.style.getPropertyValue("--cal-bg")).toBe("#ffffff");
+  });
+
+  test("dark では midnight の配色になる", async () => {
+    stubDark(true);
+    const { container } = render(Calendar, {
+      props: {
+        year: 2026,
+        month: 9,
+        today: TODAY,
+        colorScheme: "auto",
+      },
+    });
+    await tick();
+    const root = container.querySelector(".calendar") as HTMLElement;
+    expect(root.style.getPropertyValue("--cal-bg")).toBe("#0f172a");
   });
 });

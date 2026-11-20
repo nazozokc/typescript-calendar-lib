@@ -16,6 +16,7 @@
     formatCellLabel,
     getBlankClasses,
     getCellStateClasses,
+    getFocusDate,
     getSelectionCellClasses,
     joinCellClassLists,
     uiString,
@@ -31,7 +32,11 @@
     ThemeName,
   } from "./themes.js";
   import type { Snippet } from "svelte";
-  import { mergeColorScheme, resolveTheme } from "./themes.js";
+  import {
+    mergeColorScheme,
+    resolveAutoColorScheme,
+    resolveTheme,
+  } from "./themes.js";
 
   interface CalendarProps {
     /**
@@ -53,8 +58,10 @@
     rangePreview?: { from: Date; to: Date };
     /** 今日の基準日。カラースキームの today 着色に使用 */
     today?: Date;
-    /** 選択済み日付。該当セルに is-selected クラスが付き、interactive 時は button に aria-pressed が付く */
+    /** 選択済み日付。該当セルに is-selected クラスが付く */
     selected?: Date | null;
+    /** React と同じ名前で選択日を渡せるエイリアス。指定時は selected より優先される */
+    selectedDate?: Date | null;
     /** カーソル位置の日付。該当セルに is-cursor クラスが付く */
     cursorDate?: Date | null;
     /** ホバー中の日付。該当セルに is-hovered クラスが付く */
@@ -73,6 +80,10 @@
     class?: string;
     /** root 要素に追加するスタイル。CSS変数（--cal-*）で自由に上書きできる */
     style?: CSSProperties;
+    /** 見出しの左側に置く操作要素（前月ボタンや月・年選択など） */
+    headerStart?: Snippet;
+    /** 見出しの右側に置く操作要素（翌月ボタンや Today など） */
+    headerEnd?: Snippet;
 
     // ── インタラクション ──
 
@@ -84,8 +95,14 @@
     onDateHover?: (date: Date) => void;
     /** カレンダーからマウスが離れたときのコールバック */
     onDateLeave?: () => void;
-    /** キーボード操作。root 要素で発火（矢印キー等を InteractiveCalendar が処理する） */
-    onkeydown?: (event: KeyboardEvent) => void;
+  /** キーボード操作。root 要素で発火（矢印キー等を InteractiveCalendar が処理する） */
+  onkeydown?: (event: KeyboardEvent) => void;
+  /** スワイプ判定用のポインタイベント */
+  onpointerdown?: (event: PointerEvent) => void;
+  /** スワイプ判定用のポインタイベント */
+  onpointerup?: (event: PointerEvent) => void;
+  /** スワイプの中止 */
+  onpointercancel?: () => void;
 
     // ── セル状態 ──
 
@@ -117,6 +134,7 @@
     rangePreview,
     today,
     selected,
+    selectedDate,
     cursorDate,
     hoveredDate,
     theme = "default",
@@ -126,11 +144,16 @@
     showWeekNumbers = false,
     class: className,
     style,
+    headerStart,
+    headerEnd,
     interactive = false,
     onDateClick,
     onDateHover,
     onDateLeave,
     onkeydown,
+    onpointerdown,
+    onpointerup,
+    onpointercancel,
     renderCell,
     cellData,
     isDateDisabled,
@@ -153,6 +176,37 @@
   // $props.id() を使うのは同じ月のカレンダーが複数同時に置かれた場合に
   // id が衝突し aria-labelledby が別のカレンダーを見指すため。
   const headingId = $props.id();
+  // $props.id() は 1 インスタンス 1 回しか呼べないため、一意な id から派生させる
+  const hintId = `${headingId}-hint`;
+  // cursorDate が無い / 月外 / 選択不可でも 1 つだけ Tab で到達できるようにする
+  const focusDate = $derived(
+    getFocusDate({
+      year: yearMonth.year,
+      month: yearMonth.month,
+      cursorDate,
+      today,
+      isDateDisabled,
+    }),
+  );
+
+  // React と名前を揃えたい consumer 向けのエイリアス。selected より優先する。
+  const effectiveSelected = $derived(
+    selectedDate !== undefined ? selectedDate : selected,
+  );
+
+  // "auto" は OS の prefers-color-scheme に追従する。SSR では light 相当。
+  let prefersDark = $state(false);
+  $effect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const query = window.matchMedia("(prefers-color-scheme: dark)");
+    const update = () => (prefersDark = query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  });
+  const effectiveColorScheme = $derived(
+    resolveAutoColorScheme(colorScheme, prefersDark),
+  );
 
   const cellDate = (day: number): Date =>
     createDate(yearMonth.year, yearMonth.month - 1, day);
@@ -183,18 +237,19 @@
       joinCellClassLists(
         getCellStateClasses(state),
         getSelectionCellClasses(date, {
+          range,
           rangePreview,
           hoveredDate,
-          selected,
-          cursorDate,
+          selected: effectiveSelected,
+          cursorDate: focusDate,
         }),
       ) || undefined;
     return {
       date,
       state,
       className,
-      isSelected: selected != null && isSameDay(date, selected),
-      isCursor: cursorDate != null && isSameDay(date, cursorDate),
+      isSelected: effectiveSelected != null && isSameDay(date, effectiveSelected),
+      isCursor: focusDate != null && isSameDay(date, focusDate),
       isDisabled: state.isDisabled,
     };
   };
@@ -248,7 +303,7 @@
   // style 属性は文字列のみ受け付けるためオブジェクトを直列化する（--cal-* 変数含む）
   const rootStyle = $derived(
     styleObjectToString({
-      ...mergeColorScheme(colorScheme),
+      ...mergeColorScheme(effectiveColorScheme),
       ...buildSizeStyle(size),
       ...style,
     }),
@@ -277,8 +332,14 @@
   style={rootStyle}
   onmouseleave={interactive ? handleMouseLeave : undefined}
   onkeydown={onkeydown}
+  onpointerdown={onpointerdown}
+  onpointerup={onpointerup}
+  onpointercancel={onpointercancel}
 >
   <div class="calendar-header">
+    {#if headerStart}
+      <div class="calendar-nav">{@render headerStart()}</div>
+    {/if}
     <!--
       見出しをそのまま live region にする。別の要素に同じ文言を複製すると
       アクセシビリティツリー上で月名が二重に存在するため。
@@ -291,10 +352,22 @@
     >
       {getMonthName(locale, yearMonth.month)} {yearMonth.year}
     </h2>
+    {#if headerEnd}
+      <div class="calendar-nav">{@render headerEnd()}</div>
+    {/if}
+    {#if interactive}
+      <span id={hintId} class="calendar-sr-only">
+        {uiString("keyboardHint", locale)}
+      </span>
+    {/if}
   </div>
   <!-- interactive 時のみ APG の grid セマンティクスを付与する。静的表示では
-       ネイティブの table/cell セマンティクスをそのまま使う。 -->
-  <table role={interactive ? "grid" : undefined} aria-labelledby={headingId}>
+        ネイティブの table/cell セマンティクスをそのまま使う。 -->
+  <table
+    role={interactive ? "grid" : undefined}
+    aria-labelledby={headingId}
+    aria-describedby={interactive ? hintId : undefined}
+  >
     <thead>
       <tr>
         {#if showWeekNumbers}
@@ -342,7 +415,6 @@
                         yearMonth.month,
                         day,
                       )}
-                      aria-pressed={cell.isSelected}
                       disabled={cell.isDisabled}
                     >
                       {#if renderCell}

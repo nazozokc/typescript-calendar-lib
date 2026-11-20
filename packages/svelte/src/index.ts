@@ -31,6 +31,7 @@ export type {
 } from "./themes.js";
 export {
   COLOR_SCHEMES,
+  resolveAutoColorScheme,
   resolveColorScheme,
   resolveTheme,
   THEMES,

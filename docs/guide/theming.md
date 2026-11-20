@@ -161,19 +161,23 @@ Give the root a class through `theme`, then style semantic cell classes:
 
 Each day cell gets semantic classes you can target from CSS:
 
-| Class                 | When                                                          |
-| :-------------------- | :------------------------------------------------------------ |
-| `is-weekend`          | Saturday or Sunday                                            |
-| `is-holiday`          | Holiday per `holidayLocale` (default `"ja"`)                  |
-| `is-today`            | Matches `today`                                               |
-| `is-highlight`        | Matches `highlight`                                           |
-| `is-in-range`         | Inside `range`                                                |
-| `is-in-range-preview` | Inside `rangePreview`                                         |
-| `is-hovered`          | Matches `hoveredDate` (interactive mode)                      |
-| `is-selected`         | Matches `selected` / `selectedDate`                           |
-| `is-cursor`           | Matches `cursorDate`                                          |
-| `is-disabled`         | Date returned `true` from `isDateDisabled` (interactive mode) |
-| `is-blank`            | Padding cell outside the month                                |
+| Class                    | When                                                          |
+| :----------------------- | :------------------------------------------------------------ |
+| `is-weekend`             | Saturday or Sunday                                            |
+| `is-holiday`             | Holiday per `holidayLocale` (default `"ja"`)                  |
+| `is-today`               | Matches `today`                                               |
+| `is-highlight`           | Matches `highlight`                                           |
+| `is-in-range`            | Inside `range`                                                |
+| `is-range-start`         | First day of `range` (also set with `is-range-end` for 1 day) |
+| `is-range-end`           | Last day of `range`                                           |
+| `is-in-range-preview`    | Inside `rangePreview`                                         |
+| `is-range-preview-start` | First day of `rangePreview`                                   |
+| `is-range-preview-end`   | Last day of `rangePreview`                                    |
+| `is-hovered`             | Matches `hoveredDate` (interactive mode)                      |
+| `is-selected`            | Matches `selected` / `selectedDate`                           |
+| `is-cursor`              | Matches `cursorDate`                                          |
+| `is-disabled`            | Date returned `true` from `isDateDisabled` (interactive mode) |
+| `is-blank`               | Padding cell outside the month                                |
 
 The `web` package exports helpers (`getCellClasses`, `getCellStateClasses`,
 `getSelectionCellClasses`, `joinCellClassLists`) if you build your own renderer.

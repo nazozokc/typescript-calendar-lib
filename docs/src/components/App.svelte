@@ -1,6 +1,7 @@
 <script lang="ts">
   import Home from "./Home.svelte";
   import Markdown from "./Markdown.svelte";
+  import Playground from "./Playground.svelte";
   import Search from "./Search.svelte";
   import { FLAT_NAV, GITHUB_URL, PACKAGES, SIDEBAR, withBase } from "../nav";
   import type { SearchEntry } from "../search";
@@ -72,6 +73,9 @@
       <Home />
     {:else}
       <Markdown {html} />
+      {#if path === "/guide/interactive-demo"}
+        <Playground />
+      {/if}
       {#if previous || next}
         <nav class="page-nav" aria-label="Page navigation">
           {#if previous}

@@ -103,7 +103,7 @@ function App() {
 React and Svelte `<Calendar>` accept `date` as a shorthand for `year` + `month`, so a date you already hold can drive the view directly:
 
 ```tsx
-<Calendar date={today} />
+<Calendar date={today} />;
 ```
 
 ```svelte
@@ -117,7 +117,7 @@ React and Svelte `<Calendar>` accept `date` as a shorthand for `year` + `month`,
 Attach your own class to the root element without adding a wrapper: use `className` in React and `class` in Svelte. It is appended after the built-in `calendar` and theme classes, so it can drive layout or additional styling.
 
 ```tsx
-<Calendar date={today} className="my-calendar" />
+<Calendar date={today} className="my-calendar" />;
 ```
 
 ```svelte
@@ -149,7 +149,7 @@ Next.js App Router Server Components render React calendars on the server by def
 The React and Svelte calendars keep a fixed 7-column grid, which can overflow narrow phone screens. Pass `responsive` to make the grid shrink its cells, fonts, and padding below `480px` (and a touch more below `360px`) so it always fits:
 
 ```tsx
-<Calendar year={2026} month={9} responsive />
+<Calendar year={2026} month={9} responsive />;
 ```
 
 ```svelte
@@ -184,7 +184,7 @@ console.log(
 ```
 
 ```tsx
-<Calendar year={2026} month={9} weekStart="monday" showWeekNumbers />
+<Calendar year={2026} month={9} weekStart="monday" showWeekNumbers />;
 ```
 
 ```svelte
@@ -196,7 +196,7 @@ console.log(
 `selectionMode: "range"` commits a start–end range with two clicks. Clicking a third date starts a new selection:
 
 ```tsx
-<InteractiveCalendar selectionMode="range" />
+<InteractiveCalendar selectionMode="range" />;
 ```
 
 The committed range stays highlighted until the next pick starts; `useCalendarState` exposes it via `selectedRange` and `selectRange(from, to)`. The same mode is available headlessly in the TUI package.

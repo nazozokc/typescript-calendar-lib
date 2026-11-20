@@ -90,6 +90,66 @@ export const UI_STRINGS = {
     ko: "공휴일",
     zh: "假日",
   },
+  /** キーボード操作の説明（table の aria-describedby から参照する） */
+  keyboardHint: {
+    en: "Use arrow keys to move, Enter or Space to select, Page Up or Down to change month, Escape to clear.",
+    ja: "矢印キーで移動、Enter または Space で選択、Page Up / Down で月移動、Escape で解除。",
+    es: "Usa las flechas para moverte, Intro o Espacio para seleccionar, Re Pág o Av Pág para cambiar de mes y Escape para borrar.",
+    de: "Mit den Pfeiltasten navigieren, mit Eingabe oder Leertaste auswählen, mit Bild Auf oder Bild Ab den Monat wechseln und mit Escape löschen.",
+    fr: "Utilisez les flèches pour vous déplacer, Entrée ou Espace pour sélectionner, Page précédente ou suivante pour changer de mois et Échap pour effacer.",
+    ko: "화살표 키로 이동하고 Enter 또는 Space로 선택하며 Page Up / Down으로 월을 바꾸고 Escape로 해제합니다.",
+    zh: "使用方向键移动，Enter 或空格选择，Page Up / Down 切换月份，Escape 清除。",
+  },
+  /** 前月ボタンの aria-label */
+  previousMonth: {
+    en: "Previous month",
+    ja: "前の月",
+    es: "Mes anterior",
+    de: "Vorheriger Monat",
+    fr: "Mois précédent",
+    ko: "이전 달",
+    zh: "上个月",
+  },
+  /** 翌月ボタンの aria-label */
+  nextMonth: {
+    en: "Next month",
+    ja: "次の月",
+    es: "Mes siguiente",
+    de: "Nächster Monat",
+    fr: "Mois suivant",
+    ko: "다음 달",
+    zh: "下个月",
+  },
+  /** 今日へ移動するボタンの aria-label */
+  goToToday: {
+    en: "Go to today",
+    ja: "今日へ移動",
+    es: "Ir a hoy",
+    de: "Zu heute",
+    fr: "Aller à aujourd'hui",
+    ko: "오늘로 이동",
+    zh: "跳到今天",
+  },
+  /** 月選択の aria-label */
+  month: {
+    en: "Month",
+    ja: "月",
+    es: "Mes",
+    de: "Monat",
+    fr: "Mois",
+    ko: "월",
+    zh: "月份",
+  },
+  /** 年選択の aria-label */
+  year: {
+    en: "Year",
+    ja: "年",
+    es: "Año",
+    de: "Jahr",
+    fr: "Année",
+    ko: "년",
+    zh: "年份",
+  },
 } as const satisfies Record<string, Record<Locale, string>>;
 
 /** ロケールに対応する UI 文字列を参照する */

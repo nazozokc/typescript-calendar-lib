@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import type { ColorSchemeName, ThemeName } from "./themes.ts";
 import {
   COLOR_SCHEMES,
+  resolveAutoColorScheme,
   resolveColorScheme,
   resolveTheme,
   THEMES,
@@ -38,10 +39,11 @@ describe("resolveTheme", () => {
 });
 
 describe("COLOR_SCHEMES", () => {
-  test("7つの組み込みスキームが定義されている", () => {
-    expect(Object.keys(COLOR_SCHEMES)).toHaveLength(7);
+  test("8つの組み込みスキームが定義されている", () => {
+    expect(Object.keys(COLOR_SCHEMES)).toHaveLength(8);
     expect(Object.keys(COLOR_SCHEMES)).toEqual([
       "default",
+      "auto",
       "ocean",
       "forest",
       "sunset",
@@ -181,5 +183,14 @@ describe("resolveColorScheme", () => {
   test("カスタムスキームはそのまま返す", () => {
     const custom = { "--cal-bg": "#000000" };
     expect(resolveColorScheme(custom)).toBe(custom);
+  });
+
+  test("auto は light では default、dark では midnight", () => {
+    expect(resolveAutoColorScheme("auto", false)).toBe("default");
+    expect(resolveAutoColorScheme("auto", true)).toBe("midnight");
+  });
+
+  test("auto 以外はそのまま返す", () => {
+    expect(resolveAutoColorScheme("ocean", true)).toBe("ocean");
   });
 });

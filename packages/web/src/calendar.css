@@ -63,16 +63,63 @@
 }
 
 .calendar .calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   text-align: center;
   margin-bottom: 0.5rem;
   font-size: 1rem;
 }
 
 .calendar .calendar-header h2 {
+  flex: 1 1 auto;
   margin: 0;
   font-size: var(--cal-header-font-size);
   font-weight: 700;
   color: var(--cal-fg);
+}
+
+/* ヘッダーの操作要素（showNavigation で追加される前月/翌月/今日/月年選択） */
+.calendar-nav {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.calendar-nav button,
+.calendar-nav select {
+  min-width: 1.75rem;
+  min-height: 1.75rem;
+  padding: 0.125rem 0.375rem;
+  border: 1px solid var(--cal-border);
+  border-radius: 0.25rem;
+  background: var(--cal-bg);
+  color: var(--cal-fg);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.calendar-nav button:hover,
+.calendar-nav select:hover {
+  background: var(--cal-range-preview-bg, var(--cal-range-bg));
+}
+
+.calendar-nav button:focus-visible,
+.calendar-nav select:focus-visible {
+  outline: 2px solid var(--cal-accent);
+  outline-offset: 1px;
+}
+
+.calendar-nav-today {
+  white-space: nowrap;
+}
+
+/* 水平スワイプで月移動する場合、縦スクロールはブラウザに任せる */
+.calendar.calendar-swipe {
+  touch-action: pan-y;
 }
 
 .calendar td.is-weekend {
@@ -111,6 +158,25 @@
 /* 範囲プレビュー（ホバー等の候補範囲）。is-in-range より薄く表示される */
 .calendar td.is-in-range-preview {
   background: var(--cal-range-preview-bg, var(--cal-range-bg));
+}
+
+/* 範囲の端点。塗り分けだけだとどこからどこまでか分からないため、
+   内側の線で開始・終了を示す（左右を同時に持つ 1 日範囲もあり得る）。 */
+.calendar td.is-range-start,
+.calendar td.is-range-preview-start {
+  box-shadow: inset 3px 0 0 var(--cal-accent);
+}
+
+.calendar td.is-range-end,
+.calendar td.is-range-preview-end {
+  box-shadow: inset -3px 0 0 var(--cal-accent);
+}
+
+.calendar td.is-range-start.is-range-end,
+.calendar td.is-range-preview-start.is-range-preview-end {
+  box-shadow:
+    inset 3px 0 0 var(--cal-accent),
+    inset -3px 0 0 var(--cal-accent);
 }
 
 .calendar td.is-selected {
@@ -454,6 +520,16 @@
 
   .calendar td.is-in-range-preview {
     border-style: dotted;
+  }
+
+  .calendar td.is-range-start,
+  .calendar td.is-range-preview-start {
+    border-left: 3px solid Highlight;
+  }
+
+  .calendar td.is-range-end,
+  .calendar td.is-range-preview-end {
+    border-right: 3px solid Highlight;
   }
 
   .calendar td.is-selected {

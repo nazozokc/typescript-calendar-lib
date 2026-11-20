@@ -18,6 +18,7 @@ import {
   formatCellLabel,
   getBlankClasses,
   getCellStateClasses,
+  getFocusDate,
   getSelectionCellClasses,
   joinCellClassLists,
   uiString,
@@ -26,6 +27,7 @@ import type {
   CSSProperties,
   KeyboardEvent as ReactKeyboardEvent,
   ReactNode,
+  PointerEvent as ReactPointerEvent,
   Ref,
 } from "react";
 import { useId, useMemo } from "react";
@@ -37,7 +39,12 @@ import type {
   ReactTheme,
   ThemeName,
 } from "./themes.ts";
-import { mergeColorScheme, resolveTheme } from "./themes.ts";
+import {
+  mergeColorScheme,
+  resolveAutoColorScheme,
+  resolveTheme,
+  usePrefersDark,
+} from "./themes.ts";
 
 export type {
   CalendarCustomSize,
@@ -79,6 +86,10 @@ export interface CalendarProps {
   className?: string;
   /** root 要素に追加するスタイル。CSS変数（--cal-*）で自由に上書きできる */
   style?: CSSProperties;
+  /** 見出しの左側に置く操作要素（前月ボタンや月・年選択など） */
+  headerStart?: ReactNode;
+  /** 見出しの右側に置く操作要素（翌月ボタンや Today など） */
+  headerEnd?: ReactNode;
 
   // ── インタラクション ──
 
@@ -92,10 +103,16 @@ export interface CalendarProps {
   onDateLeave?: () => void;
   /** キーボード操作。root 要素で発火（矢印キー等を InteractiveCalendar が処理する） */
   onKeyDown?: (event: ReactKeyboardEvent<HTMLDivElement>) => void;
+  /** スワイプ判定用のポインタイベント（swipeToNavigate を有効にすると渡される） */
+  onPointerDown?: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  /** スワイプ判定用のポインタイベント */
+  onPointerUp?: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  /** スワイプの中止（ pointercancel ） */
+  onPointerCancel?: () => void;
 
   // ── セル状態 ──
 
-  /** 選択済み日付。aria-selected・aria-pressed と表示スタイルに使用 */
+  /** 選択済み日付。gridcell の aria-selected と表示スタイルに使用 */
   selectedDate?: Date | null;
   /** カーソル位置の日付。このセルだけ tabIndex=0（roving tabindex）になる */
   cursorDate?: Date | null;
@@ -135,11 +152,16 @@ export function Calendar({
   responsive = false,
   className,
   style,
+  headerStart,
+  headerEnd,
   interactive = false,
   onDateClick,
   onDateHover,
   onDateLeave,
   onKeyDown,
+  onPointerDown,
+  onPointerUp,
+  onPointerCancel,
   selectedDate = null,
   cursorDate = null,
   hoveredDate = null,
@@ -163,6 +185,16 @@ export function Calendar({
     );
   }
   const { year: displayYear, month: displayMonth } = yearMonth;
+
+  // cursorDate が無い / 月外 / 選択不可でも、必ず 1 つのセルだけが Tab で
+  // 到達できるようにする（roving tabindex のフォールバック）。
+  const focusDate = getFocusDate({
+    year: displayYear,
+    month: displayMonth,
+    cursorDate,
+    today,
+    isDateDisabled,
+  });
 
   // グリッドは月単位で不変。ホバー・選択の再描画でも再計算しない
   const grid = useMemo(
@@ -204,20 +236,29 @@ export function Calendar({
   // id が衝突し aria-labelledby が別のカレンダーを見指すため。
   // aria-label と h2 の両方に同じ文字列を置くとスクリーンリーダーが二重に読む。
   const headingId = useId();
+  // キーボード操作の説明は視覚的配置に依存せず aria-describedby で参照する。
+  // 見出しと同じくインスタンスごとに一意な id が必要。
+  const hintId = useId();
+  const prefersDark = usePrefersDark();
+  const effectiveColorScheme = resolveAutoColorScheme(colorScheme, prefersDark);
 
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: onMouseLeave はホバー状態クリア用の補助イベント。キーボード操作（role=grid）は独立して対応済み
+    // biome-ignore lint/a11y/noStaticElementInteractions: onMouseLeave/onPointer* は状態管理・スワイプ判定用の補助イベント。キーボード操作（role=grid）は独立して対応済み
     <div
       ref={ref}
       className={`calendar ${resolveTheme(theme).className}${isSizeName(size) ? ` calendar-size-${size}` : ""}${interactive ? " calendar-interactive" : ""}${responsive ? " calendar-responsive" : ""}${className ? ` ${className}` : ""}`}
       onMouseLeave={interactive ? handleMouseLeave : undefined}
+      onPointerDown={onPointerDown}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerCancel}
       style={{
-        ...(mergeColorScheme(colorScheme) as CSSProperties),
+        ...(mergeColorScheme(effectiveColorScheme) as CSSProperties),
         ...buildSizeStyle(size),
         ...style,
       }}
     >
       <div className="calendar-header">
+        {headerStart && <div className="calendar-nav">{headerStart}</div>}
         <h2
           id={headingId}
           aria-live={gridRole ? "polite" : undefined}
@@ -225,8 +266,19 @@ export function Calendar({
         >
           {title}
         </h2>
+        {headerEnd && <div className="calendar-nav">{headerEnd}</div>}
+        {interactive && (
+          <span id={hintId} className="calendar-sr-only">
+            {uiString("keyboardHint", locale)}
+          </span>
+        )}
       </div>
-      <table role={gridRole} aria-labelledby={headingId} onKeyDown={onKeyDown}>
+      <table
+        role={gridRole}
+        aria-labelledby={headingId}
+        aria-describedby={gridRole ? hintId : undefined}
+        onKeyDown={onKeyDown}
+      >
         <thead>
           <tr>
             {showWeekNumbers && (
@@ -287,16 +339,17 @@ export function Calendar({
                     joinCellClassLists(
                       getCellStateClasses(state),
                       getSelectionCellClasses(date, {
+                        range,
                         rangePreview,
                         hoveredDate,
                         selected: selectedDate,
-                        cursorDate,
+                        cursorDate: focusDate,
                       }),
                     ) || undefined;
                   const selected =
                     selectedDate !== null && isSameDay(date, selectedDate);
                   const cursor =
-                    cursorDate !== null && isSameDay(date, cursorDate);
+                    focusDate !== null && isSameDay(date, focusDate);
                   // cellData はセルごとに1回だけ解決し、クリック時と描画時で同じ値を渡す
                   const data =
                     interactive || renderCell ? cellData?.(date) : undefined;
@@ -333,7 +386,6 @@ export function Calendar({
                             displayMonth,
                             day,
                           )}
-                          aria-pressed={selected}
                           disabled={state.isDisabled}
                         >
                           {renderCell

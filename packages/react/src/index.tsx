@@ -33,7 +33,9 @@ export type {
 } from "./themes.ts";
 export {
   COLOR_SCHEMES,
+  resolveAutoColorScheme,
   resolveColorScheme,
   resolveTheme,
   THEMES,
+  usePrefersDark,
 } from "./themes.ts";

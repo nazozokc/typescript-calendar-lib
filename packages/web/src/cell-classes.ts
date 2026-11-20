@@ -31,7 +31,7 @@ export interface CellStateOptions {
 export interface SelectionCellOptions
   extends Pick<
     CellStateOptions,
-    "rangePreview" | "hoveredDate" | "selected" | "cursorDate"
+    "range" | "rangePreview" | "hoveredDate" | "selected" | "cursorDate"
   > {}
 
 // 範囲の from > to は不正入力として RangeError（isDateInRange が検証する）
@@ -54,11 +54,20 @@ export function getSelectionCellClasses(
   options: SelectionCellOptions,
 ): string {
   const classes: string[] = [];
+  if (options.range !== undefined && isDateInRange(date, options.range)) {
+    if (isSameDay(date, options.range.from)) classes.push("is-range-start");
+    if (isSameDay(date, options.range.to)) classes.push("is-range-end");
+  }
   if (
     options.rangePreview !== undefined &&
     isDateInRange(date, options.rangePreview)
-  )
+  ) {
     classes.push("is-in-range-preview");
+    if (isSameDay(date, options.rangePreview.from))
+      classes.push("is-range-preview-start");
+    if (isSameDay(date, options.rangePreview.to))
+      classes.push("is-range-preview-end");
+  }
   if (options.hoveredDate != null && isSameDay(date, options.hoveredDate))
     classes.push("is-hovered");
   if (options.selected != null && isSameDay(date, options.selected))
