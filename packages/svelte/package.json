@@ -50,8 +50,8 @@
     "@testing-library/svelte": "^5",
     "jsdom": "^31",
     "svelte-check": "^4",
-    "typescript": "^5.9.0",
-    "vitest": "^5.1.0"
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.1"
   },
   "author": "nazozokc",
   "homepage": "https://github.com/nazozokc/typescript-calendar-lib#readme",
